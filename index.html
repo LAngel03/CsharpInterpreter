@@ -31,8 +31,7 @@
                 <img src="./img/iconos/Inicio.png" class="nav-icon" alt="">
                 <span class="nav-label">Inicio</span>
             </button>
-
-            <!-- Estructuras selectivas -->
+            
             <div class="nav-group">
                 <button class="nav-btn has-sub">
                     <img src="./img/iconos/Selectivas.png" class="nav-icon" alt="">
@@ -46,7 +45,6 @@
                 </div>
             </div>
 
-            <!-- Ciclos -->
             <div class="nav-group">
                 <button class="nav-btn has-sub">
                     <img src="./img/iconos/Ciclos.png" class="nav-icon" alt="">
@@ -79,13 +77,15 @@
                 <img src="./img/iconos/Archivos.png" class="nav-icon" alt="">
                 <span class="nav-label">Archivos</span>
             </button>
-
         </aside>
 
         <main class="text-white p-3 p-md-4 flex-grow-1">
             <section>
                 <div id="tema-titulo"></div>
                 <div class="explanation-text" id="tema-descripcion" style="display:none;"></div>
+                
+                <div id="grid-modulos" class="row row-cols-1 row-cols-md-2 g-4 mb-4"></div>
+
                 <div id="workspace-container"></div>
             </section>
         </main>
@@ -93,6 +93,38 @@
     </div>
 
     <footer class="app-footer text-center p-3">c#</footer>
+
+    <dialog id="modal-concepto" class="custom-modal">
+        <div class="modal-content-wrapper">
+            <div class="custom-modal-header">
+                <div class="d-flex align-items-center gap-2">
+                    <h2 id="modal-titulo" class="m-0">Concepto</h2>
+                </div>
+                <button class="modal-close-x" onclick="cerrarConceptoModal()">&times;</button>
+            </div>
+            
+            <div class="custom-modal-body">
+                <span class="modal-subtitle" id="modal-subtitulo">ANALOGÍA</span>
+                <h3 class="modal-main-topic" id="modal-tema-nombre">Cargando...</h3>
+                <p class="modal-description" id="modal-descripcion-texto">Definición...</p>
+                
+                <div class="modal-card-case">
+                    <div class="card-case-header">
+                        <strong>Caso Práctico:</strong>
+                    </div>
+                    <p class="card-case-text" id="modal-caso-practico">Ejemplo...</p>
+                </div>
+
+                <p class="modal-footer-abstract" id="modal-abstraccion-conclusión">
+                    Conclusión...
+                </p>
+            </div>
+
+            <div class="custom-modal-footer">
+                <button class="ctrl-btn primary px-4 py-2" onclick="cerrarConceptoModal()">Entendido</button>
+            </div>
+        </div>
+    </dialog>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="./js/consolas.js"></script>

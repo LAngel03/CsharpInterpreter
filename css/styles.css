@@ -512,3 +512,169 @@ section {
 .nav-btn.has-sub .nav-icon { flex-shrink: 0; }
 
 .nav-btn.has-sub .nav-label { flex: 1; }
+
+/* ===============================================
+   MODALES PERSONALIZADOS (CUSTOM DIALOG)
+   =============================================== */
+.custom-modal {
+    background-color: var(--dark);
+    border: 1px solid var(--console-border);
+    border-radius: 14px;
+    padding: 0;
+    width: 90%;
+    max-width: 580px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    color: var(--white);
+    overflow: hidden;
+}
+
+/* Animación y difuminado del fondo exterior */
+.custom-modal::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: backdrop-filter 0.3s ease;
+}
+
+.modal-content-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Cabecera del Modal */
+.custom-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--console-border);
+    background-color: #1e2130;
+}
+
+.custom-modal-header h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--white);
+}
+
+.modal-close-x {
+    background: none;
+    border: none;
+    color: #8a9ab5;
+    font-size: 1.6rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.modal-close-x:hover {
+    color: var(--white);
+}
+
+/* Cuerpo del Modal */
+.custom-modal-body {
+    padding: 24px 24px 16px 24px;
+    background-color: var(--dark);
+}
+
+.modal-subtitle {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #7b2cbf; /* Color morado/azul de acento de tu captura */
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.modal-main-topic {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+    color: var(--white);
+}
+
+.modal-description {
+    font-size: 0.88rem;
+    color: #bfc6d1;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+/* Tarjeta interna del Caso Práctico */
+.modal-card-case {
+    background-color: #15161e;
+    border: 1px solid rgba(123, 44, 191, 0.25);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.card-case-header {
+    font-size: 0.8rem;
+    color: #a29bfe;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.card-case-text {
+    font-size: 0.85rem;
+    color: #bfc6d1;
+    line-height: 1.5;
+    font-style: italic;
+    margin: 0;
+}
+
+.modal-footer-abstract {
+    font-size: 0.78rem;
+    color: #8a9ab5;
+    line-height: 1.5;
+    text-align: center;
+    margin: 0;
+}
+
+/* Pie del Modal */
+.custom-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--console-border);
+    background-color: #1e2130;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Ajuste del botón primario para el modal */
+.custom-modal-footer .ctrl-btn.primary {
+    background-color: #5a189a; /* Color morado de tu botón original */
+    border-color: #5a189a;
+    color: var(--white);
+}
+
+.custom-modal-footer .ctrl-btn.primary:hover {
+    background-color: #7b2cbf;
+    border-color: #7b2cbf;
+}
+
+/* Estilos para transformar la tarjeta en un gran botón interactivo */
+.modular-card-btn {
+    background-color: #282A35 !important; 
+    border: 1px solid #3a3d4a !important; 
+    border-radius: 12px !important;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+    display: block;
+}
+
+/* Efecto visual al pasar el cursor (Hover) */
+.modular-card-btn:hover {
+    transform: translateY(-4px);
+    border-color: #a29bfe !important;
+    box-shadow: 0 8px 24px rgba(162, 155, 254, 0.15);
+}
+
+/* Efecto al hacer click (Active) */
+.modular-card-btn:active {
+    transform: translateY(-1px);
+}
