@@ -1,8 +1,8 @@
 :root {
-    --dark:           #282A35;
-    --green-main:     #04AA6D;
-    --white:          #FFFFFF;
-    --console-bg:     #1a1b22;
+    --dark: #282A35;
+    --green-main: #04AA6D;
+    --white: #FFFFFF;
+    --console-bg: #1a1b22;
     --console-header: #282A35;
     --console-border: #3a3d4a;
 }
@@ -119,10 +119,22 @@ main {
 }
 
 /* ================= SCROLLBAR ================= */
-::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-track { background: #1E1F26; }
-::-webkit-scrollbar-thumb { background: #3B4252; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #4C566A; }
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1E1F26;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #3B4252;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4C566A;
+}
 
 /* ================= RESPONSIVIDAD MÓVIL ================= */
 .sidebar-toggle {
@@ -138,7 +150,7 @@ main {
     height: 48px;
     font-size: 1.3rem;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -154,11 +166,13 @@ main {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     z-index: 150;
 }
 
-.sidebar-overlay.active { display: block; }
+.sidebar-overlay.active {
+    display: block;
+}
 
 @media (max-width: 767.98px) {
     .app-sidebar {
@@ -172,21 +186,48 @@ main {
         transition: transform 0.3s ease;
         padding-top: 60px;
     }
-    .app-sidebar.open { transform: translateX(0); }
-    body.sidebar-open { overflow: hidden; }
-    .layout { min-height: calc(100vh - 70px - 45px); }
-    main { width: 100%; padding: 16px; }
-    h1 { font-size: 1.2rem; }
-    .logo { width: 40px; }
+
+    .app-sidebar.open {
+        transform: translateX(0);
+    }
+
+    body.sidebar-open {
+        overflow: hidden;
+    }
+
+    .layout {
+        min-height: calc(100vh - 70px - 45px);
+    }
+
+    main {
+        width: 100%;
+        padding: 16px;
+    }
+
+    h1 {
+        font-size: 1.2rem;
+    }
+
+    .logo {
+        width: 40px;
+    }
 }
 
 @media (min-width: 768px) and (max-width: 991.98px) {
-    .app-sidebar { width: 200px; }
-    .nav-btn { font-size: 0.85rem; padding: 10px 12px; }
+    .app-sidebar {
+        width: 200px;
+    }
+
+    .nav-btn {
+        font-size: 0.85rem;
+        padding: 10px 12px;
+    }
 }
 
 @media (min-width: 1400px) {
-    .app-sidebar { width: 300px; }
+    .app-sidebar {
+        width: 300px;
+    }
 }
 
 /* ===============================================
@@ -200,11 +241,15 @@ main {
 }
 
 @media (max-width: 1100px) {
-    .workspace { grid-template-columns: 1fr 320px; }
+    .workspace {
+        grid-template-columns: 1fr 320px;
+    }
 }
 
 @media (max-width: 860px) {
-    .workspace { grid-template-columns: 1fr; }
+    .workspace {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* ===============================================
@@ -215,7 +260,7 @@ main {
     border-radius: 10px;
     border: 1px solid var(--console-border);
     overflow: hidden;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
     display: flex;
     flex-direction: column;
 }
@@ -225,7 +270,7 @@ main {
     border-radius: 10px;
     border: 1px solid var(--console-border);
     overflow: hidden;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
     display: flex;
     flex-direction: column;
     height: 80px;
@@ -233,7 +278,10 @@ main {
 }
 
 @media (max-width: 860px) {
-    .console-panel2 { width: 45%; height: 80px; }
+    .console-panel2 {
+        width: 45%;
+        height: 80px;
+    }
 }
 
 .console-header {
@@ -298,7 +346,9 @@ main {
 /* ===============================================
    EDITOR GRANDE
    =============================================== */
-.editor-panel { min-height: 50px; }
+.editor-panel {
+    min-height: 50px;
+}
 
 .editor-body {
     flex: 1;
@@ -312,7 +362,9 @@ main {
     line-height: 1.8;
 }
 
-.side-panels .console-panel .console-body { min-height: 140px; }
+.side-panels .console-panel .console-body {
+    min-height: 140px;
+}
 
 .editor-controls {
     display: flex;
@@ -343,7 +395,10 @@ main {
     color: var(--green-main);
 }
 
-.ctrl-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.ctrl-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
 
 .ctrl-btn.primary {
     background-color: var(--green-main);
@@ -418,7 +473,9 @@ section {
 /* ===============================================
    SUBMENÚ DESPLEGABLE
    =============================================== */
-.nav-group { margin-bottom: 4px; }
+.nav-group {
+    margin-bottom: 4px;
+}
 
 .nav-btn.has-sub {
     display: flex;
@@ -476,7 +533,9 @@ section {
     padding-left: 18px;
 }
 
-.nav-sub-btn:active { transform: scale(0.98); }
+.nav-sub-btn:active {
+    transform: scale(0.98);
+}
 
 /* ===============================================
    TÍTULO DEL TEMA ACTIVO
@@ -502,16 +561,17 @@ section {
 }
 
 .nav-btn:hover .nav-icon {
-    filter: brightness(0) saturate(100%)
-            invert(55%) sepia(60%)
-            saturate(400%) hue-rotate(115deg)
-            brightness(95%);
+    filter: brightness(0) saturate(100%) invert(55%) sepia(60%) saturate(400%) hue-rotate(115deg) brightness(95%);
     opacity: 1;
 }
 
-.nav-btn.has-sub .nav-icon { flex-shrink: 0; }
+.nav-btn.has-sub .nav-icon {
+    flex-shrink: 0;
+}
 
-.nav-btn.has-sub .nav-label { flex: 1; }
+.nav-btn.has-sub .nav-label {
+    flex: 1;
+}
 
 /* ===============================================
    MODALES PERSONALIZADOS (CUSTOM DIALOG)
@@ -580,7 +640,8 @@ section {
 .modal-subtitle {
     font-size: 0.68rem;
     font-weight: 700;
-    color: #7b2cbf; /* Color morado/azul de acento de tu captura */
+    color: #7b2cbf;
+    /* Color morado/azul de acento de tu captura */
     letter-spacing: 0.12em;
     text-transform: uppercase;
     display: block;
@@ -646,7 +707,8 @@ section {
 
 /* Ajuste del botón primario para el modal */
 .custom-modal-footer .ctrl-btn.primary {
-    background-color: #5a189a; /* Color morado de tu botón original */
+    background-color: #5a189a;
+    /* Color morado de tu botón original */
     border-color: #5a189a;
     color: var(--white);
 }
@@ -658,8 +720,8 @@ section {
 
 /* Estilos para transformar la tarjeta en un gran botón interactivo */
 .modular-card-btn {
-    background-color: #282A35 !important; 
-    border: 1px solid #3a3d4a !important; 
+    background-color: #282A35 !important;
+    border: 1px solid #3a3d4a !important;
     border-radius: 12px !important;
     cursor: pointer;
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
@@ -677,4 +739,18 @@ section {
 /* Efecto al hacer click (Active) */
 .modular-card-btn:active {
     transform: translateY(-1px);
+}
+
+/* Estilo para el fondo del modal (Backdrop) */
+#modal-concepto::backdrop {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    /* Fondo oscuro semitransparente */
+    backdrop-filter: blur(8px);
+    /* Este es el efecto de difuminado premium */
+    transition: all 0.3s ease;
+}
+
+/* Evitar bordes extraños de enfoque al abrir el diálogo */
+#modal-concepto:focus-visible {
+    outline: none;
 }

@@ -27,9 +27,16 @@ if (overlay) {
     overlay.addEventListener('click', closeSidebar);
 }
 
+// CORRECCIÓN AQUÍ: Evita que las categorías principales del menú cierren el sidebar en celular
 document.querySelectorAll('.nav-btn, .nav-sub-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-        if (window.innerWidth < 768) closeSidebar();
+        // Verificamos si el botón presionado abre un acordeón secundario
+        const esCategoriaConSubmenu = btn.classList.contains('has-sub');
+
+        // Solo cerramos si está en móvil Y NO es un menú desplegable principal
+        if (window.innerWidth < 768 && !esCategoriaConSubmenu) {
+            closeSidebar();
+        }
     });
 });
 
@@ -76,7 +83,7 @@ function limpiarPantalla() {
     const gridModulos = document.getElementById('grid-modulos');
 
     if (workspace) workspace.innerHTML = '';
-    if (gridModulos) gridModulos.innerHTML = ''; // Limpia la cuadrícula al cambiar de tema
+    if (gridModulos) gridModulos.innerHTML = '';
     mostrarDescripcion('', '');
 }
 
@@ -97,21 +104,16 @@ function cargarTema(nombreTema) {
     if (!window.temas || !window.temas[nombreTema]) return;
     const datos = window.temas[nombreTema];
 
-    // 1. Mostrar título y definición del tema
     mostrarDescripcion(datos.titulo, datos.definicion);
 
-    // 2. Inyectar las consolas debajo de la definición
     if (typeof insertarConsolas === "function") {
         insertarConsolas();
     }
-
-    // 3. Aquí irá la lógica del intérprete cuando esté lista
 }
-// ============================================================
-//  VISTA DE INICIO (TARJETAS Y MODALES) — ACTUALIZADO A 5 MÓDULOS
-// ============================================================
 
-// 1. Función para pintar la vista de Inicio (Módulos de Áreas Temáticas)
+// ============================================================
+//  VISTA DE INICIO (TARJETAS Y MODALES) — CORREGIDO
+// ============================================================
 function cargarVistaInicio() {
     const workspaceContainer = document.getElementById("workspace-container");
     const gridModulos = document.getElementById("grid-modulos");
@@ -127,7 +129,6 @@ function cargarVistaInicio() {
     }
     if (temaDescripcion) temaDescripcion.style.display = "none";
 
-    // Estructura HTML actualizada: 5 tarjetas independientes tipo botón
     if (gridModulos) {
         gridModulos.innerHTML = `
             <div class="col">
@@ -193,32 +194,28 @@ function cargarVistaInicio() {
     }
 }
 
-// Iniciar aplicación cargando el inicio por defecto al abrir
 document.addEventListener("DOMContentLoaded", () => {
     const btnInicio = document.getElementById("btn-inicio");
-
     if (btnInicio) {
         btnInicio.addEventListener("click", () => {
             limpiarPantalla();
             cargarVistaInicio();
         });
     }
-
-    // Ejecución inicial automática
     cargarVistaInicio();
 });
+
 // ============================================================
 //  DICCIONARIO DE DATOS Y GESTIÓN DE MODALES
 // ============================================================
 const diccionarioTemas = {
-    "Selectivas": { // Módulo general de Estructuras Selectivas (Creado anteriormente)
+    "Selectivas": {
         titulo: "Estructuras Selectivas",
         concepto: "Las estructuras selectivas permiten que un programa tome decisiones dependiendo de si una condición es verdadera o falsa. Se utilizan para controlar el flujo de ejecución y elegir entre diferentes acciones.",
         ejemplos: "if, if-else, switch",
         caso: "\"Si un alumno tiene promedio mayor o igual a 9, obtiene una beca del 50%; de lo contrario, no recibe beca.\"",
         conclusion: "En pocas palabras, las estructuras selectivas le dan al programa la capacidad de elegir. Sin ellas, las aplicaciones harían siempre exactamente lo mismo, sin importar lo que el usuario necesite."
     },
-
     "Ciclos": {
         titulo: "Ciclos",
         concepto: "Los ciclos permiten ejecutar un bloque de instrucciones varias veces mientras se cumpla una condición o hasta alcanzar un número determinado de repeticiones.",
@@ -226,7 +223,6 @@ const diccionarioTemas = {
         caso: "\"Imagina que necesitas imprimir en pantalla los números del 1 al 10. En lugar de escribir diez líneas de código repetitivas, creas un ciclo. Le dices a la computadora: 'Empieza con un contador en 1, muéstralo en pantalla, súmale 1 a ese contador y repite el proceso'. La máquina repetirá la instrucción de forma automática vuelta tras vuelta y se detendrá inmediatamente cuando el contador llegue a 11, logrando mostrar la lista en un instante.\"",
         conclusion: "Los ciclos nos evitan el trabajo aburrido de duplicar código manualmente. Nos permiten procesar tareas repetitivas de forma automática, exacta y en fracciones de segundo."
     },
-
     "Array_unidimensional": {
         titulo: "Arreglos Unidimensionales",
         concepto: "Un arreglo unidimensional es una estructura de datos que almacena varios elementos del mismo tipo en una sola fila de posiciones consecutivas.",
@@ -234,15 +230,13 @@ const diccionarioTemas = {
         caso: "\"Imagina que necesitas guardar las 5 calificaciones de un alumno. En lugar de crear 5 variables individuales (como calif1, calif2, etc.), creas una sola fila de casilleros en la memoria llamada 'Calificaciones' con espacio para 5 datos. La computadora numera cada espacio desde el 0. Así, en la posición 0 guardas el 8.5, en la posición 1 el 9.0, y puedes leer o modificar cualquier nota rápidamente solo diciendo el número de casillero al que quieres entrar.\"",
         conclusion: "Los arreglos unidimensionales son ideales para manejar listas simples de datos bajo un único nombre, manteniendo la información agrupada, ordenada y fácil de acceder."
     },
-
     "Array_bidimensional": {
         titulo: "Arreglos Bidimensionales",
         concepto: "Un arreglo bidimensional organiza los datos en filas y columnas, similar a una tabla o matriz.",
         ejemplos: "Matrices, Tablas de datos, Cuadrículas",
-        caso: "\"Imagina que ahora no quieres registrar las notas de un solo alumno, sino las calificaciones de varios alumnos de un grupo. Para esto usas una cuadrícula tipo Excel: cada fila representa a un estudiante diferente (Alumno 0, Alumno 1, Alumno 2) y cada columna representa una materia distinta (Matemáticas en Columna 0, Historia en Columna 1). Si el programa quiere revisar la nota de Historia del segundo alumno, va directo a la intersección exacta de la Fila 1, Columna 1.\"",
+        caso: "\"Imagina que ahora no quieres registrar las notas de un solo alumno, sino las calificaciones de varios alumnos de un grupo. Para esto usas una cuadrícula tipo Excel: cada fila representa a un estudiante diferente (Alumno 0, Alumno 1, Alumno 2) and cada columna representa una materia distinta (Matemáticas en Columna 0, Historia en Columna 1). Si el programa quiere revisar la nota de Historia del segundo alumno, va directo a la intersección exacta de la Fila 1, Columna 1.\"",
         conclusion: "Los arreglos bidimensionales son la estructura perfecta cuando los datos tienen relaciones más complejas, permitiéndonos crear mapas, tablas y bases de datos ordenadas en dos dimensiones."
     },
-
     "Recursividad": {
         titulo: "Recursividad",
         concepto: "La recursividad es una técnica donde una función se llama a sí misma para resolver un problema dividiéndolo en problemas más pequeños. Toda función recursiva debe tener una condición de parada para evitar llamadas infinitas.",
@@ -252,19 +246,31 @@ const diccionarioTemas = {
     }
 };
 
+// CORRECCIÓN AQUÍ: Inyecta el texto literal de "Ejemplos comunes" en tu ventana flotante
 function abrirConceptoModal(idTema) {
     const modal = document.getElementById('modal-concepto');
-    const datos = diccionarioTemas[idTema] || diccionarioTemas["default"];
+    const datos = diccionarioTemas[idTema] || diccionarioTemas["Selectivas"];
 
     if (!modal) return;
 
-    // Actualización de los elementos con la versión de conceptos sencillos
     document.getElementById('modal-titulo').innerText = datos.titulo;
     document.getElementById('modal-descripcion-texto').innerText = datos.concepto;
     document.getElementById('modal-caso-practico').innerText = datos.caso;
     document.getElementById('modal-abstraccion-conclusión').innerText = datos.conclusion;
 
-    // Ocultar elementos sobrantes del diseño anterior
+    // Gestión del texto de Ejemplos
+    const contenedorEjemplos = document.getElementById('modal-contenedor-ejemplos');
+    const txtEjemplos = document.getElementById('modal-ejemplos-lista');
+
+    if (contenedorEjemplos && txtEjemplos) {
+        if (datos.ejemplos) {
+            txtEjemplos.innerText = datos.ejemplos;
+            contenedorEjemplos.style.display = 'block';
+        } else {
+            contenedorEjemplos.style.display = 'none';
+        }
+    }
+
     const sub = document.getElementById('modal-subtitulo');
     const tema = document.getElementById('modal-tema-nombre');
     if (sub) sub.style.display = 'none';
@@ -276,4 +282,21 @@ function abrirConceptoModal(idTema) {
 function cerrarConceptoModal() {
     const modal = document.getElementById('modal-concepto');
     if (modal) modal.close();
+}
+
+// Cierre al dar click en la zona difuminada exterior
+const modalElemento = document.getElementById('modal-concepto');
+if (modalElemento) {
+    modalElemento.addEventListener('click', function (event) {
+        const rect = this.getBoundingClientRect();
+        const clicFuera = (
+            event.clientX < rect.left ||
+            event.clientX > rect.right ||
+            event.clientY < rect.top ||
+            event.clientY > rect.bottom
+        );
+        if (clicFuera) {
+            this.close();
+        }
+    });
 }
