@@ -73,90 +73,6 @@ main {
     overflow-y: auto;
 }
 
-/* ---- Colapsable en desktop (CORREGIDO Y ULTRA ESTRECHO) ---- */
-@media (min-width: 768px) {
-    .app-sidebar {
-        width: 42px; /* MODIFICADO: Reducido drásticamente para que sea una línea delgada de iconos */
-        overflow: hidden !important; /* Evita que cualquier elemento interno lo ensanche */
-        transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        padding: 16px 0 !important;
-    }
-
-    .app-sidebar:hover {
-        width: 260px;
-        overflow-y: auto;
-        padding: 16px 10px !important;
-    }
-
-    /* Forzar a los contenedores de los botones a no ocupar más espacio del debido */
-    .app-sidebar:not(:hover) .nav-group {
-        width: 100%;
-        overflow: hidden;
-    }
-
-    /* Modificado para comprimir completamente el botón al tamaño del icono */
-    .app-sidebar:not(:hover) .nav-btn,
-    .app-sidebar:not(:hover) .nav-btn.has-sub {
-        position: relative;
-        padding: 0 !important;
-        margin: 0 auto 12px auto !important;
-        width: 32px !important; /* Limita el ancho del botón para que no empuje el sidebar */
-        height: 32px !important;
-        justify-content: center !important;
-        overflow: hidden;
-    }
-
-    /* Centrado absoluto del icono dentro del botón colapsado */
-    .app-sidebar:not(:hover) .nav-btn .nav-icon {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        margin: 0 !important;
-        width: 18px;
-        height: 18px;
-    }
-
-    /* Desactivar completamente textos, flechas y submenús al estar colapsado */
-    .app-sidebar:not(:hover) .nav-label,
-    .app-sidebar:not(:hover) .nav-arrow,
-    .app-sidebar:not(:hover) .nav-sub,
-    .app-sidebar:not(:hover) h4 {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-
-    /* Restaurar comportamiento normal en HOVER */
-    .app-sidebar:hover .nav-btn {
-        width: 100% !important;
-        height: auto !important;
-        justify-content: flex-start !important;
-        padding: 12px 16px !important;
-        margin-bottom: 10px !important;
-    }
-
-    .app-sidebar:hover .nav-btn.has-sub {
-        justify-content: space-between !important;
-    }
-
-    /* Animación de aparición de textos al expandir */
-    .nav-label,
-    .nav-arrow,
-    .app-sidebar > h4 {
-        opacity: 0;
-        transition: opacity 0.1s ease;
-        white-space: nowrap;
-    }
-
-    .app-sidebar:hover .nav-label,
-    .app-sidebar:hover .nav-arrow,
-    .app-sidebar:hover > h4 {
-        opacity: 1;
-        transition: opacity 0.15s ease 0.15s;
-    }
-}
-
 .app-sidebar h4 {
     color: #bfc6d1;
     font-size: 0.72rem;
@@ -176,8 +92,11 @@ main {
     text-align: left;
     font-size: 0.95rem;
     cursor: pointer;
-    transition: background-color 0.2s, color 0.2s, transform 0.2s;
+    transition: 0.2s;
     margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .nav-btn:hover {
@@ -572,12 +491,6 @@ section {
 /* ===============================================
    ÍCONOS DEL SIDEBAR
    =============================================== */
-.nav-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
 .nav-icon {
     width: 18px;
     height: 18px;
@@ -596,16 +509,6 @@ section {
     opacity: 1;
 }
 
-.nav-btn.has-sub {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+.nav-btn.has-sub .nav-icon { flex-shrink: 0; }
 
-.nav-btn.has-sub .nav-icon {
-    flex-shrink: 0;
-}
-
-.nav-btn.has-sub span:not(.nav-arrow) {
-    flex: 1;
-}
+.nav-btn.has-sub .nav-label { flex: 1; }
