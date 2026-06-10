@@ -5,19 +5,25 @@
     --console-bg: #1a1b22;
     --console-header: #282A35;
     --console-border: #3a3d4a;
-    /* Sidebar */
     --sidebar-collapsed: 80px;
     --sidebar-expanded: 260px;
     --sidebar-transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    --header-h: 60px;
+    --footer-h: 45px;
 }
 
 /* ================= BODY ================= */
 body {
     background-color: #1E1F26;
-    min-height: 100vh;
+    height: 100vh;
+    /* altura fija, NO min-height */
+    overflow: hidden;
+    /* el body NO scrollea */
     margin: 0;
     padding: 0;
     font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ================= HEADER ================= */
@@ -25,14 +31,13 @@ header {
     display: flex;
     align-items: center;
     gap: 20px;
-    position: sticky;
-    top: 0;
+    flex-shrink: 0;
+    /* nunca se encoge */
     z-index: 100;
 }
 
 .app-header {
     background-color: var(--dark);
-    border-bottom: none;
     padding: 12px 20px;
 }
 
@@ -53,50 +58,66 @@ h1 {
 
 /* ================= LAYOUT ================= */
 .layout {
-    min-height: calc(100vh - 70px - 45px);
-    background-color: transparent;
+    flex: 1;
+    /* ocupa todo el espacio entre header y footer */
+    overflow: hidden;
+    /* contiene a sus hijos */
     display: flex;
-    position: relative;
+    min-height: 0;
+    /* necesario para que flex respete el overflow */
 }
 
-/* ================= MAIN ================= */
+/* ================= MAIN — el único que scrollea ================= */
 main {
     flex: 1;
-    padding: 20px;
-    overflow-y: auto;
     min-width: 0;
+    overflow-y: auto;
+    /* SOLO el main hace scroll */
+    padding: 0;
 }
 
-/* ================= SIDEBAR COLAPSABLE ================= */
+/* ================= SIDEBAR — fijo por diseño flex ================= */
 .app-sidebar {
     background-color: var(--dark);
-    border-right: 1px solid rgba(255,255,255,0.05);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
     width: var(--sidebar-collapsed);
     flex-shrink: 0;
     overflow: hidden;
     transition: width var(--sidebar-transition);
-    position: sticky;     /* ← cambio */
-    top: 0;               /* ← línea nueva */
-    height: 100vh;        /* ← línea nueva */
+    /* NO necesita position sticky — el flex lo mantiene fijo */
     z-index: 50;
     scrollbar-width: none;
-    padding: 10px 6px;
+    padding: 10px 12px;
     box-sizing: border-box;
+    /* Altura = todo el layout */
+    align-self: stretch;
 }
 
-.app-sidebar::-webkit-scrollbar { display: none; }
+.app-sidebar::-webkit-scrollbar {
+    display: none;
+}
 
 .app-sidebar:hover {
     width: var(--sidebar-expanded);
-    box-shadow: 4px 0 24px rgba(0,0,0,0.45);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.45);
     overflow-y: auto;
     scrollbar-width: thin;
     padding: 10px;
 }
 
-.app-sidebar:hover::-webkit-scrollbar { display: block; width: 4px; }
-.app-sidebar:hover::-webkit-scrollbar-track { background: transparent; }
-.app-sidebar:hover::-webkit-scrollbar-thumb { background: #3B4252; border-radius: 4px; }
+.app-sidebar:hover::-webkit-scrollbar {
+    display: block;
+    width: 4px;
+}
+
+.app-sidebar:hover::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.app-sidebar:hover::-webkit-scrollbar-thumb {
+    background: #3B4252;
+    border-radius: 4px;
+}
 
 /* Título MENÚ */
 .app-sidebar h4 {
@@ -112,9 +133,11 @@ main {
     padding-left: 6px;
 }
 
-.app-sidebar:hover h4 { opacity: 1; }
+.app-sidebar:hover h4 {
+    opacity: 1;
+}
 
-/* Indicador verde cuando colapsado */
+/* Indicador verde */
 .app-sidebar::after {
     content: '';
     position: absolute;
@@ -129,7 +152,10 @@ main {
     transition: opacity var(--sidebar-transition), height var(--sidebar-transition);
 }
 
-.app-sidebar:hover::after { opacity: 0; height: 0; }
+.app-sidebar:hover::after {
+    opacity: 0;
+    height: 0;
+}
 
 /* ================= BOTONES NAV ================= */
 .nav-btn {
@@ -156,9 +182,10 @@ main {
     color: var(--white);
 }
 
-.nav-btn:active { transform: scale(0.98); }
+.nav-btn:active {
+    transform: scale(0.98);
+}
 
-/* Labels y flechas: ocultos cuando colapsado */
 .nav-label {
     opacity: 0;
     transition: opacity var(--sidebar-transition);
@@ -167,7 +194,9 @@ main {
     text-overflow: ellipsis;
 }
 
-.app-sidebar:hover .nav-label { opacity: 1; }
+.app-sidebar:hover .nav-label {
+    opacity: 1;
+}
 
 .nav-arrow {
     font-size: 0.7rem;
@@ -177,7 +206,9 @@ main {
     opacity: 0;
 }
 
-.app-sidebar:hover .nav-arrow { opacity: 1; }
+.app-sidebar:hover .nav-arrow {
+    opacity: 1;
+}
 
 .nav-group.open .nav-arrow,
 .nav-group:hover .nav-arrow {
@@ -185,7 +216,7 @@ main {
     color: var(--green-main);
 }
 
-/* ================= ÍCONOS DEL SIDEBAR ================= */
+/* ================= ÍCONOS ================= */
 .nav-icon {
     width: 20px;
     height: 20px;
@@ -208,10 +239,14 @@ main {
     margin-bottom: 0;
 }
 
-.nav-btn.has-sub .nav-label { flex: 1; }
+.nav-btn.has-sub .nav-label {
+    flex: 1;
+}
 
 /* ================= SUBMENÚ ================= */
-.nav-group { margin-bottom: 4px; }
+.nav-group {
+    margin-bottom: 4px;
+}
 
 .nav-sub {
     max-height: 0;
@@ -221,7 +256,6 @@ main {
     transition: max-height 0.28s ease, opacity 0.2s ease;
 }
 
-/* Submenú solo despliega cuando el sidebar está expandido */
 .app-sidebar:hover .nav-group:hover .nav-sub,
 .app-sidebar:hover .nav-group.open .nav-sub {
     max-height: 200px;
@@ -253,24 +287,38 @@ main {
     padding-left: 18px;
 }
 
-.nav-sub-btn:active { transform: scale(0.98); }
+.nav-sub-btn:active {
+    transform: scale(0.98);
+}
 
 /* ================= FOOTER ================= */
 .app-footer {
     background-color: var(--dark);
-    border-top: none;
     color: var(--white);
     text-align: center;
     padding: 12px;
+    flex-shrink: 0;
 }
 
 /* ================= SCROLLBAR GLOBAL ================= */
-::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-track { background: #1E1F26; }
-::-webkit-scrollbar-thumb { background: #3B4252; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #4C566A; }
+::-webkit-scrollbar {
+    width: 10px;
+}
 
-/* ================= RESPONSIVIDAD MÓVIL ================= */
+::-webkit-scrollbar-track {
+    background: #1E1F26;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #3B4252;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4C566A;
+}
+
+/* ================= RESPONSIVE MÓVIL ================= */
 .sidebar-toggle {
     position: fixed;
     bottom: 70px;
@@ -304,11 +352,17 @@ main {
     z-index: 150;
 }
 
-.sidebar-overlay.active { display: block; }
+.sidebar-overlay.active {
+    display: block;
+}
 
 @media (max-width: 767.98px) {
+    body {
+        height: 100dvh;
+    }
+
     .app-sidebar {
-        position: fixed;
+        position: fixed !important;
         top: 0;
         left: 0;
         height: 100vh;
@@ -316,44 +370,59 @@ main {
         z-index: 200;
         transform: translateX(-100%);
         transition: transform 0.3s ease !important;
-        padding-top: 60px;
         padding: 60px 10px 10px 10px;
         overflow-y: auto !important;
         box-shadow: none;
+        align-self: auto;
     }
 
     .app-sidebar.open {
         transform: translateX(0);
-        box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
     }
 
-    /* Labels siempre visibles en móvil cuando abierto */
     .app-sidebar .nav-label,
-    .app-sidebar .nav-arrow { opacity: 1; }
+    .app-sidebar .nav-arrow {
+        opacity: 1;
+    }
 
-    /* Submenús funcionan normalmente en móvil */
     .app-sidebar .nav-group:hover .nav-sub,
     .app-sidebar .nav-group.open .nav-sub {
         max-height: 200px;
         opacity: 1;
     }
 
-    .app-sidebar::after { display: none; }
+    .app-sidebar::after {
+        display: none;
+    }
 
-    body.sidebar-open { overflow: hidden; }
+    body.sidebar-open {
+        overflow: hidden;
+    }
 
-    .layout { min-height: calc(100vh - 70px - 45px); }
-    main { width: 100%; padding: 16px; }
-    h1 { font-size: 1.2rem; }
-    .logo { width: 40px; }
+    main {
+        padding: 16px;
+    }
+
+    h1 {
+        font-size: 1.2rem;
+    }
+
+    .logo {
+        width: 40px;
+    }
 }
 
 @media (min-width: 768px) and (max-width: 991.98px) {
-    :root { --sidebar-expanded: 220px; }
+    :root {
+        --sidebar-expanded: 220px;
+    }
 }
 
 @media (min-width: 1400px) {
-    :root { --sidebar-expanded: 300px; }
+    :root {
+        --sidebar-expanded: 300px;
+    }
 }
 
 /* ===============================================
@@ -366,8 +435,17 @@ main {
     align-items: stretch;
 }
 
-@media (max-width: 1100px) { .workspace { grid-template-columns: 1fr 320px; } }
-@media (max-width: 860px)  { .workspace { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) {
+    .workspace {
+        grid-template-columns: 1fr 320px;
+    }
+}
+
+@media (max-width: 860px) {
+    .workspace {
+        grid-template-columns: 1fr;
+    }
+}
 
 /* ===============================================
    PANELES BASE
@@ -394,7 +472,12 @@ main {
     width: 19%;
 }
 
-@media (max-width: 860px) { .console-panel2 { width: 45%; height: 80px; } }
+@media (max-width: 860px) {
+    .console-panel2 {
+        width: 45%;
+        height: 80px;
+    }
+}
 
 .console-header {
     display: flex;
@@ -456,9 +539,11 @@ main {
 }
 
 /* ===============================================
-   EDITOR GRANDE
+   EDITOR
    =============================================== */
-.editor-panel { min-height: 50px; }
+.editor-panel {
+    min-height: 50px;
+}
 
 .editor-body {
     flex: 1;
@@ -472,7 +557,9 @@ main {
     line-height: 1.8;
 }
 
-.side-panels .console-panel .console-body { min-height: 140px; }
+.side-panels .console-panel .console-body {
+    min-height: 140px;
+}
 
 .editor-controls {
     display: flex;
@@ -503,7 +590,10 @@ main {
     color: var(--green-main);
 }
 
-.ctrl-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.ctrl-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
 
 .ctrl-btn.primary {
     background-color: var(--green-main);
@@ -547,9 +637,6 @@ main {
     border-radius: 3px;
 }
 
-/* ===============================================
-   PANELES LATERALES
-   =============================================== */
 .side-panels {
     display: flex;
     flex-direction: column;
@@ -575,9 +662,6 @@ section {
     flex-direction: column;
 }
 
-/* ===============================================
-   TÍTULO DEL TEMA ACTIVO
-   =============================================== */
 .tema-titulo-text {
     font-size: clamp(1.3rem, 2.5vw, 1.8rem);
     font-weight: 700;
@@ -586,7 +670,7 @@ section {
 }
 
 /* ===============================================
-   MODALES PERSONALIZADOS
+   MODALES
    =============================================== */
 .custom-modal {
     background-color: var(--dark);
@@ -636,7 +720,9 @@ section {
     transition: color 0.15s;
 }
 
-.modal-close-x:hover { color: var(--white); }
+.modal-close-x:hover {
+    color: var(--white);
+}
 
 .custom-modal-body {
     padding: 24px 24px 16px 24px;
@@ -738,7 +824,9 @@ section {
     box-shadow: 0 8px 24px rgba(162, 155, 254, 0.15);
 }
 
-.modular-card-btn:active { transform: translateY(-1px); }
+.modular-card-btn:active {
+    transform: translateY(-1px);
+}
 
 #modal-concepto::backdrop {
     background-color: rgba(0, 0, 0, 0.6) !important;
@@ -746,6 +834,11 @@ section {
     transition: all 0.3s ease;
 }
 
-#modal-concepto:focus-visible { outline: none; }
+#modal-concepto:focus-visible {
+    outline: none;
+}
 
-pre { margin: 0; font-family: monospace; }
+pre {
+    margin: 0;
+    font-family: monospace;
+}
