@@ -75,7 +75,9 @@ main {
     flex-shrink: 0;
     overflow: hidden;
     transition: width var(--sidebar-transition);
-    position: relative;
+    position: sticky;     /* ← cambio */
+    top: 0;               /* ← línea nueva */
+    height: 100vh;        /* ← línea nueva */
     z-index: 50;
     scrollbar-width: none;
     padding: 10px 6px;
