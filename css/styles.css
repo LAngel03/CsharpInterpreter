@@ -100,7 +100,8 @@ main {
 .app-sidebar:hover {
     width: var(--sidebar-expanded);
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.45);
-    overflow: hidden;    /* ← antes: overflow-y: auto */
+    overflow: hidden;
+    /* ← antes: overflow-y: auto */
     scrollbar-width: none;
     padding: 10px;
 }
@@ -954,4 +955,50 @@ pre {
     color: #8a9ab5;
     font-size: 0.9rem;
     margin-bottom: 36px;
+}
+
+/* ===============================================
+   COLORES DE SELECCIÓN EN MÓVIL
+   :active y touch feedback para nav-btn y nav-sub-btn
+   =============================================== */
+
+/* Feedback visual al tocar cualquier botón del sidebar */
+.nav-btn:active,
+.nav-btn.touching {
+    background-color: var(--green-main) !important;
+    color: var(--white) !important;
+    transform: scale(0.97);
+}
+
+.nav-sub-btn:active,
+.nav-sub-btn.touching {
+    background-color: rgba(4, 170, 109, 0.25) !important;
+    color: var(--green-main) !important;
+    border-left-color: var(--green-main) !important;
+}
+
+/* En móvil, los botones del sidebar abierto siempre muestran color al tocar */
+@media (max-width: 767.98px) {
+    .nav-btn:active {
+        background-color: var(--green-main) !important;
+        color: var(--white) !important;
+    }
+
+    .nav-sub-btn:active {
+        background-color: rgba(4, 170, 109, 0.25) !important;
+        color: var(--green-main) !important;
+    }
+
+    /* Mostrar submenú abierto por clase .open en móvil */
+    .app-sidebar .nav-group.open .nav-sub {
+        max-height: 200px !important;
+        opacity: 1 !important;
+    }
+
+    /* Flecha rotada cuando el grupo está abierto en móvil */
+    .app-sidebar .nav-group.open .nav-arrow {
+        transform: rotate(180deg) !important;
+        color: var(--green-main) !important;
+        opacity: 1 !important;
+    }
 }
