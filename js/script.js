@@ -42,50 +42,50 @@ if (overlay) overlay.addEventListener('click', closeSidebar);
 
 // ============================================================
 //  UTILIDAD — evitar que click y touchend se dupliquen
-//  En móvil el navegador dispara touchend Y después click.
+//  El navegador móvil dispara touchend → luego click sintético.
 //  Con este flag ignoramos el click si ya procesamos el touch.
+//  NO usamos preventDefault() en touchend — el navegador puede
+//  marcarlo como no cancelable si hay scroll en progreso.
 // ============================================================
 let _touchHandled = false;
 
 function crearHandler(fn) {
     return {
         touch: (e) => {
+            e.stopPropagation();
             _touchHandled = true;
-            fn(e);
-            // Resetear flag después de que el click sintético pase
+            fn();
             setTimeout(() => { _touchHandled = false; }, 400);
         },
         click: (e) => {
-            if (_touchHandled) return; // ya lo manejó touchend
-            fn(e);
+            e.stopPropagation();
+            if (_touchHandled) return;
+            fn();
         }
     };
 }
 
 // ============================================================
-//  SUBMENÚ — acordeón (SOLO has-sub)
+//  SUBMENÚ — acordeón (SOLO has-sub, NO navega)
 // ============================================================
 document.querySelectorAll('.nav-group .has-sub').forEach(btn => {
-    const fn = (e) => {
-        e.stopPropagation();
-        e.preventDefault();
+    const fn = () => {
         const group = btn.closest('.nav-group');
         const isOpen = group.classList.contains('open');
         document.querySelectorAll('.nav-group.open').forEach(g => g.classList.remove('open'));
         if (!isOpen) group.classList.add('open');
     };
     const h = crearHandler(fn);
-    btn.addEventListener('touchend', h.touch, { passive: false });
-    btn.addEventListener('click', h.click);
+    btn.addEventListener('touchend', h.touch);
+    btn.addEventListener('click',    h.click);
 });
 
 // ============================================================
 //  NAVEGACIÓN — sub-botones finales (For, While, If, etc.)
+//  Excluye has-sub explícitamente
 // ============================================================
 document.querySelectorAll('.nav-sub-btn, .nav-btn[data-tema]:not(.has-sub)').forEach(btn => {
-    const fn = (e) => {
-        e.stopPropagation();
-        e.preventDefault();
+    const fn = () => {
         const tema = btn.dataset.tema;
         if (!tema) return;
         if (tema === 'Glosario') return; // manejado en DOMContentLoaded
@@ -95,8 +95,8 @@ document.querySelectorAll('.nav-sub-btn, .nav-btn[data-tema]:not(.has-sub)').for
         if (window.innerWidth < 768) closeSidebar();
     };
     const h = crearHandler(fn);
-    btn.addEventListener('touchend', h.touch, { passive: false });
-    btn.addEventListener('click', h.click);
+    btn.addEventListener('touchend', h.touch);
+    btn.addEventListener('click',    h.click);
 });
 
 // ============================================================
@@ -215,27 +215,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnGlosario = document.getElementById('btn-glosario');
 
     if (btnInicio) {
-        const fnInicio = (e) => {
-            e.stopPropagation();
-            e.preventDefault();
+        const hInicio = crearHandler(() => {
             mostrarPantallaInicio();
             if (window.innerWidth < 768) closeSidebar();
-        };
-        const hInicio = crearHandler(fnInicio);
-        btnInicio.addEventListener('touchend', hInicio.touch, { passive: false });
-        btnInicio.addEventListener('click', hInicio.click);
+        });
+        btnInicio.addEventListener('touchend', hInicio.touch);
+        btnInicio.addEventListener('click',    hInicio.click);
     }
 
     if (btnGlosario) {
-        const fnGlosario = (e) => {
-            e.stopPropagation();
-            e.preventDefault();
+        const hGlosario = crearHandler(() => {
             cargarGlosario();
             if (window.innerWidth < 768) closeSidebar();
-        };
-        const hGlosario = crearHandler(fnGlosario);
-        btnGlosario.addEventListener('touchend', hGlosario.touch, { passive: false });
-        btnGlosario.addEventListener('click', hGlosario.click);
+        });
+        btnGlosario.addEventListener('touchend', hGlosario.touch);
+        btnGlosario.addEventListener('click',    hGlosario.click);
     }
 
     mostrarPantallaInicio();

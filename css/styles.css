@@ -1002,3 +1002,30 @@ pre {
         opacity: 1 !important;
     }
 }
+
+/* ── MÓVIL: sidebar abierto muestra todo correctamente ── */
+@media (max-width: 767.98px) {
+    /* Mostrar título MENÚ */
+    .app-sidebar.open h4 {
+        opacity: 1 !important;
+        padding-top: 0 !important;
+    }
+
+    /* Evitar que los botones se muevan al tocar */
+    .app-sidebar .nav-btn:active,
+    .app-sidebar .nav-btn:hover {
+        transform: none !important;
+    }
+
+    /* Mostrar labels siempre cuando sidebar abierto */
+    .app-sidebar.open .nav-label,
+    .app-sidebar.open .nav-arrow {
+        opacity: 1 !important;
+    }
+
+    /* Submenús se controlan solo por .open */
+    .app-sidebar.open .nav-group.open .nav-sub {
+        max-height: 200px !important;
+        opacity: 1 !important;
+    }
+}
