@@ -704,7 +704,7 @@ if (edad >= 18) {
 }`,
     switch:
         `int dia = 1;
-string comida = "";
+string comida;
 
 switch (dia) {
     case 1:
