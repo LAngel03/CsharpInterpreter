@@ -707,7 +707,7 @@ main {
     gap: 14px;
 }
 
-    /* 
+/* 
    TEXTO EXPLICATIVO
     */
 .explanation-text {
@@ -867,6 +867,7 @@ section {
     background-color: #7b2cbf;
     border-color: #7b2cbf;
 }
+
 /* Botones modulares */
 
 .modular-card-btn {
@@ -1091,7 +1092,7 @@ pre {
 }
 
 
-   /* COLORES DE SELECCIÓN EN MÓVIL / TÁCTIL
+/* COLORES DE SELECCIÓN EN MÓVIL / TÁCTIL
    :active y touch feedback para nav-btn y nav-sub-btn
  */
 
@@ -1355,4 +1356,144 @@ pre {
 
 #glosario-tooltip.visible {
     display: block;
+}
+
+
+/* ════════════════════════════════════════
+   TERCER NIVEL DEL MENÚ (sub-submenú)
+   simples / anidadas / compuestas → If · Switch · Ternario
+   ════════════════════════════════════════ */
+
+.nav-subgroup {
+    margin: 2px 0;
+}
+
+.nav-sub-btn.has-sub2 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.nav-arrow2 {
+    font-size: 0.6rem;
+    color: #8a9ab5;
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+}
+
+/* Caja del 3er nivel: oculta por defecto */
+.nav-sub2 {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    padding-left: 12px;
+    transition: max-height 0.28s ease, opacity 0.2s ease;
+}
+
+/* Hojas finales (If / Switch / Ternario) */
+.nav-sub2-btn {
+    width: 100%;
+    padding: 7px 14px;
+    background-color: transparent;
+    color: #7e87a0;
+    border: none;
+    border-left: 2px solid #14331a;
+    border-radius: 0 6px 6px 0;
+    text-align: left;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: 0.15s;
+    display: block;
+    margin-bottom: 2px;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.nav-sub2-btn:hover {
+    background-color: rgba(4, 170, 109, 0.12);
+    color: var(--green-main);
+    border-left-color: var(--green-main);
+    padding-left: 18px;
+}
+
+/* Estado ABIERTO persistente (click / móvil) */
+.nav-subgroup.open>.nav-sub2 {
+    max-height: 240px;
+    opacity: 1;
+}
+
+.nav-subgroup.open>.has-sub2 .nav-arrow2 {
+    transform: rotate(180deg);
+    color: var(--green-main);
+}
+
+/* El 2º nivel debe crecer para no recortar el 3er nivel */
+.nav-group.open .nav-sub {
+    max-height: 600px;
+}
+
+/* ── HOVER (solo escritorio con mouse real) ── */
+@media (hover: hover) and (pointer: fine) {
+    .app-sidebar:hover .nav-group:hover .nav-subgroup:hover>.nav-sub2 {
+        max-height: 240px;
+        opacity: 1;
+    }
+
+    .nav-subgroup:hover>.has-sub2 .nav-arrow2 {
+        transform: rotate(180deg);
+        color: var(--green-main);
+    }
+
+    /* evitar que el 2º nivel recorte el 3º al hacer hover */
+    .app-sidebar:hover .nav-group:hover .nav-sub,
+    .app-sidebar:hover .nav-group.open .nav-sub {
+        max-height: 600px;
+    }
+}
+
+/* ── MÓVIL ── */
+@media (max-width: 767.98px) {
+    .app-sidebar .nav-group.open .nav-sub {
+        max-height: 600px !important;
+    }
+
+    .app-sidebar .nav-subgroup.open>.nav-sub2 {
+        max-height: 240px !important;
+        opacity: 1 !important;
+    }
+
+    .app-sidebar .nav-subgroup.open>.has-sub2 .nav-arrow2 {
+        transform: rotate(180deg) !important;
+        color: var(--green-main) !important;
+    }
+}
+
+/* Pestañas Ejemplo 1 / 2 / 3 del simulador */
+#sim-ejemplos-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+.sim-tab {
+    background: #1e2130;
+    color: #8a9ab5;
+    border: 1px solid #3a3d4a;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: 0.15s;
+}
+.sim-tab:hover {
+    border-color: var(--green-main);
+    color: var(--green-main);
+}
+.sim-tab.activo {
+    background: var(--green-main);
+    color: #000;
+    border-color: var(--green-main);
+    font-weight: 600;
 }

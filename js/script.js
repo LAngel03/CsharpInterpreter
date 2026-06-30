@@ -64,12 +64,27 @@ document.querySelectorAll('.nav-group .has-sub').forEach(btn => {
     };
     const h = crearHandler(fn);
     btn.addEventListener('touchend', h.touch);
-    btn.addEventListener('click',    h.click);
+    btn.addEventListener('click', h.click);
+});
+
+//  SUB-SUBMENÚ (3er nivel) — acordeón de simples / anidadas / compuestas
+document.querySelectorAll('.nav-subgroup .has-sub2').forEach(btn => {
+    const fn = () => {
+        const sub = btn.closest('.nav-subgroup');
+        const isOpen = sub.classList.contains('open');
+        // cierra los subgrupos hermanos para que solo uno quede abierto
+        sub.parentElement.querySelectorAll('.nav-subgroup.open')
+            .forEach(s => s.classList.remove('open'));
+        if (!isOpen) sub.classList.add('open');
+    };
+    const h = crearHandler(fn);
+    btn.addEventListener('touchend', h.touch);
+    btn.addEventListener('click', h.click);
 });
 
 //  NAVEGACIÓN — sub-botones finales
 
-document.querySelectorAll('.nav-sub-btn, .nav-btn[data-tema]:not(.has-sub)').forEach(btn => {
+document.querySelectorAll('.nav-sub-btn:not(.has-sub2), .nav-sub2-btn, .nav-btn[data-tema]:not(.has-sub)').forEach(btn =>  {
     const fn = () => {
         const tema = btn.dataset.tema;
         if (!tema) return;
@@ -81,7 +96,7 @@ document.querySelectorAll('.nav-sub-btn, .nav-btn[data-tema]:not(.has-sub)').for
     };
     const h = crearHandler(fn);
     btn.addEventListener('touchend', h.touch);
-    btn.addEventListener('click',    h.click);
+    btn.addEventListener('click', h.click);
 });
 
 //  HELPERS — actualizar título y definición en pantalla
@@ -195,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.innerWidth < 768) closeSidebar();
         });
         btnInicio.addEventListener('touchend', hInicio.touch);
-        btnInicio.addEventListener('click',    hInicio.click);
+        btnInicio.addEventListener('click', hInicio.click);
     }
 
     if (btnGlosario) {
@@ -204,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.innerWidth < 768) closeSidebar();
         });
         btnGlosario.addEventListener('touchend', hGlosario.touch);
-        btnGlosario.addEventListener('click',    hGlosario.click);
+        btnGlosario.addEventListener('click', hGlosario.click);
     }
 
     const hashTema = location.hash.slice(1);
@@ -225,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // backdrop ya no lo puede tapar.
     // ──────────────────────────────────────────────────────────────────
     const modalDialog = document.getElementById('modal-concepto');
-    const tooltipBox  = document.createElement('div');
+    const tooltipBox = document.createElement('div');
     tooltipBox.id = 'glosario-tooltip';
     // Insertarlo como PRIMER hijo del dialog para que quede por encima
     // del modal-content-wrapper y su backdrop interno.
@@ -255,16 +270,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Posición anclada al elemento (no al cursor), encima y centrada
         const elRect = el.getBoundingClientRect();
         let left = elRect.left + elRect.width / 2 - tw / 2;
-        let top  = elRect.top  - th - 8;
+        let top = elRect.top - th - 8;
 
         // Evitar que se salga de la pantalla
-        if (left < 8)            left = 8;
-        if (left + tw > vw - 8)  left = vw - tw - 8;
-        if (top  < 8)            top  = elRect.bottom + 8;   // aparece abajo si no cabe arriba
-        if (top + th > vh - 8)   top  = vh - th - 8;
+        if (left < 8) left = 8;
+        if (left + tw > vw - 8) left = vw - tw - 8;
+        if (top < 8) top = elRect.bottom + 8;   // aparece abajo si no cabe arriba
+        if (top + th > vh - 8) top = vh - th - 8;
 
         tooltipBox.style.left = left + 'px';
-        tooltipBox.style.top  = top  + 'px';
+        tooltipBox.style.top = top + 'px';
     });
 
     document.addEventListener('mouseout', (e) => {
@@ -510,7 +525,7 @@ function abrirConceptoModal(idTema) {
 
     // innerHTML para que los <span class="glosario-tip"> se rendericen
     document.getElementById('modal-descripcion-texto').innerHTML = datos.concepto;
-    document.getElementById('modal-caso-practico').innerHTML    = datos.caso;
+    document.getElementById('modal-caso-practico').innerHTML = datos.caso;
     document.getElementById('modal-abstraccion-conclusión').innerHTML = datos.conclusion;
 
     const sub = document.getElementById('modal-subtitulo');
@@ -532,7 +547,7 @@ if (modalElemento) {
         const rect = this.getBoundingClientRect();
         const clicFuera = (
             event.clientX < rect.left || event.clientX > rect.right ||
-            event.clientY < rect.top  || event.clientY > rect.bottom
+            event.clientY < rect.top || event.clientY > rect.bottom
         );
         if (clicFuera) this.close();
     });

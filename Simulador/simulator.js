@@ -687,6 +687,7 @@ class Simulador {
 }
 
 const EXAMPLES = {
+    // ── Originales (string, no se tocan) ────────────────────
     if:
         `int edad = 17;
 string nombre = "Juan";
@@ -698,6 +699,7 @@ if (edad >= 18) {
 } else {
     Console.WriteLine(nombre + " es niño");
 }`,
+
     switch:
         `int dia = 1;
 string comida;
@@ -709,60 +711,371 @@ switch (dia) {
     case 2:
         comida = "Día de Tacos";
         break;
-    case 3:
-        comida = "Día de Pizza";
-        break;
-    case 4:
-        comida = "Día de Hamburguesa";
-        break;
-    case 5:
-        comida = "Día de Sushi";
-        break;
-    case 6:
-        comida = "Día de Pollo frito";
-        break;
     default:
-        comida = "Fin de semana, no hay comida especial";
+        comida = "Fin de semana";
         break;
 }
 Console.WriteLine("El menú de hoy es: " + comida);`,
+
     ternario:
         `int edad = 20;
 
 string resultado = (edad >= 18) ? "Es mayor de edad" : "Es menor de edad";
 
 Console.WriteLine(resultado);`,
+
     Ciclos_for:
         `int suma = 0;
 
 for (int i = 1; i <= 5; i = i + 1) {
     suma = suma + i;
-    Console.WriteLine("\nVoy sumando: " + suma);
+    Console.WriteLine("Voy sumando: " + suma);
 }
 
 Console.WriteLine("La suma final es: " + suma);`,
+
     Ciclos_while:
         `int contador = 3;
 
 while (contador > 0) {
-    Console.WriteLine("\nCuenta regresiva: " + contador);
+    Console.WriteLine("Cuenta regresiva: " + contador);
     contador = contador - 1;
 }
 
 Console.WriteLine("¡Despegue!");`,
+
     Ciclos_dowhile:
         `int numero = 1;
 
 do {
-    Console.WriteLine("\nNúmero: " + numero);
+    Console.WriteLine("Número: " + numero);
     numero = numero + 1;
 } while (numero <= 3);
 
-Console.WriteLine("Fin del ciclo");`
+Console.WriteLine("Fin del ciclo");`,
+
+    // ══ SIMPLES ════════════════════════════════════════════
+    if_simple: [
+        `int temperatura = 35;
+
+if (temperatura > 30) {
+    Console.WriteLine("Hace calor, toma agua");
+}`,
+        `int edad = 20;
+
+if (edad >= 18) {
+    Console.WriteLine("Eres mayor de edad");
+} else {
+    Console.WriteLine("Eres menor de edad");
+}`,
+        `int calificacion = 8;
+
+if (calificacion >= 6) {
+    Console.WriteLine("Aprobado");
+} else {
+    Console.WriteLine("Reprobado");
+}`
+    ],
+
+    switch_simple: [
+        `int dia = 3;
+string nombreDia;
+
+switch (dia) {
+    case 1:
+        nombreDia = "Lunes";
+        break;
+    case 2:
+        nombreDia = "Martes";
+        break;
+    case 3:
+        nombreDia = "Miércoles";
+        break;
+    default:
+        nombreDia = "Día no reconocido";
+        break;
+}
+
+Console.WriteLine("Hoy es: " + nombreDia);`,
+        `int opcion = 2;
+string accion;
+
+switch (opcion) {
+    case 1:
+        accion = "Nuevo juego";
+        break;
+    case 2:
+        accion = "Continuar";
+        break;
+    case 3:
+        accion = "Salir";
+        break;
+    default:
+        accion = "Opción inválida";
+        break;
+}
+
+Console.WriteLine("Elegiste: " + accion);`,
+        `int color = 1;
+string mensaje;
+
+switch (color) {
+    case 1:
+        mensaje = "Verde: avanza";
+        break;
+    case 2:
+        mensaje = "Amarillo: precaución";
+        break;
+    case 3:
+        mensaje = "Rojo: alto";
+        break;
+    default:
+        mensaje = "Color desconocido";
+        break;
+}
+
+Console.WriteLine(mensaje);`
+    ],
+
+    ternario_simple: [
+        `int edad = 20;
+
+string mensaje = (edad >= 18) ? "Mayor de edad" : "Menor de edad";
+
+Console.WriteLine(mensaje);`,
+        `int numero = 7;
+
+string tipo = (numero % 2 == 0) ? "Par" : "Impar";
+
+Console.WriteLine("El número es: " + tipo);`,
+        `int calificacion = 7;
+
+string estado = (calificacion >= 6) ? "Aprobado" : "Reprobado";
+
+Console.WriteLine(estado);`
+    ],
+
+    // ══ ANIDADAS ═══════════════════════════════════════════
+    if_anidada: [
+        `int promedio = 85;
+int faltas = 2;
+
+if (promedio >= 70) {
+    if (faltas <= 3) {
+        Console.WriteLine("Aprobado y con buena asistencia");
+    } else {
+        Console.WriteLine("Aprobado, pero con muchas faltas");
+    }
+} else {
+    Console.WriteLine("Reprobado");
+}`,
+        `int edad = 20;
+int saldo = 50;
+
+if (edad >= 18) {
+    if (saldo >= 100) {
+        Console.WriteLine("Puede comprar");
+    } else {
+        Console.WriteLine("Saldo insuficiente");
+    }
+} else {
+    Console.WriteLine("Debe ser mayor de edad");
+}`,
+        `int numero = 8;
+
+if (numero > 0) {
+    if (numero % 2 == 0) {
+        Console.WriteLine("Positivo y par");
+    } else {
+        Console.WriteLine("Positivo e impar");
+    }
+} else {
+    Console.WriteLine("No es positivo");
+}`
+    ],
+
+    switch_anidada: [
+        `int categoria = 2;
+int edad = 15;
+
+switch (categoria) {
+    case 1:
+        Console.WriteLine("Categoría infantil");
+        break;
+    case 2:
+        if (edad < 18) {
+            Console.WriteLine("Juvenil menor de edad");
+        } else {
+            Console.WriteLine("Juvenil mayor de edad");
+        }
+        break;
+    default:
+        Console.WriteLine("Categoría general");
+        break;
+}`,
+        `int nivel = 2;
+int puntos = 80;
+
+switch (nivel) {
+    case 1:
+        Console.WriteLine("Principiante");
+        break;
+    case 2:
+        if (puntos >= 50) {
+            Console.WriteLine("Intermedio aprobado");
+        } else {
+            Console.WriteLine("Intermedio en progreso");
+        }
+        break;
+    default:
+        Console.WriteLine("Nivel no definido");
+        break;
+}`,
+        `int tipo = 1;
+int cantidad = 5;
+
+switch (tipo) {
+    case 1:
+        if (cantidad > 3) {
+            Console.WriteLine("Pedido grande");
+        } else {
+            Console.WriteLine("Pedido pequeño");
+        }
+        break;
+    case 2:
+        Console.WriteLine("Pedido especial");
+        break;
+    default:
+        Console.WriteLine("Tipo desconocido");
+        break;
+}`
+    ],
+
+    ternario_anidada: [
+        `int calificacion = 85;
+
+string letra = (calificacion >= 90) ? "A" : (calificacion >= 80) ? "B" : (calificacion >= 70) ? "C" : "Reprobado";
+
+Console.WriteLine("Tu calificación es: " + letra);`,
+        `int numero = 0;
+
+string signo = (numero > 0) ? "Positivo" : (numero < 0) ? "Negativo" : "Cero";
+
+Console.WriteLine("El número es: " + signo);`,
+        `int estatura = 170;
+
+string talla = (estatura >= 180) ? "Grande" : (estatura >= 165) ? "Mediana" : "Pequeña";
+
+Console.WriteLine("Talla: " + talla);`
+    ],
+
+    // ══ COMPUESTAS ═════════════════════════════════════════
+    if_compuesta: [
+        `int edad = 25;
+int saldo = 500;
+
+if (edad >= 18 && saldo >= 100) {
+    Console.WriteLine("Puede realizar la compra");
+} else {
+    Console.WriteLine("No cumple los requisitos");
+}`,
+        `int edad = 70;
+
+if (edad < 12 || edad > 65) {
+    Console.WriteLine("Tiene descuento");
+} else {
+    Console.WriteLine("Paga precio completo");
+}`,
+        `int nota = 8;
+
+if (nota >= 6 && nota <= 10) {
+    Console.WriteLine("Calificación válida y aprobatoria");
+} else {
+    Console.WriteLine("Fuera de rango o reprobado");
+}`
+    ],
+
+    switch_compuesta: [
+        `int a = 8;
+int b = 3;
+int operacion = 1;
+
+switch (operacion) {
+    case 1:
+        Console.WriteLine("Suma: " + (a + b));
+        break;
+    case 2:
+        Console.WriteLine("Resta: " + (a - b));
+        break;
+    case 3:
+        Console.WriteLine("Multiplicación: " + (a * b));
+        break;
+    default:
+        Console.WriteLine("Operación no válida");
+        break;
+}`,
+        `int figura = 1;
+int lado = 4;
+
+switch (figura) {
+    case 1:
+        Console.WriteLine("Área del cuadrado: " + (lado * lado));
+        break;
+    case 2:
+        Console.WriteLine("Perímetro del cuadrado: " + (lado * 4));
+        break;
+    default:
+        Console.WriteLine("Figura no válida");
+        break;
+}`,
+        `int opcion = 2;
+int numero = 10;
+
+switch (opcion) {
+    case 1:
+        Console.WriteLine("Doble: " + (numero * 2));
+        break;
+    case 2:
+        Console.WriteLine("Mitad: " + (numero / 2));
+        break;
+    case 3:
+        Console.WriteLine("Cuadrado: " + (numero * numero));
+        break;
+    default:
+        Console.WriteLine("Sin operación");
+        break;
+}`
+    ],
+
+    ternario_compuesta: [
+        `int edad = 20;
+bool tieneBoleto = true;
+
+string acceso = (edad >= 18 && tieneBoleto == true) ? "Puede entrar" : "Acceso denegado";
+
+Console.WriteLine(acceso);`,
+        `int edad = 15;
+bool acompanado = true;
+
+string acceso = (edad >= 18 || acompanado == true) ? "Puede pasar" : "No puede pasar";
+
+Console.WriteLine(acceso);`,
+        `int promedio = 9;
+int faltas = 0;
+
+string beca = (promedio >= 9 && faltas == 0) ? "Beca aprobada" : "Sin beca";
+
+Console.WriteLine(beca);`
+    ]
 };
 
-const TEMAS_SOPORTADOS = ['if', 'switch', 'ternario', 'Ciclos_for', 'Ciclos_while', 'Ciclos_dowhile'];
-
+const TEMAS_SOPORTADOS = [
+    'if', 'switch', 'ternario',
+    'Ciclos_for', 'Ciclos_while', 'Ciclos_dowhile',
+    'if_simple', 'switch_simple', 'ternario_simple',
+    'if_anidada', 'switch_anidada', 'ternario_anidada',
+    'if_compuesta', 'switch_compuesta', 'ternario_compuesta'
+];
 const sim = new Simulador();
 let simEditor = null;
 let simDecorations = [];
@@ -982,16 +1295,51 @@ function simClearPanels() {
     if (fill) fill.style.width = '0%';
 }
 
+function simGetEjemplos(tema) {
+    const ex = EXAMPLES[tema];
+    if (Array.isArray(ex)) return ex.slice();
+    if (typeof ex === 'string') return [ex];
+    return [''];
+}
+
 function initSimulador(tema) {
     const editorBody = document.getElementById('editor-body');
     if (!editorBody) return;
     simTemaActual = tema;
-    const codigo = EXAMPLES[tema] || '';
+
+    const ejemplos = simGetEjemplos(tema);
+    const codigo = ejemplos[0];
+
+    // Pestañas Ejemplo 1/2/3 (solo si hay más de uno)
+    if (!document.getElementById('sim-ejemplos-tabs') && ejemplos.length > 1) {
+        const tabs = document.createElement('div');
+        tabs.id = 'sim-ejemplos-tabs';
+        tabs.innerHTML = ejemplos.map((_, i) =>
+            '<button class="sim-tab' + (i === 0 ? ' activo' : '') +
+            '" data-idx="' + i + '">Ejemplo ' + (i + 1) + '</button>'
+        ).join('');
+        editorBody.parentNode.insertBefore(tabs, editorBody);
+    }
 
     if (!document.getElementById('sim-vars-editable')) {
         const varsHost = document.createElement('div');
         varsHost.id = 'sim-vars-editable';
         editorBody.parentNode.insertBefore(varsHost, editorBody);
+    }
+
+    function activarTabs() {
+        const tabs = document.getElementById('sim-ejemplos-tabs');
+        if (!tabs) return;
+        tabs.querySelectorAll('.sim-tab').forEach(btn => {
+            btn.onclick = () => {
+                const idx = parseInt(btn.dataset.idx);
+                tabs.querySelectorAll('.sim-tab').forEach(b => b.classList.remove('activo'));
+                btn.classList.add('activo');
+                const nuevo = ejemplos[idx];
+                if (simEditor) simEditor.setValue(nuevo);
+                simCargarYEjecutar(nuevo);
+            };
+        });
     }
 
     function crearEditor() {
@@ -1008,15 +1356,14 @@ function initSimulador(tema) {
                 readOnly: true
             });
             conectarBotones();
-            simCargarYEjecutar(EXAMPLES[tema] || '');
+            activarTabs();
+            simCargarYEjecutar(codigo);
         });
     }
 
-    if (window.monaco) {
-        crearEditor();
-    } else if (window.require) {
-        crearEditor();
-    } else {
+    if (window.monaco) { crearEditor(); }
+    else if (window.require) { crearEditor(); }
+    else {
         const loader = document.createElement('script');
         loader.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.js';
         loader.onload = crearEditor;
@@ -1055,7 +1402,7 @@ function conectarBotones() {
         simStopPlay(btns);
         // Reejecuta el código ACTUAL del editor (con los valores actuales) desde el paso 1.
         // No tocamos los inputs ni restauramos EXAMPLES, así no se pierden los cambios.
-        const codigoActual = simEditor ? simEditor.getValue() : (EXAMPLES[simTemaActual] || '');
+        const codigoActual = simEditor ? simEditor.getValue() : simGetEjemplos(simTemaActual)[0];
         simEjecutarSinTocarInputs(codigoActual);
     };
 
