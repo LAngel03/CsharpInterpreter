@@ -731,8 +731,8 @@ for (int i = 1; i <= 5; i = i + 1) {
     suma = suma + i;
     Console.WriteLine("Voy sumando: " + suma);
 }
-
 Console.WriteLine("La suma final es: " + suma);`,
+
 
     Ciclos_while:
         `int contador = 3;
@@ -1113,7 +1113,7 @@ Console.WriteLine("Acción: " + accion);`
     ternario_simple: {
         enunciado: "Un programa necesita clasificar cualquier número que reciba según su signo, indicando si es positivo o negativo. Para este caso, considera que el cero cuenta como positivo. La solución debe ser lo más compacta posible: en lugar de escribir un if completo, resuelve la decisión en una sola línea usando el operador ternario, guardando el resultado en una variable de texto y mostrándolo al final.",
         codigo:
-            `int numero = -4;
+            `int numero = 0;
 
 string signo = (numero >= 0) ? "El número es positivo" : "El número es negativo";
 

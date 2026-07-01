@@ -1476,6 +1476,7 @@ pre {
     margin-bottom: 8px;
     flex-wrap: wrap;
 }
+
 .sim-tab {
     background: #1e2130;
     color: #8a9ab5;
@@ -1487,10 +1488,12 @@ pre {
     font-family: inherit;
     transition: 0.15s;
 }
+
 .sim-tab:hover {
     border-color: var(--green-main);
     color: var(--green-main);
 }
+
 .sim-tab.activo {
     background: var(--green-main);
     color: #000;
@@ -1520,8 +1523,8 @@ pre {
 
     /* Cuando simples/anidadas/compuestas está abierto,
        mostrar sus tres opciones completas */
-    .app-sidebar.open .nav-subgroup.open > .nav-sub2,
-    .app-sidebar .nav-subgroup.open > .nav-sub2 {
+    .app-sidebar.open .nav-subgroup.open>.nav-sub2,
+    .app-sidebar .nav-subgroup.open>.nav-sub2 {
         max-height: 600px !important;
         opacity: 1 !important;
     }
@@ -1533,6 +1536,7 @@ pre {
     border-color: #9d4edd;
     color: #c9a3ff;
 }
+
 .sim-tab.ejercicio.activo {
     background: #7B2CBF;
     color: #fff;
@@ -1544,6 +1548,7 @@ pre {
     border-color: rgba(133, 34, 219, 0.19);
     background: rgba(112, 38, 176, 0.156);
 }
+
 .sim-ejercicio-badge {
     display: inline-block;
     color: #fff;
@@ -1558,64 +1563,158 @@ pre {
 /* ════════════════════════════════════════
    PANELES DE MEMORIA — simulador de arreglos
    ════════════════════════════════════════ */
-.cs-mem-block { margin-bottom: 14px; }
+.cs-mem-block {
+    margin-bottom: 14px;
+}
+
 .cs-mem-head {
-    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
-    text-transform: uppercase; color: #8a9ab5; margin-bottom: 8px;
-    display: flex; align-items: center; gap: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8a9ab5;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
+
 .cs-mem-head .n {
-    background: #252a3a; color: #bfc6d1; border-radius: 10px;
-    padding: 1px 8px; font-size: 0.7rem; font-weight: 600;
+    background: #252a3a;
+    color: #bfc6d1;
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
 }
+
 .cs-var-row {
-    font-family: 'Consolas', monospace; font-size: 0.85rem;
-    color: #c5cae9; padding: 3px 0;
+    font-family: 'Consolas', monospace;
+    font-size: 0.85rem;
+    color: #c5cae9;
+    padding: 3px 0;
 }
-.cs-var-row b { color: #fff; }
+
+.cs-var-row b {
+    color: #fff;
+}
 
 /* Arreglos 1D */
-.cs-arr { margin-bottom: 10px; }
-.cs-arr-name {
-    font-family: 'Consolas', monospace; font-size: 0.82rem;
-    color: #bfc6d1; margin-bottom: 6px;
+.cs-arr {
+    margin-bottom: 10px;
 }
-.cs-arr-name b { color: #fff; }
-.cs-arr-name .meta { color: #8a9ab5; margin-left: 8px; font-size: 0.76rem; }
-.cs-cells { display: flex; flex-wrap: wrap; gap: 6px; }
-.cs-cell-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.cs-cell-idx { font-size: 0.68rem; color: #8a9ab5; font-family: 'Consolas', monospace; }
+
+.cs-arr-name {
+    font-family: 'Consolas', monospace;
+    font-size: 0.82rem;
+    color: #bfc6d1;
+    margin-bottom: 6px;
+}
+
+.cs-arr-name b {
+    color: #fff;
+}
+
+.cs-arr-name .meta {
+    color: #8a9ab5;
+    margin-left: 8px;
+    font-size: 0.76rem;
+}
+
+.cs-cells {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.cs-cell-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.cs-cell-idx {
+    font-size: 0.68rem;
+    color: #8a9ab5;
+    font-family: 'Consolas', monospace;
+}
+
 .cs-cell {
-    min-width: 34px; height: 34px; display: flex; align-items: center;
-    justify-content: center; background: #15161e;
-    border: 1px solid var(--console-border); border-radius: 6px;
-    color: #fff; font-family: 'Consolas', monospace; font-size: 0.85rem;
+    min-width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #15161e;
+    border: 1px solid var(--console-border);
+    border-radius: 6px;
+    color: #fff;
+    font-family: 'Consolas', monospace;
+    font-size: 0.85rem;
     transition: background 0.25s, border-color 0.25s;
 }
-.cs-cell.cs-null { color: #55607a; }
+
+.cs-cell.cs-null {
+    color: #55607a;
+}
 
 /* Matrices 2D */
-.cs-mtx { margin-bottom: 10px; }
+.cs-mtx {
+    margin-bottom: 10px;
+}
+
 .cs-mtx-name {
-    font-family: 'Consolas', monospace; font-size: 0.82rem;
-    color: #bfc6d1; margin-bottom: 6px;
+    font-family: 'Consolas', monospace;
+    font-size: 0.82rem;
+    color: #bfc6d1;
+    margin-bottom: 6px;
 }
-.cs-mtx-name b { color: #fff; }
-.cs-mtx-name .meta { color: #8a9ab5; margin-left: 8px; font-size: 0.76rem; }
-.cs-mtx-table { border-collapse: collapse; }
+
+.cs-mtx-name b {
+    color: #fff;
+}
+
+.cs-mtx-name .meta {
+    color: #8a9ab5;
+    margin-left: 8px;
+    font-size: 0.76rem;
+}
+
+.cs-mtx-table {
+    border-collapse: collapse;
+}
+
 .cs-mtx-table th {
-    font-size: 0.68rem; color: #8a9ab5; font-weight: 600;
-    padding: 2px 6px; font-family: 'Consolas', monospace;
+    font-size: 0.68rem;
+    color: #8a9ab5;
+    font-weight: 600;
+    padding: 2px 6px;
+    font-family: 'Consolas', monospace;
 }
-.cs-mtx-table td { padding: 2px; }
+
+.cs-mtx-table td {
+    padding: 2px;
+}
+
 .cs-mcell {
-    min-width: 30px; height: 30px; display: flex; align-items: center;
-    justify-content: center; background: #15161e;
-    border: 1px solid var(--console-border); border-radius: 5px;
-    color: #fff; font-family: 'Consolas', monospace; font-size: 0.82rem;
+    min-width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #15161e;
+    border: 1px solid var(--console-border);
+    border-radius: 5px;
+    color: #fff;
+    font-family: 'Consolas', monospace;
+    font-size: 0.82rem;
     transition: background 0.25s, border-color 0.25s;
 }
-.cs-mcell.cs-null { color: #55607a; }
+
+.cs-mcell.cs-null {
+    color: #55607a;
+}
 
 /* Celda que cambió en este paso (destello verde) */
 .cs-flash {
@@ -1623,13 +1722,92 @@ pre {
     border-color: var(--green-main) !important;
 }
 
-.cs-empty-hint { color: #8a9ab5; font-size: 0.85rem; font-style: italic; }
+.cs-empty-hint {
+    color: #8a9ab5;
+    font-size: 0.85rem;
+    font-style: italic;
+}
 
 /* Panel "Paso actual" del simulador de arreglos */
-.cs-step-line { font-size: 0.82em; color: #8a9ab5; }
-.cs-step-note { margin-top: 6px; font-size: 0.9em; color: #c5cae9; word-break: break-word; }
-.cs-step-note.iserr { color: #ff8a65; font-weight: 600; }
+.cs-step-line {
+    font-size: 0.82em;
+    color: #8a9ab5;
+}
+
+.cs-step-note {
+    margin-top: 6px;
+    font-size: 0.9em;
+    color: #c5cae9;
+    word-break: break-word;
+}
+
+.cs-step-note.iserr {
+    color: #ff8a65;
+    font-weight: 600;
+}
 
 /* Resaltado de línea en Monaco (arreglos) */
-.cs-line-active { background: rgba(4, 170, 109, 0.15); }
-.cs-line-error  { background: rgba(220, 53, 69, 0.22); }
+.cs-line-active {
+    background: rgba(4, 170, 109, 0.15);
+}
+
+.cs-line-error {
+    background: rgba(220, 53, 69, 0.22);
+}
+
+/* ════════════════════════════════════════
+   INPUTS EDITABLES — sirve para AMBOS simuladores
+   (#sim-vars-editable = selectivas/ciclos, #arr-vars-editable = arreglos)
+   ════════════════════════════════════════ */
+#sim-vars-editable,
+#arr-vars-editable {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    background: #1e2130;
+    border: 1px solid #3a3d4a;
+    border-radius: 8px;
+}
+
+/* si no hay variables editables, no mostrar el recuadro vacío */
+#sim-vars-editable:empty,
+#arr-vars-editable:empty {
+    display: none;
+}
+
+.sim-var-field,
+.arr-var-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 120px;
+}
+
+.sim-var-field label,
+.arr-var-field label {
+    font-size: 0.72em;
+    color: #8a9ab5;
+    font-family: monospace;
+    text-transform: none;
+    letter-spacing: 0.02em;
+}
+
+.sim-var-input,
+.arr-var-input {
+    background: #15161e;
+    border: 1px solid #3a3d4a;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-family: 'Consolas', monospace;
+    font-size: 0.9em;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.sim-var-input:focus,
+.arr-var-input:focus {
+    border-color: #04AA6D;
+}
