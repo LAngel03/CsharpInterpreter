@@ -1459,7 +1459,8 @@ pre {
 }
 
 /* Pestañas Ejemplo 1 / 2 / 3 del simulador */
-#sim-ejemplos-tabs {
+#sim-ejemplos-tabs,
+#arr-ejemplos-tabs {
     display: flex;
     gap: 6px;
     margin-bottom: 8px;
@@ -1705,11 +1706,84 @@ pre {
     color: #55607a;
 }
 
-/* Celda que cambió en este paso (destello verde) */
+/* Celda o variable que cambió en este paso (destello verde) */
 .cs-flash {
     background: rgba(4, 170, 109, 0.28) !important;
     border-color: var(--green-main) !important;
 }
+
+.cs-var-row.cs-flash {
+    color: var(--green-main);
+    font-weight: 700;
+    border-color: transparent !important;
+    background: transparent !important;
+}
+
+/* Celda que se leyó en este paso (destello naranja) */
+.cs-read {
+    background: rgba(240, 165, 0, 0.18) !important;
+    border-color: #f0a500 !important;
+    color: #f0a500 !important;
+}
+
+.cs-cell-idx.cs-read-idx {
+    color: #f0a500;
+    font-weight: 700;
+}
+
+/* Panel del ciclo for activo (simuladores de ciclos y arreglos) */
+.sim-for-panel {
+    background: #1a1d2a;
+    border: 1px solid #3d4160;
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    font-family: 'Consolas', monospace;
+}
+.sim-for-header {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #7c85c2;
+    margin-bottom: 6px;
+}
+.sim-for-parts {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.sim-for-part {
+    flex: 1;
+    min-width: 72px;
+    background: #0f1018;
+    border: 1px solid #2d3050;
+    border-radius: 6px;
+    padding: 5px 7px;
+}
+.sim-for-label {
+    font-size: 0.60rem;
+    color: #8a9ab5;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 3px;
+}
+.sim-for-code {
+    font-family: 'Consolas', monospace;
+    font-size: 0.78rem;
+    color: #c5cae9;
+    display: block;
+    word-break: break-all;
+}
+.sim-for-now {
+    font-size: 0.76rem;
+    color: #bfc6d1;
+    margin-top: 3px;
+}
+.sim-for-now b { color: #fff; }
+.sim-for-badge { font-size: 0.74rem; font-weight: 700; }
+.sim-for-t { color: var(--green-main); }
+.sim-for-f { color: #e05263; }
 
 .cs-empty-hint {
     color: #8a9ab5;

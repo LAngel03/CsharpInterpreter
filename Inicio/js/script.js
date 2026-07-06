@@ -553,3 +553,19 @@ if (modalElemento) {
         if (clicFuera) this.close();
     });
 }
+
+// ── CERRAR SESIÓN ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const btnCerrar = document.getElementById('btn-cerrar-sesion');
+    if (!btnCerrar) return;
+
+    btnCerrar.addEventListener('click', () => {
+        // Borra token y usuario del navegador
+        if (window.ApiClient && window.ApiClient.cerrarSesion) {
+            window.ApiClient.cerrarSesion();
+        }
+        // Regresa al login. '../index.html' porque el login está
+        // un nivel arriba de este simulador (igual que ../api.js).
+        window.location.href = '../index.html';
+    });
+});

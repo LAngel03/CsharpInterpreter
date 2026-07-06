@@ -35,8 +35,8 @@ function arrCellText(v) {
 }
 
 // ── Iconos del botón reproducir/pausar (igual que simulator.js) ──
-const _ARR_ICON_PLAY = '<img src="./img/iconos/play.png" alt="Reproducir"><span class="tooltip-text">Reproducir</span>';
-const _ARR_ICON_PAUSE = '<img src="./img/iconos/pause.png" alt="Pausar"><span class="tooltip-text">Pausar</span>';
+const _ARR_ICON_PLAY = '<img src="../img/iconos/play.png" alt="Reproducir"><span class="tooltip-text">Reproducir</span>';
+const _ARR_ICON_PAUSE = '<img src="../img/iconos/pause.png" alt="Pausar"><span class="tooltip-text">Pausar</span>';
 
 // ── Botones por ID (compatibles con consolas.js) ────────────────
 //  Devuelve SIEMPRE [reiniciar, anterior, siguiente, reproducir].
@@ -91,8 +91,7 @@ class ArraySimulator {
 
 const ARR_EXAMPLES = {
     Array_unidimensional:
-`// Declaracion, escritura y lectura de un arreglo
-int[] numeros = new int[5];
+`int[] numeros = new int[5];
 
 for (int i = 0; i < numeros.Length; i++) {
   numeros[i] = (i + 1) * 10;

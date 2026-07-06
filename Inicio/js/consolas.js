@@ -13,17 +13,17 @@ function insertarConsolas() {
                     <button class="ctrl-btn" id="btn-reiniciar">Volver al inicio</button>
 
                     <button class="btn-anterior" id="btn-paso-anterior" disabled>
-                    <img src="./img/iconos/Atras.png" alt="Paso anterior">
+                    <img src="../img/iconos/Atras.png" alt="Paso anterior">
                     <span class="tooltip-text">Paso anterior</span>
                     </button>
 
                     <button class="btn-siguiente" id="btn-paso-siguiente">
-                        <img src="./img/iconos/Siguiente.png" alt="Paso siguiente">
+                        <img src="../img/iconos/Siguiente.png" alt="Paso siguiente">
                         <span class="tooltip-text">Paso siguiente</span>
                     </button>
                     
                     <button class="ctrl-btn primary" id="btn-reproducir">
-                        <img src="./img/iconos/play.png" alt="Reproducir">
+                        <img src="../img/iconos/play.png" alt="Reproducir">
                         <span class="tooltip-text">Reproducir</span>
                     </button>
 
