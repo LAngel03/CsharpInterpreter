@@ -47,7 +47,7 @@ function setCargando(formId, cargando) {
 
 // ── Redirección tras login/registro exitoso ─────────────────────
 // Ajusta esta ruta si tu simulador vive en otro archivo/carpeta.
-const RUTA_SIMULADOR = './inicio/inicio.html';
+const RUTA_SIMULADOR = 'inicio/inicio.html';
 
 function irAlSimulador() {
     window.location.href = RUTA_SIMULADOR;
