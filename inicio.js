@@ -9,9 +9,12 @@ function showAuth(which) {
 function showLanding() {
     document.getElementById('screen-login').classList.remove('show');
     document.getElementById('screen-register').classList.remove('show');
-    document.getElementById('landing').style.display = 'block';
+    
+    document.getElementById('landing').style.display = 'flex'; 
+    
     window.scrollTo(0, 0);
 }
+
 function togglePw(id, btn) {
     const inp = document.getElementById(id);
     inp.type = inp.type === 'password' ? 'text' : 'password';
