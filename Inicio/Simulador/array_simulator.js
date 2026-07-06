@@ -1,16 +1,14 @@
 // ============================================================
 //  Simulador/array_simulator.js
-//  Simulador paso a paso para los subtemas "Arreglos unidimensionales"
-//  y "Arreglos bidimensionales" (matrices).
-//  Se conecta a los paneles del workspace existente (consolas.js),
-//  igual que Simulador/simulator.js, pero usa el motor genérico
-//  Simulador/engine.js (window.CSharpEngine) que soporta
-//  arreglos, matrices y ciclos for/while/do-while internamente.
+//  Simulador paso a paso para "Arreglos unidimensionales" y
+//  "Arreglos bidimensionales" (matrices).
 //
-//  El editor Monaco queda en modo solo-lectura. Las variables
-//  escalares declaradas con un valor literal en el nivel superior
-//  del programa se exponen como inputs editables encima del editor.
-//+
+//  AHORA lee ejemplos/ejercicio desde la API (igual que simulator.js).
+//  Mantiene ARR_EXAMPLES y ARR_EJERCICIOS como RESPALDO local: si la
+//  API falla o no devuelve datos, el simulador sigue funcionando.
+//  Todo el motor (matrices, panel del for, celdas leídas) queda igual.
+// ============================================================
+
 // ── Utilidades ───────────────────────────────────────────────
 
 function arrEscape(str) {
@@ -34,12 +32,11 @@ function arrCellText(v) {
     return String(v);
 }
 
-// ── Iconos del botón reproducir/pausar (igual que simulator.js) ──
-const _ARR_ICON_PLAY = '<img src="../img/iconos/play.png" alt="Reproducir"><span class="tooltip-text">Reproducir</span>';
-const _ARR_ICON_PAUSE = '<img src="../img/iconos/pause.png" alt="Pausar"><span class="tooltip-text">Pausar</span>';
+// ── Iconos del botón reproducir/pausar ───────────────────────
+const _ARR_ICON_PLAY  = '<img src="./img/iconos/play.png" alt="Reproducir"><span class="tooltip-text">Reproducir</span>';
+const _ARR_ICON_PAUSE = '<img src="./img/iconos/pause.png" alt="Pausar"><span class="tooltip-text">Pausar</span>';
 
-// ── Botones por ID (compatibles con consolas.js) ────────────────
-//  Devuelve SIEMPRE [reiniciar, anterior, siguiente, reproducir].
+// ── Botones por ID (compatibles con consolas.js) ─────────────
 function _arrBtns() {
     return [
         document.getElementById('btn-reiniciar'),
@@ -49,19 +46,19 @@ function _arrBtns() {
     ];
 }
 
-// ── SnapshotManager (envuelve los snapshots del motor) ─────────
+// ── SnapshotManager ──────────────────────────────────────────
 
 class ArrSnapMgr {
     constructor() { this.snaps = []; this.idx = -1; }
-    reset() { this.snaps = []; this.idx = -1; }
+    reset()  { this.snaps = []; this.idx = -1; }
     load(snapshots) { this.snaps = snapshots || []; this.idx = this.snaps.length ? 0 : -1; }
     current() { return this.idx >= 0 ? this.snaps[this.idx] : null; }
-    next() { if (this.idx < this.snaps.length - 1) this.idx++; return this.current(); }
-    prev() { if (this.idx > 0) this.idx--; return this.current(); }
+    next()  { if (this.idx < this.snaps.length - 1) this.idx++; return this.current(); }
+    prev()  { if (this.idx > 0) this.idx--; return this.current(); }
     total() { return this.snaps.length; }
 }
 
-// ── Simulador (usa CSharpEngine como motor) ─────────────────────
+// ── Simulador (usa CSharpEngine como motor) ──────────────────
 
 class ArraySimulator {
     constructor() { this.snap = new ArrSnapMgr(); this.lastAst = null; }
@@ -81,56 +78,132 @@ class ArraySimulator {
         this.snap.load(result.snapshots);
         return this.snap.current();
     }
-    next() { return this.snap.next(); }
-    prev() { return this.snap.prev(); }
+    next()  { return this.snap.next(); }
+    prev()  { return this.snap.prev(); }
     clear() { this.snap.reset(); this.lastAst = null; }
-    info() { return { index: this.snap.idx, total: this.snap.total() }; }
+    info()  { return { index: this.snap.idx, total: this.snap.total() }; }
 }
 
-// ── Ejemplos de código ──────────────────────────────────────────
 
-const ARR_EXAMPLES = {
-    Array_unidimensional:
-`int[] numeros = new int[5];
+// ════════════════════════════════════════════════════════════
+//  CONEXIÓN CON LA API (con caché y respaldo local)
+// ════════════════════════════════════════════════════════════
 
-for (int i = 0; i < numeros.Length; i++) {
-  numeros[i] = (i + 1) * 10;
+const arrCacheSubtemas = {};
+
+function arrNormalizarEjemplos(codigo_ejemplo) {
+    if (typeof codigo_ejemplo === 'string') return [codigo_ejemplo];
+    if (Array.isArray(codigo_ejemplo)) return codigo_ejemplo;
+    if (codigo_ejemplo && typeof codigo_ejemplo === 'object' && Array.isArray(codigo_ejemplo.ejemplos)) {
+        return codigo_ejemplo.ejemplos;
+    }
+    return [];
 }
 
-int suma = 0;
-for (int i = 0; i < numeros.Length; i++) {
-  suma += numeros[i];
+async function arrObtenerDatosTema(slug) {
+    if (arrCacheSubtemas[slug]) return arrCacheSubtemas[slug];
+    try {
+        if (!window.ApiClient || typeof window.ApiClient.obtenerSubtemaPorSlug !== 'function') {
+            throw new Error('ApiClient.obtenerSubtemaPorSlug no está disponible');
+        }
+        const subtema = await window.ApiClient.obtenerSubtemaPorSlug(slug);
+        if (!subtema) throw new Error('La API devolvió una respuesta vacía para "' + slug + '"');
+        arrCacheSubtemas[slug] = subtema;
+        return subtema;
+    } catch (e) {
+        console.warn(`Arreglos "${slug}" no encontrado en la API, usando respaldo local`, e);
+        return {
+            definicion: (window.temas && window.temas[slug]) ? window.temas[slug].definicion : '',
+            codigo_ejemplo: null,
+            _apiError: e.message
+        };
+    }
 }
 
-Console.WriteLine("Elemento [2] = " + numeros[2]);
-Console.WriteLine("Longitud = " + numeros.Length);
-Console.WriteLine("Suma total = " + suma);`,
+function arrGetItemsDesdeSubtema(subtema, slug) {
+    if (!subtema || subtema.codigo_ejemplo === null || subtema.codigo_ejemplo === undefined) {
+        return arrGetItemsLocal(slug);
+    }
 
-    Array_bidimensional:
-`// Llenado y recorrido de una matriz 3x2
-int[,] matriz = new int[3,2];
+    const ejemplos = arrNormalizarEjemplos(subtema.codigo_ejemplo);
+    if (!ejemplos.length) return arrGetItemsLocal(slug);
 
-for (int f = 0; f < matriz.GetLength(0); f++) {
-  for (int c = 0; c < matriz.GetLength(1); c++) {
-    matriz[f,c] = (f + 1) * (c + 1);
-  }
+    const items = ejemplos.map((code, i) => ({
+        label: ejemplos.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
+        codigo: code,
+        enunciado: null,
+        esEjercicio: false
+    }));
+
+    const ej = (Array.isArray(subtema.ejercicios) && subtema.ejercicios.length)
+        ? subtema.ejercicios[0]
+        : null;
+    if (ej) {
+        items.push({
+            label: 'Ejercicio',
+            codigo: ej.codigo_csharp,
+            enunciado: ej.descripcion,
+            esEjercicio: true
+        });
+    }
+    return items;
 }
 
-Console.WriteLine("matriz[2,1] = " + matriz[2,1]);
-Console.WriteLine("Filas: " + matriz.GetLength(0));
-Console.WriteLine("Columnas: " + matriz.GetLength(1));`
-};
+function arrGetItemsLocal(tema) {
+    const ex = ARR_EXAMPLES[tema];
+    const ejemplos = Array.isArray(ex) ? ex.slice() : (typeof ex === 'string' ? [ex] : ['']);
+    const items = ejemplos.map((code, i) => ({
+        label: 'Ejemplo ' + (i + 1),
+        codigo: code,
+        enunciado: null,
+        esEjercicio: false
+    }));
+    const ej = ARR_EJERCICIOS[tema];
+    if (ej) items.push({ label: 'Ejercicio', codigo: ej.codigo, enunciado: ej.enunciado, esEjercicio: true });
+    return items;
+}
 
-// ── Estado global del módulo ────────────────────────────────────
+function arrSetDescripcion(html, esEjercicio) {
+    const elDesc = document.getElementById('tema-descripcion');
+    if (!elDesc) return;
+    if (html) {
+        elDesc.innerHTML = esEjercicio
+            ? '<span class="sim-ejercicio-badge">Ejercicio: </span>' + html
+            : html;
+        elDesc.style.display = 'block';
+        elDesc.classList.toggle('modo-ejercicio', !!esEjercicio);
+    } else {
+        elDesc.innerHTML = '';
+        elDesc.style.display = 'none';
+        elDesc.classList.remove('modo-ejercicio');
+    }
+}
+
+function arrMostrarErrorApi(mensaje) {
+    const editorBody = document.getElementById('editor-body');
+    if (!editorBody) return;
+    let box = document.getElementById('arr-api-error');
+    if (!mensaje) { if (box) box.remove(); return; }
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'arr-api-error';
+        box.className = 'sim-api-error';
+        editorBody.parentNode.insertBefore(box, editorBody);
+    }
+    box.textContent = mensaje;
+}
+
+// ── Estado global del módulo ──────────────────────────────────
 
 const arrSim = new ArraySimulator();
-let arrMonacoEditor   = null;
-let arrDecorations    = [];
-let arrPlayTimer      = null;
-let arrPlaying        = false;
-let arrCurrentExample = '';
+let arrMonacoEditor = null;
+let arrDecorations  = [];
+let arrPlayTimer    = null;
+let arrPlaying      = false;
+let arrCurrentCode  = '';
+let arrTemaActual   = '';
 
-// ── Variables escalares editables ───────────────────────────────
+// ── Variables escalares editables ────────────────────────────
 
 function arrExtraerVariablesEditables(ast) {
     if (!ast || !ast.body) return [];
@@ -139,8 +212,6 @@ function arrExtraerVariablesEditables(ast) {
         .map(n => ({ name: n.name, dataType: n.dataType, raw: n.init.raw, value: n.init.value, line: n.line }));
 }
 
-// Reconstruye el código fuente completo sustituyendo SOLO los valores
-// de las variables editables indicadas, sin tocar el resto del programa.
 function arrReconstruirCodigo(baseCode, variables, valoresNuevos) {
     const lineas = baseCode.split('\n');
     for (const v of variables) {
@@ -164,9 +235,6 @@ function arrReconstruirCodigo(baseCode, variables, valoresNuevos) {
     return lineas.join('\n');
 }
 
-// Dibuja el panel de inputs encima del editor. Solo reconstruye el HTML
-// si las variables editables cambiaron (cantidad/nombres/tipos), para no
-// perder el foco mientras el usuario escribe.
 function arrRenderInputsVariables(variables, codigoBase) {
     const host = document.getElementById('arr-vars-editable');
     if (!host) return;
@@ -187,7 +255,7 @@ function arrRenderInputsVariables(variables, codigoBase) {
         if (v.dataType === 'bool') {
             inputHtml =
                 '<select class="arr-var-input" data-var="' + v.name + '">' +
-                    '<option value="true"' + (v.value === true ? ' selected' : '') + '>true</option>' +
+                    '<option value="true"'  + (v.value === true  ? ' selected' : '') + '>true</option>'  +
                     '<option value="false"' + (v.value === false ? ' selected' : '') + '>false</option>' +
                 '</select>';
         } else {
@@ -217,40 +285,68 @@ function arrRenderInputsVariables(variables, codigoBase) {
     });
 }
 
-// Ejecuta sin volver a dibujar el panel de inputs (evita perder el foco).
 function arrEjecutarSinTocarInputs(codigo) {
     const first = arrSim.load(codigo);
     arrRender(first, arrSim.info());
-
     const btns = _arrBtns();
     if (btns[1]) btns[1].disabled = true;
     if (btns[3]) { arrPlaying = false; btns[3].innerHTML = _ARR_ICON_PLAY; }
 }
 
-// Carga el código, detecta variables editables, dibuja sus inputs
-// y muestra el primer paso.
 function arrCargarYEjecutar(codigo) {
-    const first = arrSim.load(codigo);
+    const first    = arrSim.load(codigo);
     const variables = arrExtraerVariablesEditables(arrSim.lastAst);
     arrRenderInputsVariables(variables, codigo);
     arrRender(first, arrSim.info());
-
     const btns = _arrBtns();
     if (btns[1]) btns[1].disabled = true;
     if (btns[3]) { arrPlaying = false; btns[3].innerHTML = _ARR_ICON_PLAY; }
 }
 
-// ── Render de memoria (variables, arreglos y matrices) ──────────
+// ── Render de memoria (variables, arreglos y matrices) ────────
+
+function arrBuildForBoxHtml(forCtx) {
+    if (!forCtx) return '';
+    const valNow = forCtx.varValue !== null ? arrEscape(String(forCtx.varValue)) : '?';
+    let condBadge = '';
+    if (forCtx.condResult !== null) {
+        const yes = forCtx.condResult;
+        condBadge = '<span class="sim-for-badge ' + (yes ? 'sim-for-t' : 'sim-for-f') + '">' +
+            (yes ? '✓ verdadero' : '✗ falso') + '</span>';
+    }
+    return '<div class="sim-for-panel">' +
+        '<div class="sim-for-header">⟳ ciclo <b>for</b></div>' +
+        '<div class="sim-for-parts">' +
+            '<div class="sim-for-part">' +
+                '<div class="sim-for-label">inicializador</div>' +
+                '<code class="sim-for-code">' + arrEscape(forCtx.varName) + ' = …</code>' +
+                '<div class="sim-for-now">ahora: <b>' + valNow + '</b></div>' +
+            '</div>' +
+            '<div class="sim-for-part">' +
+                '<div class="sim-for-label">condición</div>' +
+                '<code class="sim-for-code">' + arrEscape(forCtx.condText) + '</code>' +
+                (condBadge ? '<div class="sim-for-now">' + condBadge + '</div>' : '') +
+            '</div>' +
+            '<div class="sim-for-part">' +
+                '<div class="sim-for-label">avance</div>' +
+                '<code class="sim-for-code">' + arrEscape(forCtx.updateText) + '</code>' +
+            '</div>' +
+        '</div>' +
+    '</div>';
+}
 
 function arrBuildMemoriaHtml(state) {
     const ch = new Set(state.changed || []);
-    let html = '';
+    const rd = new Set(state.read || []);
+    let html = arrBuildForBoxHtml(state.forCtx);
 
     if (state.variables && state.variables.length) {
         html += '<div class="cs-mem-block"><div class="cs-mem-head">Variables<span class="n">' + state.variables.length + '</span></div>';
         state.variables.forEach(v => {
             const f = arrFmtVal(v.value, v.type);
-            html += '<div class="cs-var-row">' + arrEscape(v.type) + ' <b>' + arrEscape(v.name) + '</b> = ' + arrEscape(f.text) + '</div>';
+            const changed = ch.has(v.name);
+            html += '<div class="cs-var-row' + (changed ? ' cs-flash' : '') + '">' +
+                arrEscape(v.type) + ' <b>' + arrEscape(v.name) + '</b> = ' + arrEscape(f.text) + '</div>';
         });
         html += '</div>';
     }
@@ -261,10 +357,14 @@ function arrBuildMemoriaHtml(state) {
             html += '<div class="cs-arr"><div class="cs-arr-name">' + arrEscape(a.type) + '[] <b>' + arrEscape(a.name) + '</b><span class="meta">.Length = ' + a.length + '</span></div>';
             html += '<div class="cs-cells">';
             for (let i = 0; i < a.length; i++) {
-                const val = a.values[i];
-                const isch = ch.has(a.name + '[' + i + ']');
-                html += '<div class="cs-cell-wrap"><div class="cs-cell-idx">' + i + '</div>' +
-                    '<div class="cs-cell' + (val === null ? ' cs-null' : '') + (isch ? ' cs-flash' : '') + '">' + arrEscape(arrCellText(val)) + '</div></div>';
+                const val   = a.values[i];
+                const isch  = ch.has(a.name + '[' + i + ']');
+                const isrd  = !isch && rd.has(a.name + '[' + i + ']');
+                const extra = isch ? ' cs-flash' : (isrd ? ' cs-read' : '');
+                html += '<div class="cs-cell-wrap">' +
+                    '<div class="cs-cell-idx' + (isrd ? ' cs-read-idx' : '') + '">' + i + '</div>' +
+                    '<div class="cs-cell' + (val === null ? ' cs-null' : '') + extra + '">' + arrEscape(arrCellText(val)) + '</div>' +
+                    '</div>';
             }
             html += '</div></div>';
         });
@@ -281,9 +381,12 @@ function arrBuildMemoriaHtml(state) {
             for (let r = 0; r < m.rows; r++) {
                 html += '<tr><th>F' + r + '</th>';
                 for (let c = 0; c < m.cols; c++) {
-                    const val = m.values[r][c];
-                    const isch = ch.has(m.name + '[' + r + ',' + c + ']');
-                    html += '<td><div class="cs-mcell' + (val === null ? ' cs-null' : '') + (isch ? ' cs-flash' : '') + '">' + arrEscape(arrCellText(val)) + '</div></td>';
+                    const val   = m.values[r][c];
+                    const key   = m.name + '[' + r + ',' + c + ']';
+                    const isch  = ch.has(key);
+                    const isrd  = !isch && rd.has(key);
+                    const extra = isch ? ' cs-flash' : (isrd ? ' cs-read' : '');
+                    html += '<td><div class="cs-mcell' + (val === null ? ' cs-null' : '') + extra + '">' + arrEscape(arrCellText(val)) + '</div></td>';
                 }
                 html += '</tr>';
             }
@@ -342,27 +445,91 @@ function arrClearPanels() {
     const panelSalida = document.getElementById('panel-salida');
     const stepEl      = document.querySelector('.ctrl-step');
     const fill        = document.querySelector('.pbar i');
-    if (panelPaso)   panelPaso.innerHTML   = '';
-    if (panelVars)   panelVars.innerHTML   = '';
+    if (panelPaso)   panelPaso.innerHTML    = '';
+    if (panelVars)   panelVars.innerHTML    = '';
     if (panelSalida) panelSalida.textContent = '';
-    if (stepEl)      stepEl.textContent    = 'Paso 0 / 0';
-    if (fill)        fill.style.width      = '0%';
+    if (stepEl)      stepEl.textContent     = 'Paso 0 / 0';
+    if (fill)        fill.style.width       = '0%';
 }
 
-// ── Inicialización del editor ─────────────────────────────────
+// ── Inicialización del editor con sistema de tabs (AHORA async) ─
 
-function initArraySimulator(nombreTema) {
+async function initArraySimulator(nombreTema) {
     const editorBody = document.getElementById('editor-body');
     if (!editorBody) return;
 
+    arrTemaActual = nombreTema;
+
+    // 1) Pide los datos a la API (con respaldo local si falla)
+    let subtema, items, defOriginal;
+    try {
+        subtema = await arrObtenerDatosTema(nombreTema);
+        items = arrGetItemsDesdeSubtema(subtema, nombreTema);
+        defOriginal = subtema.definicion ||
+            ((window.temas && window.temas[nombreTema]) ? window.temas[nombreTema].definicion : '');
+
+        if (subtema._apiError) {
+            arrMostrarErrorApi('No se pudo conectar con la API de arreglos (' + subtema._apiError + '). Mostrando datos de respaldo.');
+        } else {
+            arrMostrarErrorApi(null);
+        }
+    } catch (e) {
+        console.error('Error inicializando el simulador de arreglos para "' + nombreTema + '":', e);
+        items = arrGetItemsLocal(nombreTema);
+        defOriginal = (window.temas && window.temas[nombreTema]) ? window.temas[nombreTema].definicion : '';
+        arrMostrarErrorApi('Error cargando datos: ' + e.message + '. Mostrando respaldo local.');
+    }
+
+    if (!items || !items.length) {
+        items = [{ label: 'Ejemplo 1', codigo: '// No se pudo cargar el ejemplo.', enunciado: null, esEjercicio: false }];
+    }
+
+    // Panel de variables editables
     if (!document.getElementById('arr-vars-editable')) {
         const varsHost = document.createElement('div');
         varsHost.id = 'arr-vars-editable';
         editorBody.parentNode.insertBefore(varsHost, editorBody);
     }
 
-    const codigoInicial = ARR_EXAMPLES[nombreTema] || ARR_EXAMPLES.Array_unidimensional;
-    arrCurrentExample = codigoInicial;
+    // Tabs (solo si hay más de un item)
+    if (!document.getElementById('arr-ejemplos-tabs') && items.length > 1) {
+        const tabs = document.createElement('div');
+        tabs.id = 'arr-ejemplos-tabs';
+        tabs.innerHTML = items.map((it, i) =>
+            '<button class="sim-tab' + (i === 0 ? ' activo' : '') +
+            (it.esEjercicio ? ' ejercicio' : '') +
+            '" data-idx="' + i + '">' + it.label + '</button>'
+        ).join('');
+        editorBody.parentNode.insertBefore(tabs, editorBody.parentNode.querySelector('#arr-vars-editable'));
+    }
+
+    const codigoInicial = items[0].codigo;
+    arrCurrentCode = codigoInicial;
+
+    function activarTabs() {
+        const tabs = document.getElementById('arr-ejemplos-tabs');
+        if (!tabs) return;
+        tabs.querySelectorAll('.sim-tab').forEach(btn => {
+            btn.onclick = () => {
+                arrStopPlay(_arrBtns());
+                const idx = parseInt(btn.dataset.idx);
+                const it  = items[idx];
+
+                tabs.querySelectorAll('.sim-tab').forEach(b => b.classList.remove('activo'));
+                btn.classList.add('activo');
+
+                if (it.enunciado) {
+                    arrSetDescripcion(it.enunciado, true);
+                } else {
+                    arrSetDescripcion(defOriginal, false);
+                }
+
+                arrCurrentCode = it.codigo;
+                if (arrMonacoEditor) arrMonacoEditor.setValue(it.codigo);
+                arrCargarYEjecutar(it.codigo);
+            };
+        });
+    }
 
     function crearEditor() {
         require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
@@ -378,6 +545,7 @@ function initArraySimulator(nombreTema) {
                 readOnly: true
             });
             arrConectarBotones();
+            activarTabs();
             arrCargarYEjecutar(codigoInicial);
         });
     }
@@ -412,10 +580,7 @@ function arrStopPlay(btns) {
 
 function arrAutoPlay(btns) {
     const info = arrSim.info();
-    if (info.index >= info.total - 1) {
-        arrStopPlay(btns);
-        return;
-    }
+    if (info.index >= info.total - 1) { arrStopPlay(btns); return; }
     const state = arrSim.next();
     arrRender(state, arrSim.info());
     if (btns[1]) btns[1].disabled = (arrSim.info().index <= 0);
@@ -427,14 +592,12 @@ function arrAutoPlay(btns) {
 function arrConectarBotones() {
     const btns = _arrBtns();
 
-    // [0] Volver al inicio → restaura el ejemplo original y reejecuta.
     if (btns[0]) btns[0].onclick = () => {
         arrStopPlay(btns);
-        if (arrMonacoEditor) arrMonacoEditor.setValue(arrCurrentExample);
-        arrCargarYEjecutar(arrCurrentExample);
+        const codigoActual = arrMonacoEditor ? arrMonacoEditor.getValue() : arrCurrentCode;
+        arrEjecutarSinTocarInputs(codigoActual);
     };
 
-    // [1] Paso anterior
     if (btns[1]) {
         btns[1].disabled = true;
         btns[1].onclick = () => {
@@ -445,7 +608,6 @@ function arrConectarBotones() {
         };
     }
 
-    // [2] Paso siguiente
     if (btns[2]) btns[2].onclick = () => {
         arrStopPlay(btns);
         const state = arrSim.next();
@@ -453,12 +615,8 @@ function arrConectarBotones() {
         if (btns[1]) btns[1].disabled = (arrSim.info().index <= 0);
     };
 
-    // [3] Reproducir / Pausar
     if (btns[3]) btns[3].onclick = () => {
-        if (arrPlaying) {
-            arrStopPlay(btns);
-            return;
-        }
+        if (arrPlaying) { arrStopPlay(btns); return; }
         if (arrSim.info().total === 0) {
             const first = arrSim.load(arrMonacoEditor.getValue());
             arrRender(first, arrSim.info());
@@ -483,16 +641,12 @@ function arrConectarBotones() {
         const slider = document.getElementById('arr-speed-slider');
         const valLbl = document.getElementById('arr-speed-val');
         slider.addEventListener('input', () => {
-            const mult = (parseFloat(slider.value) / 40).toFixed(1);
-            valLbl.textContent = mult + '×';
+            valLbl.textContent = (parseFloat(slider.value) / 40).toFixed(1) + '×';
         });
     }
 }
 
 // ── Hook a cargarTema ─────────────────────────────────────────
-//  Envuelve la versión de cargarTema ya envuelta por simulator.js,
-//  sin modificar ese archivo. Cada wrapper limpia solo su propio
-//  simulador antes de delegar al siguiente.
 
 (function () {
     const _cargarTema = window.cargarTema;

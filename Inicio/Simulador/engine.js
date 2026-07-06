@@ -1,31 +1,5 @@
 /* ============================================================
-   MOTOR DEL SIMULADOR C#  (lexer + parser + intérprete)
-   Subconjunto controlado de C# para fines educativos.
-   Diseñado para correr tanto en navegador como en Node.
-
-   Flujo:  Código → Lexer → Parser → AST → Intérprete → Snapshots
-
-   ÍNDICE DE SECCIONES
-     1. LEXER        — convierte el texto fuente en una lista de
-                       tokens (números, identificadores, símbolos…).
-     2. ERRORES      — CompileError (fase léxica/sintáctica) y
-                       RuntimeError (fase de ejecución), ambos con línea.
-     3. PARSER       — descenso recursivo que construye el AST
-                       respetando la precedencia de operadores.
-     4. ENTORNO      — Environment: cadena de ámbitos (scopes) para
-                       resolver variables.
-     5. INTÉRPRETE   — recorre el AST ("tree-walking") y, en cada
-                       instrucción, registra un SNAPSHOT del estado
-                       (variables, arreglos, matrices, salida, línea
-                       actual y qué cambió).
-     6. API PÚBLICA  — CSharpEngine.compileAndRun(src, {maxSteps}).
-
-   SALIDA DE compileAndRun:
-     { tokens, ast, snapshots, output, error }
-     Cada snapshot = { step, currentLine, description,
-                       variables[], arrays[], matrices[],
-                       output[], changed[], isError }
-   ============================================================ */
+   engine.js actual*/
 (function (root) {
   "use strict";
 
