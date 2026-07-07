@@ -1,5 +1,6 @@
-/* ============================================================
-   engine.js actual*/
+/* MOTOR DEL SIMULADOR C#
+*/
+
 (function (root) {
   "use strict";
 
@@ -477,6 +478,9 @@
     this.snapshots = [];
     this.steps = 0;
     this._scopeStack = [this.global];
+    this._reads = new Set();
+    this._activeFor = null;   // { varName, condText, updateText }
+    this._lastCondResult = null;
   }
 
   Interpreter.prototype.run = function () {
@@ -522,6 +526,22 @@
     };
     for (let k = this._scopeStack.length - 1; k >= 0; k--) collect(this._scopeStack[k]);
 
+    let forCtx = null;
+    if (this._activeFor) {
+        let varValue = null;
+        for (let k = this._scopeStack.length - 1; k >= 0; k--) {
+            const cell = this._scopeStack[k].vars.get(this._activeFor.varName);
+            if (cell !== undefined) { varValue = cell.value; break; }
+        }
+        forCtx = {
+            varName:    this._activeFor.varName,
+            varValue,
+            condText:   this._activeFor.condText,
+            condResult: this._lastCondResult,
+            updateText: this._activeFor.updateText
+        };
+    }
+
     this.snapshots.push({
       step: this.snapshots.length,
       currentLine: line,
@@ -529,8 +549,11 @@
       variables, arrays, matrices,
       output: this.output.slice(),
       changed: Array.from(changed || []),
+      read: Array.from(this._reads),
+      forCtx,
       isError: !!isError
     });
+    this._reads = new Set();
   };
 
   Interpreter.prototype.withScope = function (env, fn) {
@@ -655,22 +678,41 @@
     const loopEnv = new Environment(env);
     this.withScope(loopEnv, () => {
       if (stmt.init) this.execStatement(stmt.init, loopEnv);
-      while (true) {
-        this.tick();
-        let cond = true;
-        const changed = new Set();
-        if (stmt.test) {
-          cond = truthy(this.evalExpr(stmt.test, loopEnv, changed));
-          this.snapshot(stmt.line, "for: " + this.src(stmt.test) + " → " + (cond ? "verdadero" : "falso"), changed);
+
+      // Activar panel del ciclo for
+      const savedFor  = this._activeFor;
+      const savedCond = this._lastCondResult;
+      const varName = stmt.init && stmt.init.name ? stmt.init.name : null;
+      this._activeFor = varName ? {
+          varName,
+          condText:   stmt.test   ? this.src(stmt.test)   : '',
+          updateText: stmt.update ? this.src(stmt.update) : ''
+      } : null;
+      this._lastCondResult = null;
+
+      try {
+        while (true) {
+          this.tick();
+          let cond = true;
+          const changed = new Set();
+          if (stmt.test) {
+            cond = truthy(this.evalExpr(stmt.test, loopEnv, changed));
+            this._lastCondResult = cond;
+            this.snapshot(stmt.line, "for: " + this.src(stmt.test) + " → " + (cond ? "verdadero" : "falso"), changed);
+          }
+          if (!cond) break;
+          try { this.execStatement(stmt.body, loopEnv); }
+          catch (e) { if (e === BREAK) break; if (e !== CONTINUE) throw e; }
+          if (stmt.update) {
+            const ch2 = new Set();
+            const r = this.evalExpr(stmt.update, loopEnv, ch2);
+            this.snapshot(stmt.line, this.describeExprStmt(stmt.update, r), ch2);
+          }
         }
-        if (!cond) break;
-        try { this.execStatement(stmt.body, loopEnv); }
-        catch (e) { if (e === BREAK) break; if (e !== CONTINUE) throw e; }
-        if (stmt.update) {
-          const ch2 = new Set();
-          const r = this.evalExpr(stmt.update, loopEnv, ch2);
-          this.snapshot(stmt.line, this.describeExprStmt(stmt.update, r), ch2);
-        }
+      } finally {
+        // Restaurar contexto (loops anidados)
+        this._activeFor      = savedFor;
+        this._lastCondResult = savedCond;
       }
     });
   };
@@ -733,6 +775,7 @@
           throw new RuntimeError("Índice fuera de rango: [" + idx + "] (tamaño " + arr.length + ")", node.line);
         const v = arr.values[idx];
         if (v === null) throw new RuntimeError("Posición de arreglo sin inicializar: [" + idx + "]", node.line);
+        this._reads.add(node.object.name + '[' + idx + ']');
         return v;
       }
       case "MatrixAccess": {
@@ -743,6 +786,7 @@
           throw new RuntimeError("Índice de matriz fuera de rango: [" + r + "," + c + "]", node.line);
         const v = m.values[r][c];
         if (v === null) throw new RuntimeError("Posición de matriz sin inicializar: [" + r + "," + c + "]", node.line);
+        this._reads.add(node.object.name + '[' + r + ',' + c + ']');
         return v;
       }
       case "Member": {

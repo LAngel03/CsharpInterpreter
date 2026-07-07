@@ -3,10 +3,13 @@
 //  Simulador paso a paso para "Arreglos unidimensionales" y
 //  "Arreglos bidimensionales" (matrices).
 //
-//  AHORA lee ejemplos/ejercicio desde la API (igual que simulator.js).
+//  Lee ejemplos/ejercicio desde la API (igual que simulator.js).
 //  Mantiene ARR_EXAMPLES y ARR_EJERCICIOS como RESPALDO local: si la
 //  API falla o no devuelve datos, el simulador sigue funcionando.
-//  Todo el motor (matrices, panel del for, celdas leídas) queda igual.
+//
+//  Panel del ciclo "for" mejorado: sustituye el nombre de la
+//  variable por su valor actual (ej. "3 < numeros.Length", "3++").
+//  Requiere el engine.js NUEVO (genera forCtx y read).
 // ============================================================
 
 // ── Utilidades ───────────────────────────────────────────────
@@ -305,9 +308,16 @@ function arrCargarYEjecutar(codigo) {
 
 // ── Render de memoria (variables, arreglos y matrices) ────────
 
+// Panel del ciclo "for": muestra la variable con su VALOR ACTUAL
+// sustituido dentro de la condición y del avance (ej. "3 < numeros.Length", "3++").
 function arrBuildForBoxHtml(forCtx) {
     if (!forCtx) return '';
-    const valNow = forCtx.varValue !== null ? arrEscape(String(forCtx.varValue)) : '?';
+    const val    = forCtx.varValue !== null ? forCtx.varValue : '?';
+    const valStr = arrEscape(String(val));
+    // Sustituye el nombre de la variable por su valor numérico actual
+    const varRe         = new RegExp('\\b' + forCtx.varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'g');
+    const condWithVal   = arrEscape(forCtx.condText.replace(varRe,   String(val)));
+    const updateWithVal = arrEscape(forCtx.updateText.replace(varRe, String(val)));
     let condBadge = '';
     if (forCtx.condResult !== null) {
         const yes = forCtx.condResult;
@@ -319,17 +329,16 @@ function arrBuildForBoxHtml(forCtx) {
         '<div class="sim-for-parts">' +
             '<div class="sim-for-part">' +
                 '<div class="sim-for-label">inicializador</div>' +
-                '<code class="sim-for-code">' + arrEscape(forCtx.varName) + ' = …</code>' +
-                '<div class="sim-for-now">ahora: <b>' + valNow + '</b></div>' +
+                '<code class="sim-for-code">' + arrEscape(forCtx.varName) + ' = <b class="sim-for-t">' + valStr + '</b></code>' +
             '</div>' +
             '<div class="sim-for-part">' +
                 '<div class="sim-for-label">condición</div>' +
-                '<code class="sim-for-code">' + arrEscape(forCtx.condText) + '</code>' +
+                '<code class="sim-for-code">' + condWithVal + '</code>' +
                 (condBadge ? '<div class="sim-for-now">' + condBadge + '</div>' : '') +
             '</div>' +
             '<div class="sim-for-part">' +
                 '<div class="sim-for-label">avance</div>' +
-                '<code class="sim-for-code">' + arrEscape(forCtx.updateText) + '</code>' +
+                '<code class="sim-for-code">' + updateWithVal + '</code>' +
             '</div>' +
         '</div>' +
     '</div>';
@@ -452,7 +461,7 @@ function arrClearPanels() {
     if (fill)        fill.style.width       = '0%';
 }
 
-// ── Inicialización del editor con sistema de tabs (AHORA async) ─
+// ── Inicialización del editor con sistema de tabs (async) ─────
 
 async function initArraySimulator(nombreTema) {
     const editorBody = document.getElementById('editor-body');
