@@ -396,7 +396,7 @@ function simCondToSpanish(node) {
 }
 
 class SimInterp {
-    constructor(snap, scope) { this.snap = snap; this.scope = scope; this.out = []; this.switchBroken = false; }
+    constructor(snap, scope) { this.snap = snap; this.scope = scope; this.out = []; this.switchBroken = false; this.activeLoop = null; }
     run(prog) { this.execBlock(prog.body); }
     execBlock(stmts) { for (const s of stmts) { if (this.switchBroken) break; this.execNode(s); } }
 
@@ -533,6 +533,7 @@ class SimInterp {
     }
 
     // ── FOR didáctico: muestra inicialización, condición, cuerpo e incremento ──
+    // ── FOR didáctico: muestra inicialización, condición, cuerpo e incremento ──
     execFor(node) {
         // 1) Inicialización
         if (node.init) {
@@ -543,6 +544,16 @@ class SimInterp {
                 'Inicio del for: ' + node.init.name + ' empieza en ' + simFmt(v),
                 null);
         }
+
+        // Activa el panel visual del ciclo for (se restaura al salir, soporta anidados)
+        const savedLoop = this.activeLoop;
+        const varName = node.init ? node.init.name : null;
+        this.activeLoop = varName ? {
+            kind: 'for',
+            varName,
+            condText: simExprStr(node.cond),
+            updateText: node.update.name + ' = ' + simExprStr(node.update.expr)
+        } : null;
 
         let iterations = 0;
         const LIMITE = 1000;
@@ -579,12 +590,24 @@ class SimInterp {
                 'El ciclo for terminó después de ' + iterations + (iterations === 1 ? ' repetición' : ' repeticiones'),
                 'true');
         }
+
+        this.activeLoop = savedLoop;
     }
 
+    // ── WHILE y DO-WHILE didácticos ──
     // ── WHILE y DO-WHILE didácticos ──
     execWhile(node) {
         let iterations = 0;
         const LIMITE = 1000;
+
+        // Activa el panel visual del ciclo (se restaura al salir, soporta anidados)
+        const savedLoop = this.activeLoop;
+        this.activeLoop = {
+            kind: node.isDoWhile ? 'dowhile' : 'while',
+            varName: null,
+            condText: simExprStr(node.cond),
+            updateText: null
+        };
 
         if (node.isDoWhile) {
             // do-while: el cuerpo se ejecuta SIEMPRE al menos una vez
@@ -631,6 +654,8 @@ class SimInterp {
                 'El ciclo terminó después de ' + iterations + (iterations === 1 ? ' repetición' : ' repeticiones'),
                 'true');
         }
+
+        this.activeLoop = savedLoop;
     }
 
     eval(node) {
@@ -662,7 +687,21 @@ class SimInterp {
     }
 
     capture(line, note, status) {
-        this.snap.capture({ line, note, status, variables: this.scope.snapshot(), output: this.out.slice() });
+        let loopCtx = null;
+        if (this.activeLoop) {
+            const al = this.activeLoop;
+            const varValue = al.varName ? this.scope.get(al.varName) : null;
+            const condResult = status === 'true' ? true : status === 'false' ? false : null;
+            loopCtx = {
+                kind: al.kind,
+                varName: al.varName || null,
+                varValue: varValue !== undefined ? varValue : null,
+                condText: al.condText,
+                condResult,
+                updateText: al.updateText || null
+            };
+        }
+        this.snap.capture({ line, note, status, variables: this.scope.snapshot(), output: this.out.slice(), loopCtx });
     }
 }
 
@@ -890,6 +929,53 @@ function simCargarYEjecutar(codigo) {
     document.head.appendChild(style);
 })();
 
+function simBuildLoopBoxHtml(loopCtx) {
+    if (!loopCtx) return '';
+    const condBadge = loopCtx.condResult !== null
+        ? '<span class="sim-for-badge ' + (loopCtx.condResult ? 'sim-for-t' : 'sim-for-f') + '">' +
+            (loopCtx.condResult ? 'verdadero' : 'falso') + '</span>'
+        : '';
+
+    if (loopCtx.kind === 'for') {
+        const val = (loopCtx.varValue !== null && loopCtx.varValue !== undefined) ? loopCtx.varValue : '?';
+        const valStr = simEscape(String(val));
+        const varRe = new RegExp('\\b' + loopCtx.varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'g');
+        const condWithVal = simEscape(loopCtx.condText.replace(varRe, String(val)));
+        const updateWithVal = simEscape((loopCtx.updateText || '').replace(varRe, String(val)));
+        return '<div class="sim-for-panel">' +
+            '<div class="sim-for-header">⟳ ciclo <b>for</b></div>' +
+            '<div class="sim-for-parts">' +
+                '<div class="sim-for-part">' +
+                    '<div class="sim-for-label">inicializador</div>' +
+                    '<code class="sim-for-code">' + simEscape(loopCtx.varName) + ' = <b class="sim-for-t">' + valStr + '</b></code>' +
+                '</div>' +
+                '<div class="sim-for-part">' +
+                    '<div class="sim-for-label">condición</div>' +
+                    '<code class="sim-for-code">' + condWithVal + '</code>' +
+                    (condBadge ? '<div class="sim-for-now">' + condBadge + '</div>' : '') +
+                '</div>' +
+                '<div class="sim-for-part">' +
+                    '<div class="sim-for-label">avance</div>' +
+                    '<code class="sim-for-code">' + updateWithVal + '</code>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    // while / do-while: solo panel de condición
+    const label = loopCtx.kind === 'dowhile' ? 'do-while' : 'while';
+    return '<div class="sim-for-panel">' +
+        '<div class="sim-for-header">⟳ ciclo <b>' + label + '</b></div>' +
+        '<div class="sim-for-parts">' +
+            '<div class="sim-for-part">' +
+                '<div class="sim-for-label">condición</div>' +
+                '<code class="sim-for-code">' + simEscape(loopCtx.condText) + '</code>' +
+                (condBadge ? '<div class="sim-for-now">' + condBadge + '</div>' : '') +
+            '</div>' +
+        '</div>' +
+    '</div>';
+}
+
 function simRender(state, info) {
     if (!state) { simClearPanels(); return; }
     simHighlight(state.line, state.status);
@@ -909,9 +995,10 @@ function simRender(state, info) {
     if (panelVars) {
         const entries = Object.entries(state.variables || {})
             .filter(([k, v]) => typeof v !== 'string'); // oculta strings
-        panelVars.innerHTML = entries.length
+        const varsHtml = entries.length
             ? entries.map(([k, v]) => '<div class="var">' + simEscape(k) + ' = ' + simEscape(simFmt(v)) + '</div>').join('')
             : '<span style="color:#8a9ab5;font-size:0.85em;">Sin variables</span>';
+        panelVars.innerHTML = simBuildLoopBoxHtml(state.loopCtx) + varsHtml;
     }
 
     const panelSalida = document.getElementById('panel-salida');

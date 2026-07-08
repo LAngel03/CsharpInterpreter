@@ -695,3 +695,11 @@ a {
     transform: translateY(-2px);
     text-decoration: none;
 }
+
+/* --- Mensaje de éxito (registro) --- */
+.form-exito {
+    color: var(--green);
+    font-size: 0.85em;
+    margin-top: 8px;
+    display: none;
+}

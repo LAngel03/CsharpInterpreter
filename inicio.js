@@ -39,6 +39,20 @@ function mostrarError(formId, mensaje) {
     el.style.display = mensaje ? 'block' : 'none';
 }
 
+function mostrarExito(formId, mensaje) {
+    let el = document.getElementById(formId + '-exito');
+    if (!el) {
+        el = document.createElement('p');
+        el.id = formId + '-exito';
+        el.className = 'form-exito';
+        const card = document.querySelector('#screen-' + formId + ' .auth-card');
+        const btn = card.querySelector('.btn--primary');
+        card.insertBefore(el, btn);
+    }
+    el.textContent = mensaje;
+    el.style.display = mensaje ? 'block' : 'none';
+}
+
 function setCargando(formId, cargando) {
     const card = document.querySelector('#screen-' + formId + ' .auth-card');
     const btn = card.querySelector('.btn--primary');
@@ -48,7 +62,7 @@ function setCargando(formId, cargando) {
     btn.textContent = cargando ? 'Un momento…' : btn.dataset.textoOriginal;
 }
 
-// ── Redirección tras login/registro exitoso ─────────────────────
+// ── Redirección tras login exitoso ─────────────────────
 // Ajusta esta ruta si tu simulador vive en otro archivo/carpeta.
 const RUTA_SIMULADOR = './Inicio/inicio.html';
 
@@ -110,6 +124,7 @@ async function handleLogin() {
 // ── Registro ──────────────────────────────────────────────────
 async function handleRegister() {
     mostrarError('register', '');
+    mostrarExito('register', '');
     const matricula = document.getElementById('reg-mat').value.trim();
     const nombre = document.getElementById('reg-nombre').value.trim();
     const apellido_paterno = document.getElementById('reg-ap').value.trim();
@@ -133,7 +148,7 @@ async function handleRegister() {
 
     setCargando('register', true);
     try {
-        const resultado = await window.ApiClient.register({
+        await window.ApiClient.register({
             matricula,
             nombre,
             apellido_paterno,
@@ -141,8 +156,20 @@ async function handleRegister() {
             password,
             grupo_id: grupoVal ? parseInt(grupoVal) : null
         });
-        window.ApiClient.guardarSesion(resultado);
-        irAlSimulador();
+
+        // Cuenta creada: mostramos mensaje y mandamos a login (NO al simulador)
+        mostrarExito('register', '¡Cuenta creada con éxito! Redirigiendo a iniciar sesión…');
+
+        setTimeout(() => {
+            mostrarExito('register', ''); // limpia el mensaje por si se vuelve a registrar
+            showAuth('login');
+            // Precarga la matrícula en el login para comodidad del usuario
+            const loginMat = document.getElementById('login-mat');
+            if (loginMat) loginMat.value = matricula;
+            const loginPw = document.getElementById('login-pw');
+            if (loginPw) loginPw.focus();
+        }, 1800);
+
     } catch (e) {
         mostrarError('register', e.message || 'No se pudo crear la cuenta.');
     } finally {

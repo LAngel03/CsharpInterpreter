@@ -36,8 +36,8 @@ function arrCellText(v) {
 }
 
 // ── Iconos del botón reproducir/pausar ───────────────────────
-const _ARR_ICON_PLAY  = '<img src="./img/iconos/play.png" alt="Reproducir"><span class="tooltip-text">Reproducir</span>';
-const _ARR_ICON_PAUSE = '<img src="./img/iconos/pause.png" alt="Pausar"><span class="tooltip-text">Pausar</span>';
+const _ARR_ICON_PLAY  = '<img src="../img/iconos/play.png" alt="Reproducir"><span class="tooltip-text">Reproducir</span>';
+const _ARR_ICON_PAUSE = '<img src="../img/iconos/pause.png" alt="Pausar"><span class="tooltip-text">Pausar</span>';
 
 // ── Botones por ID (compatibles con consolas.js) ─────────────
 function _arrBtns() {
@@ -322,7 +322,7 @@ function arrBuildForBoxHtml(forCtx) {
     if (forCtx.condResult !== null) {
         const yes = forCtx.condResult;
         condBadge = '<span class="sim-for-badge ' + (yes ? 'sim-for-t' : 'sim-for-f') + '">' +
-            (yes ? '✓ verdadero' : '✗ falso') + '</span>';
+            (yes ? 'verdadero' : 'falso') + '</span>';
     }
     return '<div class="sim-for-panel">' +
         '<div class="sim-for-header">⟳ ciclo <b>for</b></div>' +

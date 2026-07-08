@@ -1925,7 +1925,7 @@ pre {
     opacity: 1;
 }
 
-/* En pantallas chicas, deja solo el ícono para que no se amontone */
+/* En pantallas chicask, deja solo el ícono para que no se amontone */
 @media (max-width: 767.98px) {
     .btn-cerrar-header span {
         display: none;
