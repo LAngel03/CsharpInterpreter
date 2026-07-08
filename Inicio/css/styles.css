@@ -1885,7 +1885,52 @@ pre {
     margin-bottom: 8px;
     font-family: Arial, Helvetica, sans-serif;
 }
+
 #panel-salida {
     white-space: pre-wrap;
     word-break: break-word;
+}
+
+/* Botón "Cerrar sesión" en la esquina superior derecha del header */
+.btn-cerrar-header {
+    margin-left: auto;          /* lo empuja hasta la derecha */
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: transparent;
+    color: var(--white);
+    border: 1px solid var(--console-border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.btn-cerrar-header:hover {
+    background-color: rgba(224, 82, 99, 0.15);
+    border-color: #e05263;
+    color: #ff9aa5;
+}
+
+.btn-cerrar-header img {
+    width: 18px;
+    height: 18px;
+    filter: brightness(0) invert(1);   /* pone el ícono en blanco */
+    opacity: 0.85;
+}
+
+.btn-cerrar-header:hover img {
+    opacity: 1;
+}
+
+/* En pantallas chicas, deja solo el ícono para que no se amontone */
+@media (max-width: 767.98px) {
+    .btn-cerrar-header span {
+        display: none;
+    }
+    .btn-cerrar-header {
+        padding: 7px 10px;
+    }
 }
