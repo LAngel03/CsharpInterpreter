@@ -1,92 +1,80 @@
-/* ════════ DATOS DE EJEMPLO (luego vendrán de la API) ════════ */
-const TEMAS = {
-    'if': {
-        titulo: 'If / Else', archivo: 'ifelse.cs',
-        definicion: 'La estructura <strong>if</strong> ejecuta un bloque de código solo si una condición es verdadera. Puede combinarse con <strong>else if</strong> y <strong>else</strong> para manejar múltiples casos.',
-        codigo: `int edad = 17;\nstring nombre = "Juan";\n\nif (edad >= 18) {\n    Console.WriteLine(nombre + " es mayor de edad");\n} else if (edad >= 13) {\n    Console.WriteLine(nombre + " es adolescente");\n} else {\n    Console.WriteLine(nombre + " es niño");\n}`
-    },
-    'switch': {
-        titulo: 'Switch', archivo: 'switch.cs',
-        definicion: 'La estructura <strong>switch</strong> evalúa una expresión y ejecuta el bloque correspondiente a su valor. Es útil cuando hay múltiples casos posibles para una misma variable.',
-        codigo: `int dia = 3;\nswitch (dia) {\n    case 1: Console.WriteLine("Lunes"); break;\n    case 2: Console.WriteLine("Martes"); break;\n    case 3: Console.WriteLine("Miércoles"); break;\n    default: Console.WriteLine("Otro día"); break;\n}`
-    },
-    'ternario': {
-        titulo: 'Operador ternario', archivo: 'ternario.cs',
-        definicion: 'El <strong>operador ternario</strong> es una forma compacta de escribir un if-else en una sola línea: condición ? valor_si_true : valor_si_false.',
-        codigo: `int edad = 20;\nstring mensaje = (edad >= 18) ? "Mayor de edad" : "Menor de edad";\nConsole.WriteLine(mensaje);`
-    },
-    'ciclo-for': {
-        titulo: 'Ciclo For', archivo: 'for.cs',
-        definicion: 'El ciclo <strong>for</strong> repite un bloque un número determinado de veces. Se compone de inicialización, condición e incremento.',
-        codigo: `for (int i = 1; i <= 5; i = i + 1) {\n    Console.WriteLine("Número: " + i);\n}`
-    },
-    'ciclo-while': {
-        titulo: 'Ciclo While', archivo: 'while.cs',
-        definicion: 'El ciclo <strong>while</strong> repite un bloque mientras una condición sea verdadera.',
-        codigo: `int contador = 3;\nwhile (contador > 0) {\n    Console.WriteLine("Cuenta: " + contador);\n    contador = contador - 1;\n}`
-    },
-    'ciclo-dowhile': {
-        titulo: 'Ciclo Do-While', archivo: 'dowhile.cs',
-        definicion: 'El ciclo <strong>do-while</strong> garantiza que el bloque se ejecute al menos una vez, ya que la condición se evalúa al final.',
-        codigo: `int x = 1;\ndo {\n    Console.WriteLine("Valor: " + x);\n    x = x + 1;\n} while (x <= 3);`
-    },
-    'arreglo-uni': {
-        titulo: 'Arreglos unidimensionales', archivo: 'arreglo_uni.cs',
-        definicion: 'Un <strong>arreglo unidimensional</strong> almacena varios elementos del mismo tipo en una secuencia contigua.',
-        codigo: `int[] numeros = {10, 20, 30};\nfor (int i = 0; i < 3; i = i + 1) {\n    Console.WriteLine(numeros[i]);\n}`
-    },
-    'arreglo-bi': {
-        titulo: 'Arreglos bidimensionales', archivo: 'arreglo_bi.cs',
-        definicion: 'Un <strong>arreglo bidimensional</strong> organiza los datos en filas y columnas, como una tabla.',
-        codigo: `int[,] matriz = {{1,2},{3,4}};\nConsole.WriteLine(matriz[0,0]);\nConsole.WriteLine(matriz[1,1]);`
-    },
-    'recursividad': {
-        titulo: 'Recursividad', archivo: 'recursividad.cs',
-        definicion: 'La <strong>recursividad</strong> ocurre cuando una función se llama a sí misma. Tiene un caso base que detiene la recursión y un caso recursivo.',
-        codigo: `int factorial = 1;\nint numero = 5;\nint temporal = numero;\nwhile (temporal > 1) {\n    factorial = factorial * temporal;\n    temporal = temporal - 1;\n}\nConsole.WriteLine("Factorial: " + factorial);`
-    },
-    'archivos': {
-        titulo: 'Archivos', archivo: 'archivos.cs',
-        definicion: 'Sección dedicada a la lectura y escritura de archivos en C#.',
-        codigo: `// Ejemplo de archivos (pendiente)\nConsole.WriteLine("Lectura de archivos");`
-    },
-    'glosario': {
-        titulo: 'Glosario', archivo: 'glosario.cs',
-        definicion: 'Administra aquí los términos técnicos y sus definiciones.',
-        codigo: `// El glosario tendrá su propia vista de edición en el siguiente paso.`
+/* ════ Guardia de acceso: solo admins con sesión llegan aquí ════ */
+// Ajusta esta ruta si tu index.html vive en otro nivel de carpetas.
+const RUTA_LOGIN = '../index.html';
+
+(function protegerPanelAdmin() {
+    if (!window.ApiClient || !ApiClient.haySesion()) {
+        window.location.href = RUTA_LOGIN;
+        return;
     }
-};
+    const usuario = ApiClient.obtenerUsuarioLocal();
+    const esAdmin = usuario && typeof usuario.rol === 'string' && usuario.rol.toLowerCase() === 'admin';
+    if (!esAdmin) {
+        window.location.href = RUTA_LOGIN;
+    }
+})();
 
-const estudiantes = [
-    { nombre: "María Fernanda López", matricula: "2023A0451", hechas: 24, total: 24, cuat: 4, color: "#04AA6D" },
-    { nombre: "Diego Ramírez Soto", matricula: "2023A0288", hechas: 23, total: 24, cuat: 4, color: "#7B2CBF" },
-    { nombre: "Valeria Ortiz Mena", matricula: "2024B0112", hechas: 21, total: 24, cuat: 3, color: "#f7b733" },
-    { nombre: "Carlos Herrera Ruiz", matricula: "2024B0190", hechas: 19, total: 24, cuat: 3, color: "#2d9cdb" },
-    { nombre: "Ana Sofía Torres", matricula: "2024C0033", hechas: 17, total: 24, cuat: 2, color: "#eb5757" },
-    { nombre: "Luis Ángel Mendoza", matricula: "2025A0007", hechas: 14, total: 24, cuat: 1, color: "#06c47e" },
-    { nombre: "Paola Jiménez Cruz", matricula: "2025A0061", hechas: 11, total: 24, cuat: 1, color: "#bb6bd9" },
-    { nombre: "Jorge Castillo Vega", matricula: "2025A0078", hechas: 8, total: 24, cuat: 1, color: "#f2994a" },
-];
-
+/* ════════ Estado global ════════ */
 let temaActual = null, originalSnapshot = null, dirty = false, monacoEditor = null;
+let estudiantesCache = [];
 
-/* ════ Inicio: usuarios ════ */
-function inic(n) { const p = n.trim().split(/\s+/); return ((p[0]?.[0] || "") + (p[1]?.[0] || "")).toUpperCase() }
-function pintarUsuarios() {
-    document.getElementById("userRows").innerHTML = estudiantes.map((e, i) => {
-        const pos = i + 1, pct = Math.round(e.hechas / e.total * 100), rc = pos <= 3 ? ` rank--${pos}` : "";
-        return `<tr>
-            <td class="num"><span class="rank${rc}">${pos}</span></td>
-            <td><div class="u-cell"><div class="u-avatar" style="background:${e.color}">${inic(e.nombre)}</div><div class="u-name"><b>${e.nombre}</b><small>Activo</small></div></div></td>
-            <td><span class="matricula">${e.matricula}</span></td>
-            <td><div class="prog"><div class="prog__bar"><div class="prog__fill" style="width:${pct}%"></div></div><span class="prog__num">${e.hechas}/${e.total}</span></div></td>
-            <td class="num"><span class="badge">${e.cuat}.º</span></td>
-            <td><div class="row-actions">
-                <button class="icon-btn" title="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
-                <button class="icon-btn danger" title="Eliminar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
-            </div></td></tr>`;
-    }).join("");
+// Paleta para los avatares (ya no vienen "color" del backend, se asigna aquí)
+const PALETA_AVATAR = ["#04AA6D", "#7B2CBF", "#f7b733", "#2d9cdb", "#eb5757", "#06c47e", "#bb6bd9", "#f2994a"];
+function colorPara(i) { return PALETA_AVATAR[i % PALETA_AVATAR.length]; }
+
+/* ════ Inicio: usuarios (conectado a GET /api/usuarios) ════ */
+function inic(n) { const p = (n || "").trim().split(/\s+/); return ((p[0]?.[0] || "") + (p[1]?.[0] || "")).toUpperCase() }
+
+async function pintarUsuarios() {
+    const tbody = document.getElementById("userRows");
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px">Cargando estudiantes…</td></tr>`;
+
+    try {
+        const data = await ApiClient.listarEstudiantes();
+
+        // La vista v_estudiantes viene ordenada por apellido; para el
+        // "Ranking" mostramos a los estudiantes con más ejercicios resueltos
+        // primero (igual criterio que v_ranking_usuarios).
+        estudiantesCache = [...data].sort((a, b) => (b.puntos_totales ?? 0) - (a.puntos_totales ?? 0));
+
+        document.getElementById('statEstudiantes').textContent = estudiantesCache.length;
+
+        if (estudiantesCache.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px">Aún no hay estudiantes registrados.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = estudiantesCache.map((e, i) => {
+            const pos = i + 1, rc = pos <= 3 ? ` rank--${pos}` : "";
+            const nombreCompleto = e.nombre_completo || `${e.nombre} ${e.apellido_paterno} ${e.apellido_materno}`;
+            const grupoTxt = e.grupo ? `${e.grupo}${e.generacion ? ' · ' + e.generacion : ''}` : 'Sin grupo';
+            return `<tr>
+                <td class="num"><span class="rank${rc}">${pos}</span></td>
+                <td><div class="u-cell"></div><div class="u-name"><b>${nombreCompleto}</b><small>${grupoTxt}</small></div></div></td>
+                <td><span class="matricula">${e.matricula}</span></td>
+                <td><div class="prog"><span class="prog__num">${e.ejercicios_resueltos ?? 0} ejercicios · ${e.puntos_totales ?? 0} pts</span></div></td>
+                <td class="num"><span class="badge">${e.generacion || '—'}</span></td>
+                <td><div class="row-actions">
+                    <button class="icon-btn" title="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+                    <button class="icon-btn danger" title="Eliminar" onclick="eliminarUsuario(${e.id})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+                </div></td></tr>`;
+        }).join("");
+    } catch (err) {
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--danger,#eb5757)">No se pudieron cargar los estudiantes: ${err.message}</td></tr>`;
+    }
 }
+
+async function eliminarUsuario(id) {
+    if (!confirm('¿Eliminar a este estudiante? Esta acción no se puede deshacer.')) return;
+    try {
+        await ApiClient.eliminarEstudiante(id);
+        await pintarUsuarios();
+    } catch (err) {
+        alert('No se pudo eliminar: ' + err.message);
+    }
+}
+
 pintarUsuarios();
 
 /* ════ Navegación ════ */
@@ -120,41 +108,67 @@ if (toggleBtn) toggleBtn.addEventListener('click', () => {
 if (overlay) overlay.addEventListener('click', closeSidebar);
 
 
-/* ════ Carga de un tema ════ */
-function cargarTema(slug) {
-    const t = cargarTemaDesdeAPI(slug);
+/* ════ Carga de un tema (conectado a GET /api/subtemas/slug/:slug) ════ */
+async function cargarTema(slug) {
+    let t;
+    try {
+        t = await cargarTemaDesdeAPI(slug);
+    } catch (err) {
+        flashStatus('No se pudo cargar el tema', false);
+        console.error(err);
+        return;
+    }
     if (!t) return;
+
+    // codigo_ejemplo llega como jsonb: puede ser un string con el código
+    // o un objeto { codigo, archivo }. Se soportan ambos formatos.
+    let codigo = '', archivo = 'ejemplo.cs';
+    if (typeof t.codigo_ejemplo === 'string') codigo = t.codigo_ejemplo;
+    else if (t.codigo_ejemplo && typeof t.codigo_ejemplo === 'object') {
+        codigo = t.codigo_ejemplo.codigo || '';
+        archivo = t.codigo_ejemplo.archivo || archivo;
+    }
+
     temaActual = slug;
-    originalSnapshot = JSON.stringify({ titulo: t.titulo, definicion: t.definicion, codigo: t.codigo });
+    originalSnapshot = JSON.stringify({ titulo: t.titulo, definicion: t.definicion, codigo });
     document.getElementById('temaTitulo').textContent = t.titulo;
     document.getElementById('f-titulo').value = t.titulo;
     document.getElementById('f-definicion').value = t.definicion;
-    document.getElementById('codeFileName').textContent = t.archivo || 'ejemplo.cs';
-    if (monacoEditor) monacoEditor.setValue(t.codigo);
-    else document.getElementById('codeFallback').value = t.codigo;
+    document.getElementById('codeFileName').textContent = archivo;
+    if (monacoEditor) monacoEditor.setValue(codigo);
+    else document.getElementById('codeFallback').value = codigo;
     setDirty(false);
 }
 
-/* ════ PUNTOS DE CONEXIÓN CON LA API ════
-   Hoy leen/escriben el objeto local TEMAS. Cuando la API esté lista:
-   cargarTemaDesdeAPI  →  const r = await fetch(`${API}/api/subtemas/${slug}`); return await r.json();
-   guardarTemaEnAPI    →  await fetch(`${API}/api/subtemas/${slug}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(datos)});
-*/
-function cargarTemaDesdeAPI(slug) { return TEMAS[slug] ? { ...TEMAS[slug] } : null; }
-function guardarTemaEnAPI(slug, datos) { TEMAS[slug] = { ...TEMAS[slug], ...datos }; return true; }
+/* ════ PUNTOS DE CONEXIÓN CON LA API ════ */
+function cargarTemaDesdeAPI(slug) { return ApiClient.obtenerSubtemaPorSlug(slug); }
+function guardarTemaEnAPI(slug, datos) {
+    // OJO: usuarios.routes.js no incluye una ruta para editar subtemas.
+    // Esta llamada asume PUT /api/subtemas/slug/:slug protegida con
+    // verificarAdmin; si tu backend usa otra ruta, ajusta actualizarSubtemaPorSlug en api.js.
+    return ApiClient.actualizarSubtemaPorSlug(slug, {
+        titulo: datos.titulo,
+        definicion: datos.definicion,
+        codigo_ejemplo: { codigo: datos.codigo, archivo: document.getElementById('codeFileName').textContent }
+    });
+}
 
 /* ════ Guardar / Cancelar ════ */
 function getCodigoActual() { return monacoEditor ? monacoEditor.getValue() : document.getElementById('codeFallback').value; }
-function guardarCambios() {
+async function guardarCambios() {
     if (!temaActual) return;
     const datos = { titulo: document.getElementById('f-titulo').value.trim(), definicion: document.getElementById('f-definicion').value.trim(), codigo: getCodigoActual() };
     if (!datos.titulo) { alert('El título no puede estar vacío.'); return; }
-    if (guardarTemaEnAPI(temaActual, datos)) {
+    try {
+        await guardarTemaEnAPI(temaActual, datos);
         originalSnapshot = JSON.stringify(datos);
         document.getElementById('temaTitulo').textContent = datos.titulo;
         setDirty(false);
         flashStatus('Cambios guardados ✓', true);
-    } else { flashStatus('No se pudo guardar', false); }
+    } catch (err) {
+        console.error(err);
+        flashStatus('No se pudo guardar', false);
+    }
 }
 function cancelarCambios() {
     if (!temaActual || !originalSnapshot) return;
@@ -189,4 +203,20 @@ require(['vs/editor/editor.main'], function () {
     });
     monacoEditor.onDidChangeModelContent(() => { if (temaActual) markDirty(); });
     document.getElementById('codeFallback').style.display = 'none';
+});
+
+// ── CERRAR SESIÓN ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const btnCerrar = document.getElementById('btn-cerrar-sesion');
+    if (!btnCerrar) return;
+
+    btnCerrar.addEventListener('click', () => {
+        // Borra token y usuario del navegador
+        if (window.ApiClient && window.ApiClient.cerrarSesion) {
+            window.ApiClient.cerrarSesion();
+        }
+        // Regresa al login. '../index.html' porque el login está
+        // un nivel arriba de este simulador (igual que ../api.js).
+        window.location.href = '../index.html';
+    });
 });

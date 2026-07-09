@@ -63,17 +63,38 @@ function setCargando(formId, cargando) {
 }
 
 // ── Redirección tras login exitoso ─────────────────────
-// Ajusta esta ruta si tu simulador vive en otro archivo/carpeta.
+// Ajusta estas rutas si tus páginas viven en otro archivo/carpeta.
 const RUTA_SIMULADOR = './Inicio/inicio.html';
+const RUTA_ADMIN = './admin/indexAdministrador.html';
 
 function irAlSimulador() {
     window.location.href = RUTA_SIMULADOR;
 }
 
+function irAlPanelAdmin() {
+    window.location.href = RUTA_ADMIN;
+}
+
+// ── Determina si el usuario que acaba de loguearse es admin ──────
+// Confirmado con auth.service.js: el login devuelve usuario.rol como
+// string ('admin' | 'estudiante'), viene de roles.nombre en la BD.
+function esAdmin(usuario) {
+    return !!usuario && typeof usuario.rol === 'string' && usuario.rol.toLowerCase() === 'admin';
+}
+
+// ── Manda a cada quien a su pantalla según su rol ─────────────────
+function redirigirSegunRol(usuario) {
+    if (esAdmin(usuario)) {
+        irAlPanelAdmin();
+    } else {
+        irAlSimulador();
+    }
+}
+
 // ── Si ya hay sesión guardada, no mostrar login/registro de nuevo ──
 document.addEventListener('DOMContentLoaded', () => {
     if (window.ApiClient && window.ApiClient.haySesion()) {
-        irAlSimulador();
+        redirigirSegunRol(window.ApiClient.obtenerUsuarioLocal());
         return;
     }
     cargarGrupos();
@@ -113,7 +134,7 @@ async function handleLogin() {
     try {
         const resultado = await window.ApiClient.login(matricula, password);
         window.ApiClient.guardarSesion(resultado);
-        irAlSimulador();
+        redirigirSegunRol(resultado.usuario);
     } catch (e) {
         mostrarError('login', e.message || 'No se pudo iniciar sesión.');
     } finally {

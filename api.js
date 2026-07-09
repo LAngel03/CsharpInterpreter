@@ -50,6 +50,17 @@ function obtenerGrupos() {
   return apiFetch('/usuarios/grupos'); // pública en el backend
 }
 
+// Requiere sesión de admin (authMiddleware + verificarAdmin en el backend).
+// Devuelve la vista v_estudiantes: matricula, nombre_completo, grupo,
+// generacion, puntos_totales, ejercicios_resueltos, creado_en, etc.
+function listarEstudiantes() {
+  return apiFetch('/usuarios');
+}
+
+function eliminarEstudiante(id) {
+  return apiFetch(`/usuarios/${id}`, { method: 'DELETE' });
+}
+
 // ── Subtemas ──────────────────────────────
 function obtenerSubtemaPorSlug(slug) {
   return apiFetch(`/subtemas/slug/${slug}`);
@@ -57,6 +68,18 @@ function obtenerSubtemaPorSlug(slug) {
 
 function listarSubtemasPorCategoria(categoriaId) {
   return apiFetch(`/subtemas/categoria/${categoriaId}`);
+}
+
+// NOTA: en las rutas que me compartiste (usuarios.routes.js) no venía un
+// endpoint para actualizar subtemas, así que esta función asume que existe
+// (o existirá) una ruta PUT /api/subtemas/slug/:slug en tu backend, igual
+// de protegida con verificarAdmin. Si tu ruta real es distinta (por id, por
+// ejemplo), solo hay que ajustar la URL aquí abajo.
+function actualizarSubtemaPorSlug(slug, datos) {
+  return apiFetch(`/subtemas/slug/${slug}`, {
+    method: 'PUT',
+    body: JSON.stringify(datos)
+  });
 }
 
 // ── Glosario ──────────────────────────────
@@ -93,8 +116,11 @@ window.ApiClient = {
   register,
   obtenerPerfil,
   obtenerGrupos,
+  listarEstudiantes,
+  eliminarEstudiante,
   obtenerSubtemaPorSlug,
   listarSubtemasPorCategoria,
+  actualizarSubtemaPorSlug,
   listarGlosario,
   guardarSesion,
   cerrarSesion,

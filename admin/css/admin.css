@@ -963,17 +963,7 @@ tbody tr:last-child td {
     gap: 12px
 }
 
-.u-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    font-weight: 700;
-    font-size: .8rem;
-    color: #fff;
-    flex-shrink: 0
-}
+
 
 .u-name b {
     font-weight: 600;
@@ -1038,21 +1028,6 @@ tbody tr:last-child td {
     font-size: .84rem;
     background: var(--bg);
     color: var(--text-dim)
-}
-
-.rank--1 {
-    background: linear-gradient(135deg, #f7b733, #fc4a1a);
-    color: #fff
-}
-
-.rank--2 {
-    background: linear-gradient(135deg, #bdc3c7, #8a9ab5);
-    color: #fff
-}
-
-.rank--3 {
-    background: linear-gradient(135deg, #cd7f32, #a05a2c);
-    color: #fff
 }
 
 .row-actions {
@@ -1125,4 +1100,39 @@ tbody tr:last-child td {
         grid-template-columns: 1fr 1fr;
         gap: 12px
     }
+}
+
+
+/* Botón "Cerrar sesión" en la esquina superior derecha del header */
+.btn-cerrar-header {
+    margin-left: auto;          /* lo empuja hasta la derecha */
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: transparent;
+    color: var(--white);
+    border: 1px solid var(--console-border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.btn-cerrar-header:hover {
+    background-color: rgba(224, 82, 99, 0.15);
+    border-color: #e05263;
+    color: #ff9aa5;
+}
+
+.btn-cerrar-header img {
+    width: 18px;
+    height: 18px;
+    filter: brightness(0) invert(1);   /* pone el ícono en blanco */
+    opacity: 0.85;
+}
+
+.btn-cerrar-header:hover img {
+    opacity: 1;
 }

@@ -22,6 +22,10 @@
             <div class="av">LA</div>
             <div>L. Ángel<small>Administrador</small></div>
         </div>
+        <button id="btn-cerrar-sesion" class="btn-cerrar-header">
+        <img src="../img/iconos/Salir.png" alt="">
+        <span>Cerrar sesión</span>
+    </button>
     </header>
 
     <div class="layout">
@@ -103,7 +107,7 @@
                 <div class="stats">
                     <div class="stat">
                         <div class="k">Estudiantes</div>
-                        <div class="v">128</div>
+                        <div class="v" id="statEstudiantes">—</div>
                     </div>
 
                 </div>
@@ -257,6 +261,7 @@
         })();
     </script>
 
+    <script src="../api.js"></script>
     <script src="../admin/js/admin.js"></script>
 </body>
 
