@@ -21,8 +21,8 @@ function arcFmtVal(v, type) {
     return String(v);
 }
 
-const _ARC_ICON_PLAY  = '<img src="./img/iconos/play.png" alt="Reproducir"><span class="tooltip-text">Reproducir</span>';
-const _ARC_ICON_PAUSE = '<img src="./img/iconos/pause.png" alt="Pausar"><span class="tooltip-text">Pausar</span>';
+const _ARC_ICON_PLAY  = '<img src="../img/iconos/play.png" alt="Reproducir"><span class="tooltip-text">Reproducir</span>';
+const _ARC_ICON_PAUSE = '<img src="../img/iconos/pause.png" alt="Pausar"><span class="tooltip-text">Pausar</span>';
 
 function _arcBtns() {
     return [
