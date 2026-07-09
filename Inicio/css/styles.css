@@ -1,4 +1,4 @@
-/* styles.css Actual*/
+/* styles.css */
 
 :root {
     --dark: #282A35;
@@ -41,7 +41,33 @@ header {
 .app-header {
     background-color: var(--dark);
     padding: 6px 20px;
-    /* antes 12px 20px → menos alto */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-cerrar-header {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    color: #bfc6d1;
+    padding: 5px 10px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.btn-cerrar-header:hover {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+}
+.btn-cerrar-header img {
+    width: 18px;
+    height: 18px;
+    opacity: 0.75;
 }
 
 .logo {
@@ -1539,6 +1565,16 @@ pre {
     background: rgba(112, 38, 176, 0.156);
 }
 
+.sim-api-error {
+    background: rgba(224, 82, 99, 0.12);
+    border: 1px solid #e05263;
+    border-radius: 6px;
+    color: #e05263;
+    font-size: 0.82rem;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+}
+
 .sim-ejercicio-badge {
     display: inline-block;
     color: #fff;
@@ -1874,63 +1910,29 @@ pre {
 .arr-var-input:focus {
     border-color: #04AA6D;
 }
-
-.sim-api-error {
-    background: rgba(224, 82, 99, 0.12);
-    border: 1px solid #e05263;
-    color: #ffb3bd;
-    font-size: 0.8rem;
-    padding: 8px 12px;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    font-family: Arial, Helvetica, sans-serif;
+/* ── Tabla de métodos del módulo Archivos ── */
+.arc-tabla-metodos {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82em;
+    margin-top: 6px;
 }
-
-#panel-salida {
-    white-space: pre-wrap;
-    word-break: break-word;
+.arc-tabla-metodos th {
+    background: #1e2130;
+    color: #8a9ab5;
+    font-weight: 600;
+    padding: 6px 10px;
+    text-align: left;
+    border-bottom: 1px solid #3a3d4a;
 }
-
-/* Botón "Cerrar sesión" en la esquina superior derecha del header */
-.btn-cerrar-header {
-    margin-left: auto;          /* lo empuja hasta la derecha */
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background-color: transparent;
-    color: var(--white);
-    border: 1px solid var(--console-border);
-    border-radius: 8px;
-    padding: 7px 14px;
-    font-size: 0.85rem;
-    font-family: inherit;
-    cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+.arc-tabla-metodos td {
+    padding: 5px 10px;
+    border-bottom: 1px solid #2a2d3a;
+    vertical-align: top;
 }
-
-.btn-cerrar-header:hover {
-    background-color: rgba(224, 82, 99, 0.15);
-    border-color: #e05263;
-    color: #ff9aa5;
-}
-
-.btn-cerrar-header img {
-    width: 18px;
-    height: 18px;
-    filter: brightness(0) invert(1);   /* pone el ícono en blanco */
-    opacity: 0.85;
-}
-
-.btn-cerrar-header:hover img {
-    opacity: 1;
-}
-
-/* En pantallas chicask, deja solo el ícono para que no se amontone */
-@media (max-width: 767.98px) {
-    .btn-cerrar-header span {
-        display: none;
-    }
-    .btn-cerrar-header {
-        padding: 7px 10px;
-    }
+.arc-tabla-metodos tr:last-child td { border-bottom: none; }
+.arc-tabla-metodos code {
+    font-family: 'Consolas', monospace;
+    font-size: 0.9em;
+    color: #04AA6D;
 }

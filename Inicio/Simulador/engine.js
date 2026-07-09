@@ -1,6 +1,31 @@
-/* MOTOR DEL SIMULADOR C#
-*/
+/* ============================================================
+   MOTOR DEL SIMULADOR C#  (lexer + parser + intérprete)
+   Subconjunto controlado de C# para fines educativos.
+   Diseñado para correr tanto en navegador como en Node.
 
+   Flujo:  Código → Lexer → Parser → AST → Intérprete → Snapshots
+
+   ÍNDICE DE SECCIONES
+     1. LEXER        — convierte el texto fuente en una lista de
+                       tokens (números, identificadores, símbolos…).
+     2. ERRORES      — CompileError (fase léxica/sintáctica) y
+                       RuntimeError (fase de ejecución), ambos con línea.
+     3. PARSER       — descenso recursivo que construye el AST
+                       respetando la precedencia de operadores.
+     4. ENTORNO      — Environment: cadena de ámbitos (scopes) para
+                       resolver variables.
+     5. INTÉRPRETE   — recorre el AST ("tree-walking") y, en cada
+                       instrucción, registra un SNAPSHOT del estado
+                       (variables, arreglos, matrices, salida, línea
+                       actual y qué cambió).
+     6. API PÚBLICA  — CSharpEngine.compileAndRun(src, {maxSteps}).
+
+   SALIDA DE compileAndRun:
+     { tokens, ast, snapshots, output, error }
+     Cada snapshot = { step, currentLine, description,
+                       variables[], arrays[], matrices[],
+                       output[], changed[], isError }
+   ============================================================ */
 (function (root) {
   "use strict";
 
@@ -11,7 +36,7 @@
     "int", "double", "float", "string", "bool", "char",
     "if", "else", "switch", "case", "default",
     "for", "while", "do", "new", "true", "false",
-    "break", "continue", "return", "void"
+    "break", "continue", "return", "void", "static"
   ]);
 
   const TYPE_KEYWORDS = new Set(["int", "double", "float", "string", "bool", "char"]);
@@ -155,9 +180,30 @@
     }
 
     function parseProgram() {
-      const body = [];
-      while (!atEnd()) body.push(parseStatement());
-      return { type: "Program", body };
+      const functions = [], body = [];
+      while (!atEnd()) {
+        if (check("KEYWORD", "static")) functions.push(parseFunctionDecl());
+        else body.push(parseStatement());
+      }
+      return { type: "Program", functions, body };
+    }
+
+    function parseFunctionDecl() {
+      const line = next().line;                               // consume 'static'
+      const retTypeTok = next();                              // void / int / string …
+      const nameTok = expect("IDENT", undefined, "Se esperaba el nombre de la función");
+      expect("PUNCT", "(");
+      const params = [];
+      if (!check("PUNCT", ")")) {
+        do {
+          const paramTypeTok = next();
+          const paramName = expect("IDENT", undefined, "Se esperaba el nombre del parámetro").value;
+          params.push({ dataType: paramTypeTok.value, name: paramName });
+        } while (match("PUNCT", ","));
+      }
+      expect("PUNCT", ")");
+      const funcBody = parseBlock();
+      return { type: "FunctionDecl", returnType: retTypeTok.value, name: nameTok.value, params, funcBody, line };
     }
 
     function parseBlock() {
@@ -183,6 +229,13 @@
           case "do": return parseDoWhile();
           case "break": { const ln = next().line; expect("PUNCT", ";"); return { type: "Break", line: ln }; }
           case "continue": { const ln = next().line; expect("PUNCT", ";"); return { type: "Continue", line: ln }; }
+          case "return": {
+            const ln = next().line;
+            let value = null;
+            if (!check("PUNCT", ";")) value = parseExpression();
+            expect("PUNCT", ";");
+            return { type: "Return", value, line: ln };
+          }
         }
       }
       const ln = t.line;
@@ -391,7 +444,20 @@
         next(); return { type: "Literal", value: t.value === "true", raw: "bool", line: t.line };
       }
       if (t.type === "KEYWORD" && t.value === "new") return parseNew();
-      if (t.type === "IDENT") { next(); return { type: "Variable", name: t.value, line: t.line }; }
+      if (t.type === "IDENT") {
+        next();
+        if (check("PUNCT", "(")) {
+          next();
+          const args = [];
+          if (!check("PUNCT", ")")) {
+            args.push(parseExpression());
+            while (check("PUNCT", ",")) { next(); args.push(parseExpression()); }
+          }
+          expect("PUNCT", ")");
+          return { type: "FunctionCall", name: t.value, arguments: args, line: t.line };
+        }
+        return { type: "Variable", name: t.value, line: t.line };
+      }
       if (t.type === "PUNCT" && t.value === "(") {
         next(); const e = parseExpression(); expect("PUNCT", ")"); return e;
       }
@@ -442,6 +508,7 @@
      --------------------------------------------------------- */
   const BREAK = { signal: "break" };
   const CONTINUE = { signal: "continue" };
+  function ReturnValue(val) { this.value = val; }
 
   function Environment(parent) { this.vars = new Map(); this.parent = parent || null; }
   Environment.prototype.define = function (name, cell) { this.vars.set(name, cell); };
@@ -479,11 +546,15 @@
     this.steps = 0;
     this._scopeStack = [this.global];
     this._reads = new Set();
-    this._activeFor = null;   // { varName, condText, updateText }
+    this._activeFor = null;
     this._lastCondResult = null;
+    this._functions = {};
+    this._callStack = [];
+    this._files = {};
   }
 
   Interpreter.prototype.run = function () {
+    for (const fn of (this.ast.functions || [])) this._functions[fn.name] = fn;
     this.snapshot(0, "Inicio del programa", new Set());
     try {
       this.execBlockBody(this.ast.body, this.global);
@@ -492,6 +563,10 @@
       if (e instanceof RuntimeError) {
         this.snapshot(e.line || 0, "⚠ Error: " + e.message, new Set(), true);
         return { snapshots: this.snapshots, output: this.output, error: e };
+      }
+      if (e instanceof ReturnValue) {
+        this.snapshot(0, "Fin del programa", new Set());
+        return { snapshots: this.snapshots, output: this.output, error: null };
       }
       if (e === BREAK || e === CONTINUE) {
         const re = new RuntimeError("'break'/'continue' fuera de un ciclo o switch", 0);
@@ -551,6 +626,8 @@
       changed: Array.from(changed || []),
       read: Array.from(this._reads),
       forCtx,
+      callStack: this._callStack.map(f => ({ name: f.name, args: Object.assign({}, f.args) })),
+      files: Object.assign({}, this._files),
       isError: !!isError
     });
     this._reads = new Set();
@@ -580,9 +657,18 @@
         const changed = new Set();
         const r = this.evalExpr(stmt.expression, env, changed);
         if (stmt.expression.type === "Call" && this.isWriteLine(stmt.expression)) return;
+        if (stmt.expression.type === "Call" && this.isFileVoidCall(stmt.expression)) return;
+        if (stmt.expression.type === "FunctionCall") return;
         this.snapshot(stmt.line, this.describeExprStmt(stmt.expression, r), changed);
         return;
       }
+      case "Return": {
+        const changed = new Set();
+        const val = stmt.value ? this.evalExpr(stmt.value, env, changed) : null;
+        this.snapshot(stmt.line, "return " + fmt(val), changed);
+        throw new ReturnValue(val);
+      }
+      case "FunctionDecl": return;
       case "If": return this.execIf(stmt, env);
       case "Switch": return this.execSwitch(stmt, env);
       case "For": return this.execFor(stmt, env);
@@ -746,6 +832,12 @@
       node.object && node.object.type === "Variable" && node.object.name === "Console";
   };
 
+  Interpreter.prototype.isFileVoidCall = function (node) {
+    return node.type === "Call" &&
+      node.object && node.object.type === "Variable" && node.object.name === "File" &&
+      ["WriteAllText", "AppendAllText", "Delete"].includes(node.name);
+  };
+
   Interpreter.prototype.evalExpr = function (node, env, changed) {
     changed = changed || new Set();
     switch (node.type) {
@@ -794,6 +886,7 @@
         throw new RuntimeError("Miembro no soportado: ." + node.name, node.line);
       }
       case "Call": return this.evalCall(node, env, changed);
+      case "FunctionCall": return this.evalFunctionCall(node, env, changed);
       default: throw new RuntimeError("Expresión no soportada: " + node.type, node.line);
     }
   };
@@ -813,7 +906,84 @@
       if (d === 1) return m.cols;
       throw new RuntimeError("GetLength solo admite dimensión 0 o 1", node.line);
     }
+    if (node.object && node.object.type === "Variable" && node.object.name === "File") {
+      const path = fmtPrint(this.evalExpr(node.arguments[0], env, changed));
+      switch (node.name) {
+        case "WriteAllText": {
+          const content = fmtPrint(this.evalExpr(node.arguments[1], env, changed));
+          this._files[path] = content;
+          this.snapshot(node.line, "File.WriteAllText: crear \"" + path + "\" con " + fmt(content), changed);
+          return undefined;
+        }
+        case "AppendAllText": {
+          const content = fmtPrint(this.evalExpr(node.arguments[1], env, changed));
+          this._files[path] = (this._files[path] || "") + content;
+          this.snapshot(node.line, "File.AppendAllText: agregar a \"" + path + "\"", changed);
+          return undefined;
+        }
+        case "ReadAllText": {
+          if (!(path in this._files))
+            throw new RuntimeError("Archivo no encontrado: \"" + path + "\"", node.line);
+          return this._files[path];
+        }
+        case "Exists": {
+          return path in this._files;
+        }
+        case "Delete": {
+          const existia = path in this._files;
+          delete this._files[path];
+          this.snapshot(node.line, "File.Delete: eliminar \"" + path + "\" (" + (existia ? "eliminado" : "no existía") + ")", changed);
+          return undefined;
+        }
+        case "Copy": {
+          const dest = fmtPrint(this.evalExpr(node.arguments[1], env, changed));
+          if (!(path in this._files))
+            throw new RuntimeError("Archivo origen no encontrado: \"" + path + "\"", node.line);
+          this._files[dest] = this._files[path];
+          this.snapshot(node.line, "File.Copy: \"" + path + "\" → \"" + dest + "\"", changed);
+          return undefined;
+        }
+      }
+    }
     throw new RuntimeError("Función no soportada: " + node.name, node.line);
+  };
+
+  Interpreter.prototype.evalFunctionCall = function (node, env, changed) {
+    const fn = this._functions[node.name];
+    if (!fn) throw new RuntimeError("Función no definida: '" + node.name + "'", node.line);
+    if (this._callStack.length >= 50)
+      throw new RuntimeError("Demasiadas llamadas recursivas (desbordamiento de pila)", node.line);
+
+    const argVals = node.arguments.map(a => this.evalExpr(a, env, changed));
+
+    const fnEnv = new Environment(this.global);
+    fn.params.forEach((p, i) => {
+      const v = argVals[i] !== undefined ? argVals[i] : defaultValue(p.dataType);
+      fnEnv.define(p.name, { kind: "scalar", type: p.dataType, value: coerce(p.dataType, v) });
+    });
+
+    const frame = { name: fn.name, args: {} };
+    fn.params.forEach((p, i) => { frame.args[p.name] = argVals[i]; });
+    this._callStack.push(frame);
+
+    const argsStr = fn.params.map((p, i) => p.name + " = " + fmt(argVals[i])).join(", ");
+    this.snapshot(node.line, "Llamar " + fn.name + "(" + argsStr + ")", new Set());
+
+    let returnVal = fn.returnType === "void" ? null : defaultValue(fn.returnType);
+    try {
+      this.withScope(fnEnv, () => this.execBlockBody(fn.funcBody.body, fnEnv));
+    } catch (e) {
+      if (e instanceof ReturnValue) {
+        returnVal = e.value;
+      } else {
+        this._callStack.pop();
+        throw e;
+      }
+    }
+
+    this._callStack.pop();
+    this.snapshot(node.line, fn.name + " devuelve " + fmt(returnVal), new Set());
+    return returnVal;
   };
 
   Interpreter.prototype.resolveArray = function (objNode, env) {
@@ -961,6 +1131,7 @@
       case "MatrixAccess": return this.src(n.object) + "[" + this.src(n.indices[0]) + "," + this.src(n.indices[1]) + "]";
       case "Member": return this.src(n.object) + "." + n.name;
       case "Call": return this.src(n.object) + "." + n.name + "(" + n.arguments.map(a => this.src(a)).join(", ") + ")";
+      case "FunctionCall": return n.name + "(" + n.arguments.map(a => this.src(a)).join(", ") + ")";
       default: return "";
     }
   };
