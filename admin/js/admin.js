@@ -1,5 +1,4 @@
 /* ════ Guardia de acceso: solo admins con sesión llegan aquí ════ */
-// Ajusta esta ruta si tu index.html vive en otro nivel de carpetas.
 const RUTA_LOGIN = '../index.html';
 
 (function protegerPanelAdmin() {
@@ -34,7 +33,6 @@ async function pintarUsuarios() {
 
         // La vista v_estudiantes viene ordenada por apellido; para el
         // "Ranking" mostramos a los estudiantes con más ejercicios resueltos
-        // primero (igual criterio que v_ranking_usuarios).
         estudiantesCache = [...data].sort((a, b) => (b.puntos_totales ?? 0) - (a.puntos_totales ?? 0));
 
         document.getElementById('statEstudiantes').textContent = estudiantesCache.length;
@@ -77,13 +75,6 @@ async function eliminarUsuario(id) {
 
 pintarUsuarios();
 
-/* ════ Navegación ════ */
-/* function clearActive() { document.querySelectorAll('.nav-btn,.nav-sub-btn').forEach(b => b.classList.remove('active')) }
-function navInicio(btn) { if (!confirmDiscard()) return; clearActive(); btn.classList.add('active'); showView('inicio'); }
-function navTema(btn, slug) { if (!confirmDiscard()) return; clearActive(); btn.classList.add('active'); showView('tema'); cargarTema(slug); }
-function showView(name) { document.querySelectorAll('.view').forEach(v => v.classList.remove('show')); document.getElementById('view-' + name).classList.add('show'); }
-function toggleGroup(id) { document.getElementById(id).classList.toggle('open'); }
- */
 
 const toggleBtn = document.getElementById('sidebarToggle');
 const sidebar = document.getElementById('sidebar');
@@ -143,9 +134,7 @@ async function cargarTema(slug) {
 /* ════ PUNTOS DE CONEXIÓN CON LA API ════ */
 function cargarTemaDesdeAPI(slug) { return ApiClient.obtenerSubtemaPorSlug(slug); }
 function guardarTemaEnAPI(slug, datos) {
-    // OJO: usuarios.routes.js no incluye una ruta para editar subtemas.
-    // Esta llamada asume PUT /api/subtemas/slug/:slug protegida con
-    // verificarAdmin; si tu backend usa otra ruta, ajusta actualizarSubtemaPorSlug en api.js.
+
     return ApiClient.actualizarSubtemaPorSlug(slug, {
         titulo: datos.titulo,
         definicion: datos.definicion,

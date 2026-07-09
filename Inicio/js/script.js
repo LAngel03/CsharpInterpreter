@@ -666,6 +666,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.ApiClient && window.ApiClient.cerrarSesion) {
             window.ApiClient.cerrarSesion();
         }
-        window.location.href = './Inicio/inicio.html';
+        window.location.href = '../index.html';
     });
 });
