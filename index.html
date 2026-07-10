@@ -1,4 +1,4 @@
-<!-- index.html -->
+<!-- index.html (pagina principal) -->
 
 <!DOCTYPE html>
 <html lang="es">
@@ -6,301 +6,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="./Inicio/css/styles.css">
-    <title>C# Interpreter</title>
+    <title>Simulador C# — Inicio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="inicio.css">
 </head>
 
 <body>
 
     <header class="app-header text-white">
-        <img src="./img/Csharp_Logo.png" class="logo" alt="C# Logo"
-            onclick="mostrarPantallaInicio(); document.getElementById('main-content').scrollTo({top:0,behavior:'smooth'});"
-            style="cursor:pointer;">
-        <h1>Interpreter</h1>
-        <button id="btn-cerrar-sesion" class="btn-cerrar-header">
-            <img src="./img/iconos/Salir.png" alt="">
-            <span>Cerrar sesión</span>
-        </button>
+        <img src="./img/banner.png" class="logo" alt="C# Logo">
     </header>
 
-    <div class="layout d-flex">
-        <button class="sidebar-toggle d-md-none" id="sidebarToggle" aria-label="Abrir menú">&#9776;</button>
-        <div class="sidebar-overlay d-md-none" id="sidebarOverlay"></div>
+    <div id="landing">
 
-        <aside class="app-sidebar text-white shadow" id="sidebar">
-            <h4 class="mb-4">MENÚ</h4>
-
-            <button class="nav-btn" id="btn-inicio">
-                <img src="./img/iconos/Inicio.png" class="nav-icon" alt="">
-                <span class="nav-label">Inicio</span>
-            </button>
-
-            <div class="nav-group">
-                <button class="nav-btn has-sub">
-                    <img src="./img/iconos/operadores.png" class="nav-icon" alt="">
-                    <span class="nav-label">Operadores</span>
-                    <span class="nav-arrow">&#9662;</span>
-                </button>
-                <div class="nav-sub">
-                    <button class="nav-sub-btn" data-tema="operadores_logicos">Lógicos</button>
-                    <button class="nav-sub-btn" data-tema="operadores_aritmeticos">Aritméticos</button>
-                    <button class="nav-sub-btn" data-tema="operadores_relacionales">Relacionales</button>
+        <section class="hero">
+            <div class="hero__copy">
+                <h1>Entiende C# <span class="hl">paso a paso</span>, no solo el resultado.</h1>
+                <p class="lead">Escribe o corrige código y observa, línea por línea, cómo cambian las variables y qué
+                    imprime la consola. Una forma visual de aprender programación estructurada.</p>
+                <div class="hero__cta">
+                    <button class="btn btn--primary" onclick="showAuth('register')">
+                        Crear cuenta
+                    </button>
+                    <button class="btn btn--ghost" onclick="showAuth('login')">Iniciar sesión</button>
                 </div>
             </div>
 
-            <div class="nav-group">
-                <button class="nav-btn has-sub">
-                    <img src="./img/iconos/Selectivas.png" class="nav-icon" alt="">
-                    <span class="nav-label">Estructuras selectivas</span>
-                    <span class="nav-arrow">&#9662;</span>
-                </button>
-                <div class="nav-sub">
-
-                    <div class="nav-subgroup">
-                        <button class="nav-sub-btn has-sub2">
-                            <span style="flex:1">simples</span>
-                            <span class="nav-arrow2">&#9662;</span>
-                        </button>
-                        <div class="nav-sub2">
-                            <button class="nav-sub2-btn" data-tema="if_simple">If</button>
-                            <button class="nav-sub2-btn" data-tema="switch_simple">Switch</button>
-                            <button class="nav-sub2-btn" data-tema="ternario_simple">Ternario</button>
-                        </div>
-                    </div>
-
-                    <div class="nav-subgroup">
-                        <button class="nav-sub-btn has-sub2">
-                            <span style="flex:1">anidadas</span>
-                            <span class="nav-arrow2">&#9662;</span>
-                        </button>
-                        <div class="nav-sub2">
-                            <button class="nav-sub2-btn" data-tema="if_anidada">If</button>
-                            <button class="nav-sub2-btn" data-tema="switch_anidada">Switch</button>
-                            <button class="nav-sub2-btn" data-tema="ternario_anidada">Ternario</button>
-                        </div>
-                    </div>
-
-                    <div class="nav-subgroup">
-                        <button class="nav-sub-btn has-sub2">
-                            <span style="flex:1">compuestas</span>
-                            <span class="nav-arrow2">&#9662;</span>
-                        </button>
-                        <div class="nav-sub2">
-                            <button class="nav-sub2-btn" data-tema="if_compuesta">If</button>
-                            <button class="nav-sub2-btn" data-tema="switch_compuesta">Switch</button>
-                            <button class="nav-sub2-btn" data-tema="ternario_compuesta">Ternario</button>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <div class="nav-group">
-                <button class="nav-btn has-sub">
-                    <img src="./img/iconos/Ciclos.png" class="nav-icon" alt="">
-                    <span class="nav-label">Ciclos</span>
-                    <span class="nav-arrow">&#9662;</span>
-                </button>
-                <div class="nav-sub">
-                    <button class="nav-sub-btn" data-tema="Ciclos_for">For</button>
-                    <button class="nav-sub-btn" data-tema="Ciclos_while">While</button>
-                    <button class="nav-sub-btn" data-tema="Ciclos_dowhile">Do-While</button>
-                </div>
-            </div>
-
-            <button class="nav-btn" data-tema="Array_unidimensional">
-                <img src="./img/iconos/Array_Unidimensional.png" class="nav-icon" alt="">
-                <span class="nav-label">Arreglos unidimensionales</span>
-            </button>
-
-            <button class="nav-btn" data-tema="Array_bidimensional">
-                <img src="./img/iconos/Array_Bidimensional.png" class="nav-icon" alt="">
-                <span class="nav-label">Arreglos bidimensionales</span>
-            </button>
-
-            <button class="nav-btn" data-tema="Recursividad">
-                <img src="./img/iconos/Recursividad.png" class="nav-icon" alt="">
-                <span class="nav-label">Recursividad</span>
-            </button>
-
-            <button class="nav-btn" data-tema="Archivos">
-                <img src="./img/iconos/Archivos.png" class="nav-icon" alt="">
-                <span class="nav-label">Archivos</span>
-            </button>
-
-            <button class="nav-btn" data-tema="Glosario" id="btn-glosario">
-                <img src="./img/iconos/glosario.png" class="nav-icon" alt="">
-                <span class="nav-label">Glosario</span>
-            </button>
-        </aside>
-
-        <main class="text-white flex-grow-1" style="padding:0; overflow-y:auto;" id="main-content">
-
-            <div id="pantalla-inicio">
-
-                <div class="hero">
-                    <div class="hero-left">
-
-                        <div class="hero-left-text">
-                            <h2>Visualiza la ejecución<br>del <span>código C#</span></h2>
-
-                            <p>
-                                Aprende los fundamentos de la programación de forma visual e interactiva.
-                                Observa paso a paso cómo se ejecutan las instrucciones, analiza el flujo
-                                de ejecución y comprende el comportamiento de estructuras como ciclos,
-                                condicionales, arreglos y recursividad mediante diagramas y representaciones dinámicas.
-                            </p>
-                        </div>
-
-                    </div>
-                </div>
-
-
-                <!-- GLOSARIO INTEGRADO EN INICIO -->
-                <div class="inicio-glosario">
-                    <h3>Conceptos Generales</h3>
-                    <p class="sub">Selecciona un área temática para revisar sus definiciones, casos prácticos y
-                        conclusiones analógicas.</p>
-
-                    <div class="row row-cols-1 row-cols-md-2 g-4">
-                        <div class="col">
-                            <button class="card h-100 p-4 w-100 text-start modular-card-btn"
-                                onclick="abrirConceptoModal('Selectivas')">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div class="p-2 rounded" style="background-color: rgba(4,170,109,0.1);">
-                                        <img src="./img/iconos/Selectivas.png" class="nav-icon" alt="">
-                                    </div>
-                                </div>
-                                <h4 class="text-white fw-bold mb-1">Estructuras Selectivas</h4>
-                                <p class="text-white small flex-grow-1 m-0 mt-2">Conceptos generales sobre la toma de
-                                    decisiones lógicas en el código.</p>
-                            </button>
-                        </div>
-
-                        <div class="col">
-                            <button class="card h-100 p-4 w-100 text-start modular-card-btn"
-                                onclick="abrirConceptoModal('Ciclos')">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div class="p-2 rounded" style="background-color: rgba(123,44,191,0.1);">
-                                        <img src="./img/iconos/Ciclos.png" class="nav-icon" alt="">
-                                    </div>
-                                </div>
-                                <h4 class="text-white fw-bold mb-1">Ciclos</h4>
-                                <p class="text-white small flex-grow-1 m-0 mt-2">Conceptos generales sobre repeticiones
-                                    de bloques de código.</p>
-                            </button>
-                        </div>
-
-                        <div class="col">
-                            <button class="card h-100 p-4 w-100 text-start modular-card-btn"
-                                onclick="abrirConceptoModal('Array_unidimensional')">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div class="p-2 rounded" style="background-color: rgba(4,170,109,0.1);">
-                                        <img src="./img/iconos/Array_Unidimensional.png" class="nav-icon" alt="">
-                                    </div>
-                                </div>
-                                <h4 class="text-white fw-bold mb-1">Arreglos Unidimensionales</h4>
-                                <p class="text-white small flex-grow-1 m-0 mt-2">Conceptos generales sobre
-                                    almacenamiento lineal en una sola fila de datos consecutivos.</p>
-                            </button>
-                        </div>
-
-                        <div class="col">
-                            <button class="card h-100 p-4 w-100 text-start modular-card-btn"
-                                onclick="abrirConceptoModal('Array_bidimensional')">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div class="p-2 rounded" style="background-color: rgba(4,170,109,0.1);">
-                                        <img src="./img/iconos/Array_Bidimensional.png" class="nav-icon" alt="">
-                                    </div>
-                                </div>
-                                <h4 class="text-white fw-bold mb-1">Arreglos Bidimensionales</h4>
-                                <p class="text-white small flex-grow-1 m-0 mt-2">Conceptos generales organizados en
-                                    tablas formadas por filas y columnas.</p>
-                            </button>
-                        </div>
-
-                        <div class="col">
-                            <button class="card h-100 p-4 w-100 text-start modular-card-btn"
-                                onclick="abrirConceptoModal('Recursividad')">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div class="p-2 rounded" style="background-color: rgba(255,193,7,0.1);">
-                                        <img src="./img/iconos/Recursividad.png" class="nav-icon" alt="">
-                                    </div>
-                                </div>
-                                <h4 class="text-white fw-bold mb-1">Recursividad</h4>
-                                <p class="text-white small flex-grow-1 m-0 mt-2">Conceptos generales sobre funciones que
-                                    dividen un problema llamándose a sí mismas.</p>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-            <!-- ══ FIN PANTALLA INICIO ══ -->
-
-            <!-- Contenido dinámico de módulos -->
-            <section id="seccion-tema" style="display:none; padding: 20px;">
-                <div id="tema-titulo"></div>
-                <div class="explanation-text" id="tema-descripcion" style="display:none;"></div>
-                <div id="grid-modulos" class="row row-cols-1 row-cols-md-2 g-4 mb-4"></div>
-                <div id="workspace-container"></div>
-            </section>
-
-            <!-- FOOTER ahora vive dentro de main, así fluye con el scroll -->
-            <footer class="app-footer text-center p-3">C# Interpreter</footer>
-
-        </main>
-
+        </section>
+        <div class="foot">Simulador C# · Proyecto educativo de Programación Estructurada</div>
     </div>
 
-    <dialog id="modal-concepto" class="custom-modal">
-        <div class="modal-content-wrapper">
-            <div class="custom-modal-header">
-                <div class="d-flex align-items-center gap-2">
-                    <h2 id="modal-titulo" class="m-0">Concepto</h2>
+    <div class="auth-screen" id="screen-login">
+        <div class="auth-card">
+            <button class="auth-back" onclick="showLanding()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12" />
+                    <polyline points="12 19 5 12 12 5" />
+                </svg>
+                Volver al inicio
+            </button>
+            <div class="auth-head">
+                <h2>Iniciar sesión</h2>
+            </div>
+            <p class="auth-sub">Ingresa con tu matrícula y contraseña.</p>
+
+            <div class="field">
+                <label for="login-mat">Matrícula</label>
+                <input id="login-mat" type="text" inputmode="numeric" maxlength="8" placeholder="Ej: 20241088">
+            </div>
+            <div class="field">
+                <label for="login-pw">Contraseña</label>
+                <div class="pw-wrap">
+                    <input id="login-pw" type="password" placeholder="Tu contraseña" autocomplete="current-password">
+                    <button type="button" onclick="togglePw('login-pw',this)" aria-label="Mostrar contraseña">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                    </button>
                 </div>
-                <button class="modal-close-x" onclick="cerrarConceptoModal()">&times;</button>
             </div>
-            <div class="custom-modal-body">
-                <span class="modal-subtitle" id="modal-subtitulo">ANALOGÍA</span>
-                <h3 class="modal-main-topic" id="modal-tema-nombre">Cargando...</h3>
-                <p class="modal-description" id="modal-descripcion-texto">Definición...</p>
-                <div class="modal-card-case">
-                    <div class="card-case-header"><strong>Caso Práctico:</strong></div>
-                    <p class="card-case-text" id="modal-caso-practico">Ejemplo...</p>
-                </div>
-                <p class="modal-footer-abstract" id="modal-abstraccion-conclusión">Conclusión...</p>
-            </div>
-            <div class="custom-modal-footer">
-                <button class="ctrl-btn primary px-4 py-2" onclick="cerrarConceptoModal()">Entendido</button>
-            </div>
+
+            <button class="btn btn--primary" onclick="handleLogin()">Entrar</button>
+
+            <p class="auth-alt">¿No tienes cuenta? <button class="btn btn--primary" onclick="showAuth('register')">Crear
+                    cuenta</button></p>
         </div>
-    </dialog>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./Inicio/js/consolas.js"></script>
-    <script src="./Inicio/js/temas/operadores.js"></script>
-    <script src="./Inicio/js/temas/Ciclos_for.js"></script>
-    <script src="./Inicio/js/temas/Ciclos_while.js"></script>
-    <script src="./Inicio/js/temas/Ciclos_dowhile.js"></script>
-    <script src="./Inicio/js/temas/if.js"></script>
-    <script src="./Inicio/js/temas/switch.js"></script>
-    <script src="./Inicio/js/temas/ternario.js"></script>
-    <script src="./Inicio/js/temas/selectivas_niveles.js"></script> <!-- NUEVO -->
-    <script src="./Inicio/js/temas/Array_unidimensional.js"></script>
-    <script src="./Inicio/js/temas/Array_bidimensional.js"></script>
-    <script src="./Inicio/js/temas/Recursividad.js"></script>
-    <script src="./Inicio/js/temas/Archivos.js"></script>
-    <script src="./api.js"></script>
-    <script src="./Inicio/js/script.js"></script>
-    <script src="./Inicio/Simulador/simulator.js"></script>
-    <script src="./Inicio/Simulador/engine.js"></script>
-    <script src="./Inicio/Simulador/array_simulator.js"></script>
-    <script src="./Inicio/Simulador/recursividad_simulator.js"></script>
-    <script src="./Inicio/Simulador/archivos_simulator.js"></script>
+    <!-- REGISTRO -->
+    <div class="auth-screen" id="screen-register">
+        <div class="auth-card wide">
+            <button class="auth-back" onclick="showLanding()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12" />
+                    <polyline points="12 19 5 12 12 5" />
+                </svg>
+                Volver al inicio
+            </button>
+            <div class="auth-head">
+                <h2>Crear cuenta</h2>
+            </div>
+            <p class="auth-sub">Regístrate como estudiante para acceder al simulador.</p>
 
+            <div class="field">
+                <label for="reg-mat">Matrícula</label>
+                <input id="reg-mat" type="text" inputmode="numeric" maxlength="8" placeholder="Ejemplo: 20241088">
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label for="reg-nombre">Nombre(s)</label>
+                    <input id="reg-nombre" type="text" placeholder="Tu nombre">
+                </div>
+                <div class="field">
+                    <label for="reg-ap">Apellido paterno</label>
+                    <input id="reg-ap" type="text" placeholder="Apellido paterno">
+                </div>
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label for="reg-am">Apellido materno</label>
+                    <input id="reg-am" type="text" placeholder="Apellido materno">
+                </div>
+                <div class="field">
+                    <label for="reg-grupo">Grupo</label>
+                    <select id="reg-grupo">
+                        <option value="" disabled selected>Selecciona tu grupo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field">
+                <label for="reg-pw">Contraseña</label>
+                <div class="pw-wrap">
+                    <input id="reg-pw" type="password" placeholder="Crea una contraseña">
+                    <button type="button" onclick="togglePw('reg-pw',this)" aria-label="Mostrar contraseña">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <button class="btn btn--primary" onclick="handleRegister()">Crear cuenta</button>
+
+            <p class="auth-alt">¿Ya tienes cuenta? <button onclick="showAuth('login')">Inicia sesión</button></p>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script src="inicio.js"></script>
 </body>
 
 </html>
