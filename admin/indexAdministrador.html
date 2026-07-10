@@ -4,6 +4,16 @@
 <html lang="es">
 
 <head>
+    <script>
+        (function () {
+            const token = localStorage.getItem('token');
+            if (!token) { window.location.replace('../index.html'); return; }
+            let usuario = null;
+            try { usuario = JSON.parse(localStorage.getItem('usuario')); } catch (e) {}
+            const esAdmin = usuario && typeof usuario.rol === 'string' && usuario.rol.toLowerCase() === 'admin';
+            if (!esAdmin) window.location.replace('../Inicio/inicio.html');
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administrador — Simulador C#</title>
