@@ -87,6 +87,78 @@ class ArraySimulator {
     info()  { return { index: this.snap.idx, total: this.snap.total() }; }
 }
 
+// ════════════════════════════════════════════════════════════
+//  EJEMPLOS Y EJERCICIOS — RESPALDO local (usado si la API falla)
+// ════════════════════════════════════════════════════════════
+
+const ARR_EXAMPLES = {
+    Array_unidimensional:
+`int[] numeros = new int[5];
+
+for (int i = 0; i < numeros.Length; i++) {
+  numeros[i] = (i + 1) * 10;
+}
+
+int suma = 0;
+for (int i = 0; i < numeros.Length; i++) {
+  suma += numeros[i];
+}
+
+Console.WriteLine("Elemento [2] = " + numeros[2]);
+Console.WriteLine("Longitud = " + numeros.Length);
+Console.WriteLine("Suma total = " + suma);`,
+
+    Array_bidimensional:
+`// Llenado y recorrido de una matriz 3x2
+int[,] matriz = new int[3,2];
+
+for (int f = 0; f < matriz.GetLength(0); f++) {
+  for (int c = 0; c < matriz.GetLength(1); c++) {
+    matriz[f,c] = (f + 1) * (c + 1);
+  }
+}
+
+Console.WriteLine("matriz[2,1] = " + matriz[2,1]);
+Console.WriteLine("Filas: " + matriz.GetLength(0));
+Console.WriteLine("Columnas: " + matriz.GetLength(1));`
+};
+
+const ARR_EJERCICIOS = {
+    Array_unidimensional: {
+        enunciado: `Una maestra registró las calificaciones de 5 alumnos. Crea un arreglo <code>int[]</code> de tamaño 5, llénalo con las calificaciones <strong>7, 8, 6, 9, 10</strong> y calcula el promedio del grupo usando un ciclo <code>for</code>.`,
+        codigo:
+`int[] calificaciones = new int[5];
+calificaciones[0] = 7;
+calificaciones[1] = 8;
+calificaciones[2] = 6;
+calificaciones[3] = 9;
+calificaciones[4] = 10;
+
+int suma = 0;
+for (int i = 0; i < calificaciones.Length; i++) {
+  suma += calificaciones[i];
+}
+
+double promedio = suma / calificaciones.Length;
+Console.WriteLine("Suma total = " + suma);
+Console.WriteLine("Promedio = " + promedio);`
+    },
+    Array_bidimensional: {
+        enunciado: `Una tienda registra las ventas de 2 vendedores durante 3 días en una matriz <code>int[,]</code> de 2 filas por 3 columnas. Llena la matriz con valores de ejemplo y calcula el total de ventas de cada vendedor (cada fila) usando ciclos <code>for</code> anidados.`,
+        codigo:
+`int[,] ventas = new int[2,3];
+ventas[0,0] = 100; ventas[0,1] = 150; ventas[0,2] = 120;
+ventas[1,0] = 80;  ventas[1,1] = 200; ventas[1,2] = 90;
+
+for (int f = 0; f < ventas.GetLength(0); f++) {
+  int totalFila = 0;
+  for (int c = 0; c < ventas.GetLength(1); c++) {
+    totalFila += ventas[f,c];
+  }
+  Console.WriteLine("Vendedor " + (f + 1) + " vendio en total: " + totalFila);
+}`
+    }
+};
 
 // ════════════════════════════════════════════════════════════
 //  CONEXIÓN CON LA API (con caché y respaldo local)
