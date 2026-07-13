@@ -31,7 +31,13 @@ function inic(n) { const p = (n || "").trim().split(/\s+/); return ((p[0]?.[0] |
 // Se normaliza porque un registro viejo podría llegar como null/undefined:
 // en ese caso lo tratamos como ACTIVO (para no bloquear a nadie por accidente).
 function estaActivo(e) { return e.activo !== false; }
-
+// Formatea la fecha de registro: 13/07/2026
+function fechaRegistro(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d)) return '—';
+    return d.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
 /* Cambia el filtro y repinta (sin volver a pedir datos a la API) */
 function filtrarUsuarios(filtro) {
     filtroUsuarios = filtro;
@@ -94,7 +100,7 @@ function renderTablaUsuarios() {
     tbody.innerHTML = lista.map((e, i) => {
         const pos = i + 1, rc = pos <= 3 ? ` rank--${pos}` : "";
         const nombreCompleto = e.nombre_completo || `${e.nombre} ${e.apellido_paterno} ${e.apellido_materno}`;
-        const grupoTxt = e.grupo ? `${e.grupo}${e.generacion ? ' · ' + e.generacion : ''}` : 'Sin grupo';
+        const grupoTxt = e.grupo ? `Grupo ${e.grupo}` : 'Sin grupo';
         const activo = estaActivo(e);
 
         // Celda de estado: etiqueta + interruptor
@@ -109,7 +115,7 @@ function renderTablaUsuarios() {
                 <td><div class="u-cell"></div><div class="u-name"><b>${nombreCompleto}</b><small>${grupoTxt}</small></div></div></td>
                 <td><span class="matricula">${e.matricula}</span></td>
                 <td><div class="prog"><span class="prog__num">${e.ejercicios_resueltos ?? 0} ejercicios · ${e.puntos_totales ?? 0} pts</span></div></td>
-                <td class="num"><span class="badge">${e.generacion || '—'}</span></td>
+                <td class="num"><span class="badge">${fechaRegistro(e.creado_en)}</span></td>
                 <td><div class="estado-cell">${estadoCell}</div></td>
                 <td><div class="row-actions">
                     <button class="icon-btn" title="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>

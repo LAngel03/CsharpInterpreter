@@ -9,7 +9,7 @@
             const token = localStorage.getItem('token');
             if (!token) { window.location.replace('../index.html'); return; }
             let usuario = null;
-            try { usuario = JSON.parse(localStorage.getItem('usuario')); } catch (e) {}
+            try { usuario = JSON.parse(localStorage.getItem('usuario')); } catch (e) { }
             const esAdmin = usuario && typeof usuario.rol === 'string' && usuario.rol.toLowerCase() === 'admin';
             if (!esAdmin) window.location.replace('../Inicio/inicio.html');
         })();
@@ -33,9 +33,9 @@
             <div>L. Ángel<small>Administrador</small></div>
         </div>
         <button id="btn-cerrar-sesion" class="btn-cerrar-header">
-        <img src="../img/iconos/Salir.png" alt="">
-        <span>Cerrar sesión</span>
-    </button>
+            <img src="../img/iconos/Salir.png" alt="">
+            <span>Cerrar sesión</span>
+        </button>
     </header>
 
     <div class="layout">
@@ -138,7 +138,8 @@
                                     <th>Nombre</th>
                                     <th>Matrícula</th>
                                     <th>Actividades completadas</th>
-                                    <th class="num">Cuatrimestre</th>
+                                    <th class="num">Fecha de registro</th>
+                                    <th>Estado</th>
                                     <th style="text-align:right">Acciones</th>
                                 </tr>
                             </thead>
