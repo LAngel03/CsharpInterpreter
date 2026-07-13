@@ -39,20 +39,17 @@ function mostrarError(formId, mensaje) {
     el.style.display = mensaje ? 'block' : 'none';
 }
 
-function mostrarExito(formId, mensaje) {
-    let el = document.getElementById(formId + '-exito');
-    if (!el) {
-        el = document.createElement('p');
-        el.id = formId + '-exito';
-        el.className = 'form-exito';
-        const card = document.querySelector('#screen-' + formId + ' .auth-card');
-        const btn = card.querySelector('.btn--primary');
-        card.insertBefore(el, btn);
-    }
-    el.textContent = mensaje;
-    el.style.display = mensaje ? 'block' : 'none';
-}
+// Cuenta creada: PENDIENTE de activación por el administrador
+        mostrarExito('register', 'Tu cuenta fue creada. Un administrador debe activarla antes de que puedas ingresar.');
 
+        setTimeout(() => {
+            mostrarExito('register', '');
+            showAuth('login');
+            const loginMat = document.getElementById('login-mat');
+            if (loginMat) loginMat.value = matricula;
+            const loginPw = document.getElementById('login-pw');
+            if (loginPw) loginPw.focus();
+        }, 4500);   // ← antes 1800: el mensaje es más largo, dale tiempo de leerlo
 function setCargando(formId, cargando) {
     const card = document.querySelector('#screen-' + formId + ' .auth-card');
     const btn = card.querySelector('.btn--primary');

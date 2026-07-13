@@ -220,7 +220,7 @@ async function cargarGlosario() {
 
     if (terminos && terminos.length > 0) {
         // Render desde API
-        const ORDEN_UNIDADES = ['Unidad II', 'Unidad III', 'Unidad IV', 'Operadores'];
+        const ORDEN_UNIDADES = ['Operadores','Unidad II', 'Unidad III', 'Unidad IV'];
         const UNIDADES_OCULTAS = ['General'];
         const porUnidad = {};
         for (const t of terminos) {
