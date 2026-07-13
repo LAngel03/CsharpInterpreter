@@ -9,9 +9,9 @@ function showAuth(which) {
 function showLanding() {
     document.getElementById('screen-login').classList.remove('show');
     document.getElementById('screen-register').classList.remove('show');
-    
-    document.getElementById('landing').style.display = 'flex'; 
-    
+
+    document.getElementById('landing').style.display = 'flex';
+
     window.scrollTo(0, 0);
 }
 
@@ -39,17 +39,20 @@ function mostrarError(formId, mensaje) {
     el.style.display = mensaje ? 'block' : 'none';
 }
 
-// Cuenta creada: PENDIENTE de activación por el administrador
-        mostrarExito('register', 'Tu cuenta fue creada. Un administrador debe activarla antes de que puedas ingresar.');
+function mostrarExito(formId, mensaje) {
+    let el = document.getElementById(formId + '-exito');
+    if (!el) {
+        el = document.createElement('p');
+        el.id = formId + '-exito';
+        el.className = 'form-exito';
+        const card = document.querySelector('#screen-' + formId + ' .auth-card');
+        const btn = card.querySelector('.btn--primary');
+        card.insertBefore(el, btn);
+    }
+    el.textContent = mensaje;
+    el.style.display = mensaje ? 'block' : 'none';
+}
 
-        setTimeout(() => {
-            mostrarExito('register', '');
-            showAuth('login');
-            const loginMat = document.getElementById('login-mat');
-            if (loginMat) loginMat.value = matricula;
-            const loginPw = document.getElementById('login-pw');
-            if (loginPw) loginPw.focus();
-        }, 4500);   // ← antes 1800: el mensaje es más largo, dale tiempo de leerlo
 function setCargando(formId, cargando) {
     const card = document.querySelector('#screen-' + formId + ' .auth-card');
     const btn = card.querySelector('.btn--primary');
@@ -133,6 +136,9 @@ async function handleLogin() {
         window.ApiClient.guardarSesion(resultado);
         redirigirSegunRol(resultado.usuario);
     } catch (e) {
+        // Si la cuenta aún no está activada, la API responde 403 y su
+        // mensaje ("Tu cuenta aún no ha sido activada…") llega en e.message,
+        // así que se muestra tal cual sin necesidad de código extra.
         mostrarError('login', e.message || 'No se pudo iniciar sesión.');
     } finally {
         setCargando('login', false);
@@ -175,8 +181,9 @@ async function handleRegister() {
             grupo_id: grupoVal ? parseInt(grupoVal) : null
         });
 
-        // Cuenta creada: mostramos mensaje y mandamos a login (NO al simulador)
-        mostrarExito('register', '¡Cuenta creada con éxito! Redirigiendo a iniciar sesión…');
+        // Cuenta creada, pero PENDIENTE de activación por el administrador.
+        // No hay auto-login: el alumno no puede entrar hasta que lo activen.
+        mostrarExito('register', 'Tu cuenta fue creada. Un administrador debe activarla antes de que puedas ingresar.');
 
         setTimeout(() => {
             mostrarExito('register', ''); // limpia el mensaje por si se vuelve a registrar
@@ -186,7 +193,7 @@ async function handleRegister() {
             if (loginMat) loginMat.value = matricula;
             const loginPw = document.getElementById('login-pw');
             if (loginPw) loginPw.focus();
-        }, 1800);
+        }, 4500);   // el mensaje es más largo que antes: dale tiempo de leerlo
 
     } catch (e) {
         mostrarError('register', e.message || 'No se pudo crear la cuenta.');
