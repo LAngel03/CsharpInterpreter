@@ -1136,3 +1136,66 @@ tbody tr:last-child td {
 .btn-cerrar-header:hover img {
     opacity: 1;
 }
+/* ============================================================
+   ESTADO DE ACTIVACIÓN — pegar al final de Admin.css
+   ============================================================ */
+
+/* Etiqueta "Pendiente" (naranja, para distinguirla del badge verde) */
+.badge--pend {
+    background: rgba(255, 159, 67, 0.12);
+    color: var(--warn);
+}
+
+/* Celda de estado: etiqueta arriba, botón abajo */
+.estado-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+/* Botón de activar / desactivar */
+.btn-estado {
+    border: 1px solid var(--console-border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 7px;
+    font-size: 0.73rem;
+    font-weight: 600;
+    font-family: inherit;
+    transition: 0.15s;
+    white-space: nowrap;
+}
+
+.btn-estado:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Activar → verde */
+.btn-estado--on {
+    border-color: var(--green-main);
+    color: var(--green-main);
+}
+
+.btn-estado--on:hover:not(:disabled) {
+    background: var(--green-main);
+    color: #fff;
+}
+
+/* Desactivar → rojo */
+.btn-estado--off:hover:not(:disabled) {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+/* Resalta discretamente las filas pendientes */
+.fila-pendiente {
+    background: rgba(255, 159, 67, 0.04);
+}
+
+.fila-pendiente td:first-child {
+    box-shadow: inset 3px 0 0 var(--warn);
+}

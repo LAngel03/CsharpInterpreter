@@ -110,6 +110,13 @@ function obtenerUsuarioLocal() {
 function haySesion() {
   return Boolean(getToken());
 }
+// Activar / desactivar un estudiante (solo admin)
+function cambiarActivoEstudiante(id, activo) {
+  return apiFetch(`/usuarios/${id}/activo`, {
+    method: 'PATCH',
+    body: JSON.stringify({ activo })
+  });
+}
 
 window.ApiClient = {
   login,
@@ -126,4 +133,5 @@ window.ApiClient = {
   cerrarSesion,
   obtenerUsuarioLocal,
   haySesion,
+  cambiarActivoEstudiante,
 };
