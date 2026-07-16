@@ -2,7 +2,7 @@
 
 const API_BASE_URL = 'https://apicsharpinterpreter-production.up.railway.app/api';
 function getToken() {
-  return localStorage.getItem('token'); // ajusta si guardas el token distinto
+  return localStorage.getItem('token'); 
 }
 
 async function apiFetch(path, options = {}) {
@@ -50,9 +50,6 @@ function obtenerGrupos() {
   return apiFetch('/usuarios/grupos'); // pública en el backend
 }
 
-// Requiere sesión de admin (authMiddleware + verificarAdmin en el backend).
-// Devuelve la vista v_estudiantes: matricula, nombre_completo, grupo,
-// generacion, puntos_totales, ejercicios_resueltos, creado_en, etc.
 function listarEstudiantes() {
   return apiFetch('/usuarios');
 }
@@ -70,11 +67,7 @@ function listarSubtemasPorCategoria(categoriaId) {
   return apiFetch(`/subtemas/categoria/${categoriaId}`);
 }
 
-// NOTA: en las rutas que me compartiste (usuarios.routes.js) no venía un
-// endpoint para actualizar subtemas, así que esta función asume que existe
-// (o existirá) una ruta PUT /api/subtemas/slug/:slug en tu backend, igual
-// de protegida con verificarAdmin. Si tu ruta real es distinta (por id, por
-// ejemplo), solo hay que ajustar la URL aquí abajo.
+
 function actualizarSubtemaPorSlug(slug, datos) {
   return apiFetch(`/subtemas/slug/${slug}`, {
     method: 'PUT',

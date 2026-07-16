@@ -348,7 +348,13 @@ class SimParser {
         const t = this.peek();
         if (t.type === 'op' && (t.value === '-' || t.value === '!')) {
             this.next();
-            return { type: 'Binary', op: t.value === '!' ? '==' : '-', left: { type: 'Literal', value: 0 }, right: this.parseUnary() };
+            const operando = this.parseUnary();
+            // -x  →  0 - x     (negación aritmética)
+            // !x  →  x == false (negación lógica: invierte el booleano)
+            if (t.value === '!') {
+                return { type: 'Binary', op: '==', left: operando, right: { type: 'Literal', value: false } };
+            }
+            return { type: 'Binary', op: '-', left: { type: 'Literal', value: 0 }, right: operando };
         }
         return this.parsePrimary();
     }
