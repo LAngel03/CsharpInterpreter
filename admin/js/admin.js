@@ -20,12 +20,7 @@ let estudiantesCache = [];
 // Filtro activo de la tabla de usuarios: 'todos' | 'pendientes' | 'activos'
 let filtroUsuarios = 'todos';
 
-// Paleta para los avatares (ya no vienen "color" del backend, se asigna aquí)
-const PALETA_AVATAR = ["#04AA6D", "#7B2CBF", "#f7b733", "#2d9cdb", "#eb5757", "#06c47e", "#bb6bd9", "#f2994a"];
-function colorPara(i) { return PALETA_AVATAR[i % PALETA_AVATAR.length]; }
-
 /* ════ Inicio: usuarios (conectado a GET /api/usuarios) ════ */
-function inic(n) { const p = (n || "").trim().split(/\s+/); return ((p[0]?.[0] || "") + (p[1]?.[0] || "")).toUpperCase() }
 
 // La vista v_estudiantes ahora devuelve la columna "activo".
 // Se normaliza porque un registro viejo podría llegar como null/undefined:
@@ -38,15 +33,6 @@ function fechaRegistro(iso) {
     if (isNaN(d)) return '—';
     return d.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
-/* Cambia el filtro y repinta (sin volver a pedir datos a la API) */
-function filtrarUsuarios(filtro) {
-    filtroUsuarios = filtro;
-    document.querySelectorAll('[data-filtro]').forEach(b => {
-        b.classList.toggle('on', b.dataset.filtro === filtro);
-    });
-    renderTablaUsuarios();
-}
-
 /* Pide los estudiantes a la API y los pinta */
 async function pintarUsuarios() {
     const tbody = document.getElementById("userRows");
@@ -185,6 +171,160 @@ if (toggleBtn) toggleBtn.addEventListener('click', () => {
 
 if (overlay) overlay.addEventListener('click', closeSidebar);
 
+/* ════ Navegación del sidebar → vista de edición de temas ════ */
+const viewInicio = document.getElementById('view-inicio');
+const viewTema = document.getElementById('view-tema');
+const btnInicio = document.getElementById('btn-inicio');
+
+function mostrarVistaInicio() {
+    if (viewTema) viewTema.classList.remove('show');
+    if (viewInicio) viewInicio.classList.add('show');
+}
+
+function mostrarVistaTema(slug) {
+    if (viewInicio) viewInicio.classList.remove('show');
+    if (viewTema) viewTema.classList.add('show');
+    cargarTema(slug);
+}
+
+// Temas que no vienen de la API (100% locales en el simulador del alumno):
+// editarlos aquí no tendría ningún efecto para los estudiantes.
+const TEMAS_NO_EDITABLES = ['Glosario', 'Recursividad', 'Archivos'];
+
+document.querySelectorAll('.nav-sub-btn[data-tema]:not(.has-sub2), .nav-sub2-btn[data-tema], .nav-btn[data-tema]:not(.has-sub)').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tema = btn.dataset.tema;
+        if (!tema) return;
+        if (TEMAS_NO_EDITABLES.includes(tema)) {
+            alert('Este tema todavía no está conectado a la base de datos: no se puede editar desde el panel.');
+            return;
+        }
+        if (!confirmDiscard()) return;
+        mostrarVistaTema(tema);
+        if (window.innerWidth < 768) closeSidebar();
+    });
+});
+
+if (btnInicio) {
+    btnInicio.addEventListener('click', () => {
+        if (!confirmDiscard()) return;
+        mostrarVistaInicio();
+        if (window.innerWidth < 768) closeSidebar();
+    });
+}
+
+/* ════ Ejemplos y ejercicio del tema ════
+   itemsActuales: [{tipo:'ejemplo', codigo}] o [{tipo:'ejercicio', codigo, descripcion}]
+   Mismo contrato que simNormalizarCodigoEjemplo (Inicio/Simulador/simulator.js):
+   codigo_ejemplo puede ser string | array de strings | {ejemplos:[...]}. */
+let itemsActuales = [];
+let tabActivo = 0;
+
+function normalizarCodigoEjemplo(codigo_ejemplo) {
+    if (typeof codigo_ejemplo === 'string') return [codigo_ejemplo];
+    if (Array.isArray(codigo_ejemplo)) return codigo_ejemplo;
+    if (codigo_ejemplo && typeof codigo_ejemplo === 'object' && Array.isArray(codigo_ejemplo.ejemplos)) {
+        return codigo_ejemplo.ejemplos;
+    }
+    return [''];
+}
+
+// Etiquetas "Ejemplo N" / "Ejercicio N" según la posición dentro de su propio tipo
+function etiquetasItems() {
+    let iEj = 0, iEjer = 0;
+    return itemsActuales.map(it => {
+        if (it.tipo === 'ejercicio') { iEjer++; return 'Ejercicio ' + iEjer; }
+        iEj++; return 'Ejemplo ' + iEj;
+    });
+}
+
+function renderEditorTabs() {
+    const cont = document.getElementById('editorTabs');
+    if (!cont) return;
+    const etiquetas = etiquetasItems();
+
+    cont.innerHTML = itemsActuales.map((item, i) => {
+        const esUltimoEjemplo = item.tipo === 'ejemplo' && itemsActuales.filter(x => x.tipo === 'ejemplo').length === 1;
+        const claseTipo = item.tipo === 'ejercicio' ? ' ejercicio' : '';
+        const claseActivo = i === tabActivo ? ' activo' : '';
+        const quitar = esUltimoEjemplo ? '' : `<span class="tab-remove" data-tab-remove="${i}" title="Quitar">&times;</span>`;
+        return `<span class="sim-tab${claseTipo}${claseActivo}" data-tab="${i}">${etiquetas[i]}${quitar}</span>`;
+    }).join('') +
+        `<button type="button" class="tab-add-btn" id="btnAgregarEjemplo">+ Ejemplo</button>` +
+        `<button type="button" class="tab-add-btn" id="btnAgregarEjercicio">+ Ejercicio</button>`;
+
+    cont.querySelectorAll('[data-tab-remove]').forEach(el => {
+        el.addEventListener('click', (ev) => { ev.stopPropagation(); eliminarTab(Number(el.dataset.tabRemove)); });
+    });
+    cont.querySelectorAll('.sim-tab').forEach(el => {
+        el.addEventListener('click', () => seleccionarTab(Number(el.dataset.tab)));
+    });
+    const btnEj = document.getElementById('btnAgregarEjemplo');
+    if (btnEj) btnEj.addEventListener('click', agregarEjemplo);
+    const btnEjer = document.getElementById('btnAgregarEjercicio');
+    if (btnEjer) btnEjer.addEventListener('click', agregarEjercicio);
+}
+
+// Guarda en itemsActuales lo que haya en el editor/enunciado antes de cambiar de pestaña
+function volcarTabActivaAEstado() {
+    const item = itemsActuales[tabActivo];
+    if (!item) return;
+    item.codigo = getCodigoActual();
+    if (item.tipo === 'ejercicio') {
+        const elEnun = document.getElementById('f-enunciado');
+        if (elEnun) item.descripcion = elEnun.value;
+    }
+}
+
+function seleccionarTab(i, { volcar = true } = {}) {
+    if (volcar) volcarTabActivaAEstado();
+    tabActivo = Math.max(0, Math.min(i, itemsActuales.length - 1));
+    const item = itemsActuales[tabActivo];
+    if (!item) return;
+
+    document.querySelectorAll('#editorTabs .sim-tab').forEach(el => {
+        el.classList.toggle('activo', Number(el.dataset.tab) === tabActivo);
+    });
+
+    const esEjercicio = item.tipo === 'ejercicio';
+    const enunciadoWrap = document.getElementById('enunciadoWrap');
+    if (enunciadoWrap) enunciadoWrap.style.display = esEjercicio ? '' : 'none';
+    if (esEjercicio) document.getElementById('f-enunciado').value = item.descripcion || '';
+
+    document.getElementById('codeFileName').textContent = etiquetasItems()[tabActivo].toLowerCase().replace(/\s+/g, '_') + '.cs';
+
+    if (monacoEditor) monacoEditor.setValue(item.codigo || '');
+    else document.getElementById('codeFallback').value = item.codigo || '';
+}
+
+function agregarEjemplo() {
+    volcarTabActivaAEstado();
+    itemsActuales.push({ tipo: 'ejemplo', codigo: '' });
+    renderEditorTabs();
+    seleccionarTab(itemsActuales.length - 1, { volcar: false });
+    markDirty();
+}
+
+function agregarEjercicio() {
+    volcarTabActivaAEstado();
+    itemsActuales.push({ tipo: 'ejercicio', codigo: '', descripcion: '' });
+    renderEditorTabs();
+    seleccionarTab(itemsActuales.length - 1, { volcar: false });
+    markDirty();
+}
+
+function eliminarTab(i) {
+    const item = itemsActuales[i];
+    if (!item) return;
+    const esUltimoEjemplo = item.tipo === 'ejemplo' && itemsActuales.filter(x => x.tipo === 'ejemplo').length === 1;
+    if (esUltimoEjemplo) { alert('Debe quedar al menos un ejemplo.'); return; }
+    if (!confirm('¿Quitar esta pestaña? Su contenido se perderá al guardar.')) return;
+    itemsActuales.splice(i, 1);
+    renderEditorTabs();
+    seleccionarTab(Math.min(i, itemsActuales.length - 1), { volcar: false });
+    markDirty();
+}
+
 /* ════ Carga de un tema (conectado a GET /api/subtemas/slug/:slug) ════ */
 async function cargarTema(slug) {
     let t;
@@ -197,50 +337,72 @@ async function cargarTema(slug) {
     }
     if (!t) return;
 
-    // codigo_ejemplo llega como jsonb: puede ser un string con el código
-    // o un objeto { codigo, archivo }. Se soportan ambos formatos.
-    let codigo = '', archivo = 'ejemplo.cs';
-    if (typeof t.codigo_ejemplo === 'string') codigo = t.codigo_ejemplo;
-    else if (t.codigo_ejemplo && typeof t.codigo_ejemplo === 'object') {
-        codigo = t.codigo_ejemplo.codigo || '';
-        archivo = t.codigo_ejemplo.archivo || archivo;
-    }
+    itemsActuales = normalizarCodigoEjemplo(t.codigo_ejemplo).map(codigo => ({ tipo: 'ejemplo', codigo: codigo || '' }));
+    (Array.isArray(t.ejercicios) ? t.ejercicios : []).forEach(ej => {
+        itemsActuales.push({ tipo: 'ejercicio', codigo: ej.codigo_csharp || '', descripcion: ej.descripcion || '' });
+    });
+    if (!itemsActuales.length) itemsActuales.push({ tipo: 'ejemplo', codigo: '' });
 
     temaActual = slug;
-    originalSnapshot = JSON.stringify({ titulo: t.titulo, definicion: t.definicion, codigo });
     document.getElementById('temaTitulo').textContent = t.titulo;
     document.getElementById('f-titulo').value = t.titulo;
     document.getElementById('f-definicion').value = t.definicion;
-    document.getElementById('codeFileName').textContent = archivo;
-    if (monacoEditor) monacoEditor.setValue(codigo);
-    else document.getElementById('codeFallback').value = codigo;
+
+    renderEditorTabs();
+    seleccionarTab(0, { volcar: false });
+
+    originalSnapshot = JSON.stringify({ titulo: t.titulo, definicion: t.definicion, items: itemsActuales });
     setDirty(false);
 }
 
 /* ════ PUNTOS DE CONEXIÓN CON LA API ════ */
 function cargarTemaDesdeAPI(slug) { return ApiClient.obtenerSubtemaPorSlug(slug); }
 
-function guardarTemaEnAPI(slug, datos) {
-    return ApiClient.actualizarSubtemaPorSlug(slug, {
-        titulo: datos.titulo,
-        definicion: datos.definicion,
-        codigo_ejemplo: { codigo: datos.codigo, archivo: document.getElementById('codeFileName').textContent }
-    });
-}
+function guardarTemaEnAPI(slug, datos) { return ApiClient.actualizarSubtemaPorSlug(slug, datos); }
 
 /* ════ Guardar / Cancelar ════ */
 function getCodigoActual() { return monacoEditor ? monacoEditor.getValue() : document.getElementById('codeFallback').value; }
 
 async function guardarCambios() {
     if (!temaActual) return;
-    const datos = { titulo: document.getElementById('f-titulo').value.trim(), definicion: document.getElementById('f-definicion').value.trim(), codigo: getCodigoActual() };
-    if (!datos.titulo) { alert('El título no puede estar vacío.'); return; }
+    volcarTabActivaAEstado();
+
+    const titulo = document.getElementById('f-titulo').value.trim();
+    const definicion = document.getElementById('f-definicion').value.trim();
+    if (!titulo) { alert('El título no puede estar vacío.'); return; }
+
+    const ejemplos = itemsActuales.filter(it => it.tipo === 'ejemplo').map(it => it.codigo || '');
+    const ejercicios = itemsActuales
+        .filter(it => it.tipo === 'ejercicio')
+        .map(it => ({ descripcion: (it.descripcion || '').trim(), codigo_csharp: it.codigo || '' }));
+
+    if (!ejemplos.length) { alert('Debe haber al menos un ejemplo.'); return; }
+    if (ejercicios.some(ej => !ej.descripcion)) { alert('Cada ejercicio necesita un enunciado.'); return; }
+
+    const datos = { titulo, definicion, codigo_ejemplo: ejemplos, ejercicios };
+
     try {
         await guardarTemaEnAPI(temaActual, datos);
-        originalSnapshot = JSON.stringify(datos);
-        document.getElementById('temaTitulo').textContent = datos.titulo;
+
+        // Verificación: releer el tema y confirmar que el backend sí conservó los ejercicios.
+        // El PUT nunca había mandado "ejercicios" antes de este cambio, así que no hay
+        // garantía de que el backend lo persista sin ajustes ahí también.
+        let ejerciciosConfirmados = false;
+        try {
+            const releido = await cargarTemaDesdeAPI(temaActual);
+            const n = Array.isArray(releido && releido.ejercicios) ? releido.ejercicios.length : 0;
+            ejerciciosConfirmados = n === ejercicios.length;
+        } catch (e) { /* si falla la relectura, se avisa igual abajo */ }
+
+        originalSnapshot = JSON.stringify({ titulo, definicion, items: itemsActuales });
+        document.getElementById('temaTitulo').textContent = titulo;
         setDirty(false);
-        flashStatus('Cambios guardados ✓', true);
+
+        if (ejerciciosConfirmados) {
+            flashStatus('Cambios guardados ✓', true);
+        } else {
+            flashStatus('Guardado, pero el backend no devolvió los ejercicios — revisar backend', false);
+        }
     } catch (err) {
         console.error(err);
         flashStatus('No se pudo guardar', false);
@@ -252,7 +414,9 @@ function cancelarCambios() {
     const s = JSON.parse(originalSnapshot);
     document.getElementById('f-titulo').value = s.titulo;
     document.getElementById('f-definicion').value = s.definicion;
-    if (monacoEditor) monacoEditor.setValue(s.codigo); else document.getElementById('codeFallback').value = s.codigo;
+    itemsActuales = s.items.map(it => ({ ...it }));
+    renderEditorTabs();
+    seleccionarTab(0, { volcar: false });
     setDirty(false);
 }
 

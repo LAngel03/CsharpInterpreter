@@ -247,12 +247,12 @@ body {
     }
 
     .app-sidebar:hover .nav-group:hover .nav-sub {
-        max-height: 200px;
+        max-height: 600px;
         opacity: 1;
     }
 
     .app-sidebar:hover .nav-group.open .nav-sub {
-        max-height: 200px;
+        max-height: 600px;
         opacity: 1;
     }
 
@@ -377,6 +377,69 @@ body {
     transform: scale(0.98);
 }
 
+/* ================= SUB-SUBMENÚ (3er nivel) =================
+   simples / anidadas / compuestas → If · Switch · Ternario */
+.nav-subgroup {
+    margin: 2px 0;
+}
+
+.nav-sub-btn.has-sub2 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.nav-arrow2 {
+    font-size: 0.6rem;
+    color: #8a9ab5;
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+}
+
+.nav-sub2 {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    padding-left: 12px;
+    transition: max-height 0.28s ease, opacity 0.2s ease;
+}
+
+.nav-sub2-btn {
+    width: 100%;
+    padding: 7px 14px;
+    background-color: transparent;
+    color: #7e87a0;
+    border: none;
+    border-left: 2px solid #14331a;
+    border-radius: 0 6px 6px 0;
+    text-align: left;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: 0.15s;
+    display: block;
+    margin-bottom: 2px;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.nav-sub2-btn:hover {
+    background-color: rgba(4, 170, 109, 0.12);
+    color: var(--green-main);
+    border-left-color: var(--green-main);
+    padding-left: 18px;
+}
+
+.nav-subgroup.open > .nav-sub2 {
+    max-height: 240px;
+    opacity: 1;
+}
+
+.nav-subgroup.open > .has-sub2 .nav-arrow2 {
+    transform: rotate(180deg);
+    color: var(--green-main);
+}
+
 /* ================= RESPONSIVE MÓVIL — botón flotante + overlay ================= */
 .sidebar-toggle {
     position: fixed;
@@ -454,8 +517,18 @@ body {
     }
 
     .app-sidebar .nav-group.open .nav-sub {
-        max-height: 200px;
-        opacity: 1;
+        max-height: 1200px !important;
+        opacity: 1 !important;
+    }
+
+    .app-sidebar .nav-subgroup.open > .nav-sub2 {
+        max-height: 600px !important;
+        opacity: 1 !important;
+    }
+
+    .app-sidebar .nav-subgroup.open > .has-sub2 .nav-arrow2 {
+        transform: rotate(180deg) !important;
+        color: var(--green-main) !important;
     }
 
     .app-sidebar::after {
@@ -809,14 +882,6 @@ body {
     background: var(--green-main)
 }
 
-.stat.alt::before {
-    background: #7B2CBF
-}
-
-.stat.amber::before {
-    background: var(--warn)
-}
-
 .stat .k {
     font-size: .78rem;
     color: var(--text-dim);
@@ -868,32 +933,6 @@ body {
 
 .card__head .grow {
     flex: 1
-}
-
-.filter-tabs {
-    display: flex;
-    gap: 5px;
-    background: var(--bg);
-    padding: 4px;
-    border-radius: 9px
-}
-
-.filter-tabs button {
-    border: none;
-    background: none;
-    color: var(--text-dim);
-    cursor: pointer;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: .79rem;
-    font-family: inherit;
-    font-weight: 600;
-    transition: .15s
-}
-
-.filter-tabs button.on {
-    background: var(--green-main);
-    color: #fff
 }
 
 .btn-add {
@@ -985,20 +1024,6 @@ tbody tr:last-child td {
     align-items: center;
     gap: 10px;
     min-width: 150px
-}
-
-.prog__bar {
-    flex: 1;
-    height: 7px;
-    background: var(--bg);
-    border-radius: 99px;
-    overflow: hidden
-}
-
-.prog__fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--green-main), #06c47e);
-    border-radius: 99px
 }
 
 .prog__num {
@@ -1152,6 +1177,7 @@ tbody tr:last-child td {
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
+    min-width: 110px;
 }
 
 /* Botón de activar / desactivar */
@@ -1202,6 +1228,86 @@ tbody tr:last-child td {
 tbody td.num {
     text-align: center;
 }
-.estado-cell {
-    min-width: 110px;
+
+/* ============================================================
+   EDITOR DE TEMA — pestañas de Ejemplo N / Ejercicio N
+   ============================================================ */
+.editor-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.sim-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #1e2130;
+    color: #8a9ab5;
+    border: 1px solid var(--console-border);
+    border-radius: 8px;
+    padding: 6px 10px 6px 14px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: 0.15s;
+}
+
+.sim-tab:hover {
+    border-color: var(--green-main);
+    color: var(--green-main);
+}
+
+.sim-tab.activo {
+    background: var(--green-main);
+    color: #000;
+    border-color: var(--green-main);
+    font-weight: 600;
+}
+
+.sim-tab.ejercicio:hover {
+    border-color: #7B2CBF;
+    color: #c9a3ff;
+}
+
+.sim-tab.ejercicio.activo {
+    background: #7B2CBF;
+    color: #fff;
+    border-color: #7B2CBF;
+}
+
+.sim-tab .tab-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    font-size: 0.9rem;
+    line-height: 1;
+    opacity: 0.6;
+}
+
+.sim-tab .tab-remove:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.tab-add-btn {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px dashed var(--console-border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.tab-add-btn:hover {
+    border-color: var(--green-main);
+    color: var(--green-main);
 }

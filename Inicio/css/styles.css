@@ -305,25 +305,6 @@ main {
     transition: opacity 0.2s, filter 0.2s;
 }
 
-.img-fluid {
-    border-radius: 25px;
-    max-width: 100%;
-    width: 300px;
-    height: 300px;
-
-    -webkit-mask-image: linear-gradient(to right,
-            rgba(0, 0, 0, 0) 0%,
-            rgba(0, 0, 0, 1) 30%);
-
-    mask-image: linear-gradient(to right,
-            rgba(0, 0, 0, 0) 0%,
-            rgba(0, 0, 0, 1) 30%);
-    mask-image: linear-gradient(to right,
-            transparent 0%,
-            black 50%,
-            black 100%);
-}
-
 .nav-btn.has-sub {
     display: flex;
     justify-content: space-between;
@@ -461,16 +442,14 @@ main {
     .app-sidebar.open {
         transform: translateX(0);
         box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+        overflow-y: auto !important;
+        /* espacio extra abajo para que el último ítem no
+           quede tapado por el botón verde flotante */
+        padding-bottom: 90px !important;
     }
 
     .app-sidebar .nav-label,
     .app-sidebar .nav-arrow {
-        opacity: 1;
-    }
-
-    /* En móvil el submenú se controla SOLO por .open (nunca por hover) */
-    .app-sidebar .nav-group.open .nav-sub {
-        max-height: 200px;
         opacity: 1;
     }
 
@@ -961,7 +940,7 @@ pre {
     position: absolute;
     inset: 0;
     /* cubre top/right/bottom/left = 0 */
-    background-image: url("../img/Diagrama_De_Flujo.png");
+    background-image: url("../../img/Diagrama_De_Flujo.png");
     background-size: cover;
     /* la imagen se adapta a todo el hero */
     background-position: center;
@@ -1018,79 +997,11 @@ pre {
     max-width: 500px;
 }
 
-.img-fluid {
-    position: relative;
-    left: 500px;
-}
-
-.img-fluid {
-    width: 220px;
-    height: auto;
-    border-radius: 25px;
-
-    -webkit-mask-image: linear-gradient(to right,
-            transparent 0%,
-            black 25%,
-            black 100%);
-
-    mask-image: linear-gradient(to right,
-            transparent 0%,
-            black 25%,
-            black 100%);
-}
-
 @media (max-width: 900px) {
     .hero-left {
         flex-direction: column;
         text-align: center;
     }
-
-    .img-fluid {
-        width: 160px;
-    }
-}
-
-/* Stats hero derecha */
-.hero-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding-left: 40px;
-    border-left: 2px solid #2a2d3a;
-}
-
-@media (max-width: 900px) {
-    .hero-stats {
-        border-left: none;
-        border-top: 2px solid #2a2d3a;
-        padding-left: 0;
-        padding-top: 30px;
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 16px;
-    }
-}
-
-.stat-item {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-}
-
-.stat-num {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: var(--white);
-    white-space: nowrap;
-}
-
-.stat-num span {
-    color: var(--green-main);
-}
-
-.stat-label {
-    font-size: 0.9rem;
-    color: #8a9ab5;
 }
 
 /* ── SECCIÓN GLOSARIO EN INICIO ── */
@@ -1123,15 +1034,13 @@ pre {
  */
 
 /* Feedback visual al tocar cualquier botón del sidebar */
-.nav-btn:active,
-.nav-btn.touching {
+.nav-btn:active {
     background-color: var(--green-main) !important;
     color: var(--white) !important;
     transform: scale(0.97);
 }
 
-.nav-sub-btn:active,
-.nav-sub-btn.touching {
+.nav-sub-btn:active {
     background-color: rgba(4, 170, 109, 0.25) !important;
     color: var(--green-main) !important;
     border-left-color: var(--green-main) !important;
@@ -1147,12 +1056,6 @@ pre {
     .nav-sub-btn:active {
         background-color: rgba(4, 170, 109, 0.25) !important;
         color: var(--green-main) !important;
-    }
-
-    /* Mostrar submenú abierto por clase .open en móvil */
-    .app-sidebar .nav-group.open .nav-sub {
-        max-height: 200px !important;
-        opacity: 1 !important;
     }
 
     /* Flecha rotada cuando el grupo está abierto en móvil */
@@ -1284,6 +1187,9 @@ pre {
     font-size: 0.78rem;
     font-weight: normal;
     letter-spacing: normal;
+
+    padding: 6px 12px;
+    border-radius: 8px;
 }
 
 /* Ícono con el mismo tamaño estándar que Anterior/Siguiente */
@@ -1326,11 +1232,6 @@ pre {
 #btn-reproducir:hover .tooltip-text {
     visibility: visible;
     opacity: 1;
-}
-
-#btn-reproducir {
-    padding: 6px 12px;
-    border-radius: 8px;
 }
 
 .glosario-unidad-titulo {
@@ -1471,6 +1372,7 @@ pre {
 @media (max-width: 767.98px) {
     .app-sidebar .nav-group.open .nav-sub {
         max-height: 600px !important;
+        opacity: 1 !important;
     }
 
     .app-sidebar .nav-subgroup.open>.nav-sub2 {
@@ -1521,14 +1423,6 @@ pre {
    FIX MÓVIL: que el 3er nivel no se recorte
    ════════════════════════════════════════ */
 @media (max-width: 767.98px) {
-
-    /* El sidebar debe poder desplazarse completo */
-    .app-sidebar.open {
-        overflow-y: auto !important;
-        /* espacio extra abajo para que el último ítem no
-           quede tapado por el botón verde flotante */
-        padding-bottom: 90px !important;
-    }
 
     /* Cuando un grupo está abierto, su caja de 2º nivel
        debe crecer lo suficiente para mostrar el 3er nivel */

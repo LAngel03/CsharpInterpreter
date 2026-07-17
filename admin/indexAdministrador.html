@@ -54,14 +54,61 @@
 
             <div class="nav-group">
                 <button class="nav-btn has-sub">
+                    <img src="../img/iconos/operadores.png" class="nav-icon" alt="">
+                    <span class="nav-label">Operadores</span>
+                    <span class="nav-arrow">&#9662;</span>
+                </button>
+                <div class="nav-sub">
+                    <button class="nav-sub-btn" data-tema="operadores_logicos">Lógicos</button>
+                    <button class="nav-sub-btn" data-tema="operadores_aritmeticos">Aritméticos</button>
+                    <button class="nav-sub-btn" data-tema="operadores_relacionales">Relacionales</button>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <button class="nav-btn has-sub">
                     <img src="../img/iconos/Selectivas.png" class="nav-icon" alt="">
                     <span class="nav-label">Estructuras selectivas</span>
                     <span class="nav-arrow">&#9662;</span>
                 </button>
                 <div class="nav-sub">
-                    <button class="nav-sub-btn" data-tema="if">If</button>
-                    <button class="nav-sub-btn" data-tema="switch">Switch</button>
-                    <button class="nav-sub-btn" data-tema="ternario">Operador ternario</button>
+
+                    <div class="nav-subgroup">
+                        <button class="nav-sub-btn has-sub2">
+                            <span style="flex:1">simples</span>
+                            <span class="nav-arrow2">&#9662;</span>
+                        </button>
+                        <div class="nav-sub2">
+                            <button class="nav-sub2-btn" data-tema="if_simple">If</button>
+                            <button class="nav-sub2-btn" data-tema="switch_simple">Switch</button>
+                            <button class="nav-sub2-btn" data-tema="ternario_simple">Ternario</button>
+                        </div>
+                    </div>
+
+                    <div class="nav-subgroup">
+                        <button class="nav-sub-btn has-sub2">
+                            <span style="flex:1">anidadas</span>
+                            <span class="nav-arrow2">&#9662;</span>
+                        </button>
+                        <div class="nav-sub2">
+                            <button class="nav-sub2-btn" data-tema="if_anidada">If</button>
+                            <button class="nav-sub2-btn" data-tema="switch_anidada">Switch</button>
+                            <button class="nav-sub2-btn" data-tema="ternario_anidada">Ternario</button>
+                        </div>
+                    </div>
+
+                    <div class="nav-subgroup">
+                        <button class="nav-sub-btn has-sub2">
+                            <span style="flex:1">compuestas</span>
+                            <span class="nav-arrow2">&#9662;</span>
+                        </button>
+                        <div class="nav-sub2">
+                            <button class="nav-sub2-btn" data-tema="if_compuesta">If</button>
+                            <button class="nav-sub2-btn" data-tema="switch_compuesta">Switch</button>
+                            <button class="nav-sub2-btn" data-tema="ternario_compuesta">Ternario</button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -101,6 +148,11 @@
             <button class="nav-btn" data-tema="Glosario" id="btn-glosario">
                 <img src="../img/iconos/glosario.png" class="nav-icon" alt="">
                 <span class="nav-label">Glosario</span>
+            </button>
+
+            <button class="nav-btn" data-tema="Ponte_a_prueba" id="btn-ponte-a-prueba">
+                <img src="../img/iconos/code.png" class="nav-icon" alt="">
+                <span class="nav-label">Ponte a prueba</span>
             </button>
         </aside>
 
@@ -194,11 +246,16 @@
                                 <polyline points="8 6 2 12 8 18" />
                             </svg></div>
                         <div>
-                            <h3>Código de ejemplo (C#)</h3><small>El código que el simulador ejecutará paso a
-                                paso</small>
+                            <h3>Ejemplos y ejercicio (C#)</h3><small>Cada pestaña es un ejemplo o ejercicio que verán
+                                los estudiantes; usa "+" para agregar</small>
                         </div>
                     </div>
                     <div class="block__body">
+                        <div class="editor-tabs" id="editorTabs"></div>
+                        <div class="field" id="enunciadoWrap" style="display:none"><label>Enunciado del ejercicio
+                                <span class="req">*</span></label><textarea class="textarea" id="f-enunciado"
+                                oninput="markDirty()"></textarea>
+                        </div>
                         <div class="code-shell">
                             <div class="code-shell__bar"><span class="dot r"></span><span class="dot y"></span><span
                                     class="dot g"></span><span class="name" id="codeFileName">ejemplo.cs</span></div>
@@ -264,8 +321,18 @@
                 });
             });
 
+            // Sub-acordeón (3er nivel): simples / anidadas / compuestas
+            document.querySelectorAll('.nav-subgroup .has-sub2').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const sub = btn.closest('.nav-subgroup');
+                    const isOpen = sub.classList.contains('open');
+                    sub.parentElement.querySelectorAll('.nav-subgroup.open').forEach(s => s.classList.remove('open'));
+                    if (!isOpen) sub.classList.add('open');
+                });
+            });
+
             // En móvil, cerrar el sidebar al elegir cualquier opción final
-            document.querySelectorAll('.nav-sub-btn, .nav-btn[data-tema]:not(.has-sub), #btn-inicio, #btn-glosario')
+            document.querySelectorAll('.nav-sub-btn:not(.has-sub2), .nav-sub2-btn, .nav-btn[data-tema]:not(.has-sub), #btn-inicio, #btn-glosario')
                 .forEach(b => b.addEventListener('click', () => {
                     if (window.innerWidth < 768) closeSidebar();
                 }));
