@@ -654,7 +654,9 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-shrink: 0
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end
 }
 
 .block__head .ic {
@@ -1149,6 +1151,51 @@ tbody tr:last-child td {
     .stats {
         grid-template-columns: 1fr 1fr;
         gap: 12px
+    }
+
+    /* Header: ya no cabe todo en una fila angosta — se recorta lo secundario */
+    .app-header {
+        padding: 6px 12px;
+        gap: 8px
+    }
+
+    .app-header .tag {
+        display: none
+    }
+
+    .admin-mini small {
+        display: none
+    }
+
+    .btn-cerrar-header span {
+        display: none
+    }
+
+    .btn-cerrar-header {
+        padding: 8px;
+        gap: 0
+    }
+
+    /* Recuadros de edición: título arriba, acciones (estado + botones) debajo a lo ancho */
+    .block__head .head-actions {
+        width: 100%;
+        justify-content: space-between
+    }
+
+    .btn--sm {
+        padding: 7px 12px;
+        font-size: .78rem
+    }
+}
+
+@media(max-width:420px) {
+    /* Deja solo el avatar (iniciales); el nombre ya no cabe */
+    .admin-mini > div:not(.av) {
+        display: none
+    }
+
+    .admin-mini {
+        gap: 0
     }
 }
 
