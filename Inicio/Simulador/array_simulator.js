@@ -210,17 +210,16 @@ function arrGetItemsDesdeSubtema(subtema, slug) {
         esEjercicio: false
     }));
 
-    const ej = (Array.isArray(subtema.ejercicios) && subtema.ejercicios.length)
-        ? subtema.ejercicios[0]
-        : null;
-    if (ej) {
+    const ejercicios = Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [];
+    ejercicios.forEach((ej, i) => {
         items.push({
-            label: 'Ejercicio',
+            label: ejercicios.length > 1 ? 'Ejercicio ' + (i + 1) : 'Ejercicio',
             codigo: ej.codigo_csharp,
             enunciado: ej.descripcion,
+            titulo: ej.titulo || null,
             esEjercicio: true
         });
-    }
+    });
     return items;
 }
 
@@ -238,12 +237,12 @@ function arrGetItemsLocal(tema) {
     return items;
 }
 
-function arrSetDescripcion(html, esEjercicio) {
+function arrSetDescripcion(html, esEjercicio, titulo) {
     const elDesc = document.getElementById('tema-descripcion');
     if (!elDesc) return;
     if (html) {
         elDesc.innerHTML = esEjercicio
-            ? '<span class="sim-ejercicio-badge">Ejercicio: </span>' + html
+            ? '<span class="sim-ejercicio-badge">Ejercicio: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '') + html
             : html;
         elDesc.style.display = 'block';
         elDesc.classList.toggle('modo-ejercicio', !!esEjercicio);
@@ -600,7 +599,7 @@ async function initArraySimulator(nombreTema) {
                 btn.classList.add('activo');
 
                 if (it.enunciado) {
-                    arrSetDescripcion(it.enunciado, true);
+                    arrSetDescripcion(it.enunciado, true, it.titulo);
                 } else {
                     arrSetDescripcion(defOriginal, false);
                 }

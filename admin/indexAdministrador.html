@@ -226,12 +226,27 @@
                         <div>
                             <h3>Concepto del tema</h3><small>El texto explicativo que verán los estudiantes</small>
                         </div>
+                        <div class="grow"></div>
+                        <div class="head-actions" data-seccion="concepto">
+                            <span class="status"><span class="dotpulse"></span><span class="status-text">Sin
+                            cambios</span></span>
+                            <button class="btn btn--ghost btn--sm" onclick="cancelarCambios()">Cancelar</button>
+                            <button class="btn btn--save btn--sm" onclick="guardarCambios()" disabled>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                                    <polyline points="17 21 17 13 7 13 7 21" />
+                                    <polyline points="7 3 7 8 15 8" />
+                                </svg>
+                                Guardar cambios
+                            </button>
+                        </div>
                     </div>
                     <div class="block__body">
                         <div class="field"><label>Título <span class="req">*</span></label><input class="input"
-                                id="f-titulo" type="text" oninput="markDirty()"></div>
+                                id="f-titulo" type="text" oninput="markDirty('concepto')"></div>
                         <div class="field"><label>Definición <span class="req">*</span></label><textarea
-                                class="textarea" id="f-definicion" oninput="markDirty()"></textarea>
+                                class="textarea" id="f-definicion" oninput="markDirty('concepto')"></textarea>
                             <div class="hint">Puedes usar etiquetas HTML simples como &lt;strong&gt; o &lt;ul&gt; para
                                 dar formato.</div>
                         </div>
@@ -249,24 +264,43 @@
                             <h3>Ejemplos y ejercicio (C#)</h3><small>Cada pestaña es un ejemplo o ejercicio que verán
                                 los estudiantes; usa "+" para agregar</small>
                         </div>
+                        <div class="grow"></div>
+                        <div class="head-actions" data-seccion="ejemplos">
+                            <span class="status"><span class="dotpulse"></span><span class="status-text">Sin
+                            cambios</span></span>
+                            <button class="btn btn--ghost btn--sm" onclick="cancelarCambios()">Cancelar</button>
+                            <button class="btn btn--save btn--sm" onclick="guardarCambios()" disabled>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                                    <polyline points="17 21 17 13 7 13 7 21" />
+                                    <polyline points="7 3 7 8 15 8" />
+                                </svg>
+                                Guardar cambios
+                            </button>
+                        </div>
                     </div>
                     <div class="block__body">
                         <div class="editor-tabs" id="editorTabs"></div>
+                        <div class="field" id="tituloEjercicioWrap" style="display:none"><label>Título del ejercicio
+                                <span class="req">*</span></label><input type="text" class="input" id="f-titulo-ejercicio"
+                                oninput="markDirty('ejemplos')">
+                        </div>
                         <div class="field" id="enunciadoWrap" style="display:none"><label>Enunciado del ejercicio
                                 <span class="req">*</span></label><textarea class="textarea" id="f-enunciado"
-                                oninput="markDirty()"></textarea>
+                                oninput="markDirty('ejemplos')"></textarea>
                         </div>
                         <div class="code-shell">
                             <div class="code-shell__bar"><span class="dot r"></span><span class="dot y"></span><span
                                     class="dot g"></span><span class="name" id="codeFileName">ejemplo.cs</span></div>
                             <div id="monaco-editor"></div>
                             <textarea class="code-fallback" id="codeFallback" style="display:none"
-                                oninput="markDirty()"></textarea>
+                                oninput="markDirty('ejemplos')"></textarea>
                         </div>
                     </div>
                 </div>
 
-                <div class="action-bar">
+                <!-- <div class="action-bar">
                     <span class="status" id="saveStatus"><span class="dotpulse"></span><span id="saveStatusText">Sin
                             cambios</span></span>
                     <button class="btn btn--ghost" onclick="cancelarCambios()">Cancelar</button>
@@ -279,7 +313,7 @@
                         </svg>
                         Guardar cambios
                     </button>
-                </div>
+                </div> -->
             </section>
 
         </main>

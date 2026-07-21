@@ -14,7 +14,8 @@ const RUTA_LOGIN = '../index.html';
 })();
 
 /* ════════ Estado global ════════ */
-let temaActual = null, originalSnapshot = null, dirty = false, monacoEditor = null;
+let temaActual = null, originalSnapshot = null, monacoEditor = null;
+let dirtySecciones = { concepto: false, ejemplos: false };
 let estudiantesCache = [];
 
 // Filtro activo de la tabla de usuarios: 'todos' | 'pendientes' | 'activos'
@@ -273,6 +274,8 @@ function volcarTabActivaAEstado() {
     if (item.tipo === 'ejercicio') {
         const elEnun = document.getElementById('f-enunciado');
         if (elEnun) item.descripcion = elEnun.value;
+        const elTit = document.getElementById('f-titulo-ejercicio');
+        if (elTit) item.titulo = elTit.value;
     }
 }
 
@@ -289,7 +292,12 @@ function seleccionarTab(i, { volcar = true } = {}) {
     const esEjercicio = item.tipo === 'ejercicio';
     const enunciadoWrap = document.getElementById('enunciadoWrap');
     if (enunciadoWrap) enunciadoWrap.style.display = esEjercicio ? '' : 'none';
-    if (esEjercicio) document.getElementById('f-enunciado').value = item.descripcion || '';
+    const tituloWrap = document.getElementById('tituloEjercicioWrap');
+    if (tituloWrap) tituloWrap.style.display = esEjercicio ? '' : 'none';
+    if (esEjercicio) {
+        document.getElementById('f-enunciado').value = item.descripcion || '';
+        document.getElementById('f-titulo-ejercicio').value = item.titulo || '';
+    }
 
     document.getElementById('codeFileName').textContent = etiquetasItems()[tabActivo].toLowerCase().replace(/\s+/g, '_') + '.cs';
 
@@ -302,15 +310,15 @@ function agregarEjemplo() {
     itemsActuales.push({ tipo: 'ejemplo', codigo: '' });
     renderEditorTabs();
     seleccionarTab(itemsActuales.length - 1, { volcar: false });
-    markDirty();
+    markDirty('ejemplos');
 }
 
 function agregarEjercicio() {
     volcarTabActivaAEstado();
-    itemsActuales.push({ tipo: 'ejercicio', codigo: '', descripcion: '' });
+    itemsActuales.push({ tipo: 'ejercicio', codigo: '', descripcion: '', titulo: '' });
     renderEditorTabs();
     seleccionarTab(itemsActuales.length - 1, { volcar: false });
-    markDirty();
+    markDirty('ejemplos');
 }
 
 function eliminarTab(i) {
@@ -322,7 +330,7 @@ function eliminarTab(i) {
     itemsActuales.splice(i, 1);
     renderEditorTabs();
     seleccionarTab(Math.min(i, itemsActuales.length - 1), { volcar: false });
-    markDirty();
+    markDirty('ejemplos');
 }
 
 /* ════ Carga de un tema (conectado a GET /api/subtemas/slug/:slug) ════ */
@@ -339,7 +347,7 @@ async function cargarTema(slug) {
 
     itemsActuales = normalizarCodigoEjemplo(t.codigo_ejemplo).map(codigo => ({ tipo: 'ejemplo', codigo: codigo || '' }));
     (Array.isArray(t.ejercicios) ? t.ejercicios : []).forEach(ej => {
-        itemsActuales.push({ tipo: 'ejercicio', codigo: ej.codigo_csharp || '', descripcion: ej.descripcion || '' });
+        itemsActuales.push({ tipo: 'ejercicio', codigo: ej.codigo_csharp || '', descripcion: ej.descripcion || '', titulo: ej.titulo || '' });
     });
     if (!itemsActuales.length) itemsActuales.push({ tipo: 'ejemplo', codigo: '' });
 
@@ -352,7 +360,7 @@ async function cargarTema(slug) {
     seleccionarTab(0, { volcar: false });
 
     originalSnapshot = JSON.stringify({ titulo: t.titulo, definicion: t.definicion, items: itemsActuales });
-    setDirty(false);
+    limpiarDirty();
 }
 
 /* ════ PUNTOS DE CONEXIÓN CON LA API ════ */
@@ -365,6 +373,10 @@ function getCodigoActual() { return monacoEditor ? monacoEditor.getValue() : doc
 
 async function guardarCambios() {
     if (!temaActual) return;
+    // Se guardan los recuadros que tenían cambios pendientes al momento de
+    // presionar "Guardar" (el PUT manda todo junto, pero solo esos recuadros
+    // deben mostrar la notificación — el otro no tenía nada que guardar).
+    const seccionesAGuardar = Object.keys(dirtySecciones).filter(s => dirtySecciones[s]);
     volcarTabActivaAEstado();
 
     const titulo = document.getElementById('f-titulo').value.trim();
@@ -374,9 +386,10 @@ async function guardarCambios() {
     const ejemplos = itemsActuales.filter(it => it.tipo === 'ejemplo').map(it => it.codigo || '');
     const ejercicios = itemsActuales
         .filter(it => it.tipo === 'ejercicio')
-        .map(it => ({ descripcion: (it.descripcion || '').trim(), codigo_csharp: it.codigo || '' }));
+        .map(it => ({ titulo: (it.titulo || '').trim(), descripcion: (it.descripcion || '').trim(), codigo_csharp: it.codigo || '' }));
 
     if (!ejemplos.length) { alert('Debe haber al menos un ejemplo.'); return; }
+    if (ejercicios.some(ej => !ej.titulo)) { alert('Cada ejercicio necesita un título.'); return; }
     if (ejercicios.some(ej => !ej.descripcion)) { alert('Cada ejercicio necesita un enunciado.'); return; }
 
     const datos = { titulo, definicion, codigo_ejemplo: ejemplos, ejercicios };
@@ -396,16 +409,16 @@ async function guardarCambios() {
 
         originalSnapshot = JSON.stringify({ titulo, definicion, items: itemsActuales });
         document.getElementById('temaTitulo').textContent = titulo;
-        setDirty(false);
+        limpiarDirty();
 
         if (ejerciciosConfirmados) {
-            flashStatus('Cambios guardados ✓', true);
+            flashStatus('Cambios guardados ✓', true, seccionesAGuardar);
         } else {
-            flashStatus('Guardado, pero el backend no devolvió los ejercicios — revisar backend', false);
+            flashStatus('Guardado, pero el backend no devolvió los ejercicios — revisar backend', false, seccionesAGuardar);
         }
     } catch (err) {
         console.error(err);
-        flashStatus('No se pudo guardar', false);
+        flashStatus('No se pudo guardar', false, seccionesAGuardar);
     }
 }
 
@@ -417,26 +430,58 @@ function cancelarCambios() {
     itemsActuales = s.items.map(it => ({ ...it }));
     renderEditorTabs();
     seleccionarTab(0, { volcar: false });
-    setDirty(false);
+    limpiarDirty();
 }
 
-/* ════ Estado "dirty" ════ */
-function markDirty() { setDirty(true); }
+/* ════ Estado "dirty" (independiente por recuadro: "concepto" o "ejemplos") ════
+   El PUT guarda todo el subtema junto, así que ambos botones "Guardar cambios"
+   disparan el mismo guardarCambios(); solo el indicador visual se independiza
+   para que editar un recuadro no marque el otro como pendiente. */
+function markDirty(seccion) { setSeccionDirty(seccion || 'ejemplos', true); }
 
-function setDirty(v) {
-    dirty = v;
-    document.getElementById('btnGuardar').disabled = !v;
-    const st = document.getElementById('saveStatus'); st.classList.toggle('dirty', v);
-    document.getElementById('saveStatusText').textContent = v ? 'Cambios sin guardar' : 'Sin cambios';
+function setSeccionDirty(seccion, v) {
+    dirtySecciones[seccion] = v;
+    const scope = document.querySelector('.head-actions[data-seccion="' + seccion + '"]');
+    if (!scope) return;
+    const btn = scope.querySelector('.btn--save');
+    if (btn) btn.disabled = !v;
+    const st = scope.querySelector('.status');
+    if (st) { st.classList.toggle('dirty', v); st.classList.remove('saved'); st.style.color = ''; }
+    const txt = scope.querySelector('.status-text');
+    if (txt) txt.textContent = v ? 'Cambios sin guardar' : 'Sin cambios';
 }
 
-function flashStatus(msg, ok) {
-    const st = document.getElementById('saveStatus'), txt = document.getElementById('saveStatusText');
-    st.classList.remove('dirty'); st.style.color = ok ? 'var(--green-main)' : 'var(--danger)'; txt.textContent = msg;
-    setTimeout(() => { st.style.color = ''; txt.textContent = 'Sin cambios'; }, 2200);
+function hayCambiosPendientes() { return dirtySecciones.concepto || dirtySecciones.ejemplos; }
+
+// Se llama tras cargar/cancelar/guardar: en los tres casos el estado en pantalla
+// vuelve a coincidir con el original (o con lo recién guardado) en AMBOS recuadros.
+function limpiarDirty() {
+    setSeccionDirty('concepto', false);
+    setSeccionDirty('ejemplos', false);
 }
 
-function confirmDiscard() { if (!dirty) return true; return confirm('Tienes cambios sin guardar. ¿Deseas descartarlos?'); }
+// secciones: cuáles recuadros mostrar la notificación (por defecto, ambos).
+function flashStatus(msg, ok, secciones) {
+    const lista = (secciones && secciones.length) ? secciones : ['concepto', 'ejemplos'];
+    const scopes = lista
+        .map(s => document.querySelector('.head-actions[data-seccion="' + s + '"]'))
+        .filter(Boolean);
+
+    scopes.forEach(scope => {
+        const st = scope.querySelector('.status');
+        const txt = scope.querySelector('.status-text');
+        if (st) { st.classList.remove('dirty'); st.classList.toggle('saved', ok); if (!ok) st.style.color = 'var(--danger)'; }
+        if (txt) txt.textContent = msg;
+    });
+
+    // Al terminar el flash, cada recuadro vuelve a SU estado real (dirty si el
+    // guardado falló y seguía pendiente, o "Sin cambios" si sí se guardó).
+    setTimeout(() => {
+        lista.forEach(seccion => setSeccionDirty(seccion, dirtySecciones[seccion]));
+    }, 2200);
+}
+
+function confirmDiscard() { if (!hayCambiosPendientes()) return true; return confirm('Tienes cambios sin guardar. ¿Deseas descartarlos?'); }
 
 /* ════ Monaco ════ */
 require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
@@ -446,7 +491,7 @@ require(['vs/editor/editor.main'], function () {
         value: '', language: 'csharp', theme: 'vs-dark', automaticLayout: true,
         fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false
     });
-    monacoEditor.onDidChangeModelContent(() => { if (temaActual) markDirty(); });
+    monacoEditor.onDidChangeModelContent(() => { if (temaActual) markDirty('ejemplos'); });
     document.getElementById('codeFallback').style.display = 'none';
 });
 

@@ -642,7 +642,19 @@ body {
     align-items: center;
     gap: 11px;
     padding: 15px 20px;
-    border-bottom: 1px solid var(--console-border)
+    border-bottom: 1px solid var(--console-border);
+    flex-wrap: wrap
+}
+
+.block__head .grow {
+    flex: 1
+}
+
+.block__head .head-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0
 }
 
 .block__head .ic {
@@ -798,17 +810,25 @@ body {
     flex-wrap: wrap
 }
 
-.action-bar .status {
+.status {
     font-size: .82rem;
     color: var(--text-mut);
-    margin-right: auto;
     display: flex;
     align-items: center;
-    gap: 8px
+    gap: 8px;
+    transition: color .15s
 }
 
-.action-bar .status.dirty {
+.action-bar .status {
+    margin-right: auto
+}
+
+.status.dirty {
     color: var(--warn)
+}
+
+.status.saved {
+    color: var(--green-main)
 }
 
 .dotpulse {
@@ -855,6 +875,11 @@ body {
 .btn--save:disabled {
     opacity: .45;
     cursor: not-allowed
+}
+
+.btn--sm {
+    padding: 8px 14px;
+    font-size: .82rem
 }
 
 /* ── Inicio: usuarios ── */

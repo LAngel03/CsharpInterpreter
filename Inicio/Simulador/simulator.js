@@ -1069,12 +1069,12 @@ function simGetItems(tema) {
 }
 
 // Cambia el texto de arriba: concepto normal o enunciado del ejercicio
-function simSetDescripcion(html, esEjercicio) {
+function simSetDescripcion(html, esEjercicio, titulo) {
     const elDesc = document.getElementById('tema-descripcion');
     if (!elDesc) return;
     if (html) {
         elDesc.innerHTML = esEjercicio
-            ? '<span class="sim-ejercicio-badge">Ejercicio: </span>' + html
+            ? '<span class="sim-ejercicio-badge">Ejercicio: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '') + html
             : html;
         elDesc.style.display = 'block';
         elDesc.classList.toggle('modo-ejercicio', !!esEjercicio);
@@ -1162,19 +1162,19 @@ function simGetItemsDesdeSubtema(subtema, slugFallback) {
         enunciado: null
     }));
 
-    // El ejercicio viene APARTE, en subtema.ejercicios (lista de la BD).
-    // Campos reales: descripcion (enunciado) y codigo_csharp (solución).
-    const ej = (Array.isArray(subtema.ejercicios) && subtema.ejercicios.length)
-        ? subtema.ejercicios[0]
-        : null;
-    if (ej) {
+    // Los ejercicios vienen APARTE, en subtema.ejercicios (lista de la BD).
+    // Campos reales: titulo, descripcion (enunciado) y codigo_csharp (solución).
+    // La pestaña siempre dice "Ejercicio N"; el título se muestra arriba del enunciado.
+    const ejercicios = Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [];
+    ejercicios.forEach((ej, i) => {
         items.push({
-            label: 'Ejercicio',
+            label: ejercicios.length > 1 ? 'Ejercicio ' + (i + 1) : 'Ejercicio',
             codigo: ej.codigo_csharp,
             enunciado: ej.descripcion,
+            titulo: ej.titulo || null,
             esEjercicio: true
         });
-    }
+    });
 
     if (!items.length) {
         items.push({ label: 'Ejemplo 1', codigo: '// La API no devolvió ejemplos para este tema.', enunciado: null });
@@ -1238,7 +1238,7 @@ async function initSimulador(tema) {
                 tabs.querySelectorAll('.sim-tab').forEach(b => b.classList.remove('activo'));
                 btn.classList.add('activo');
 
-                if (it.enunciado) simSetDescripcion(it.enunciado, true);
+                if (it.enunciado) simSetDescripcion(it.enunciado, true, it.titulo);
                 else simSetDescripcion(defOriginal, false);
 
                 if (simEditor) simEditor.setValue(it.codigo);
