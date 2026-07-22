@@ -47,22 +47,24 @@ header {
 }
 
 .btn-cerrar-header {
-    margin-left: auto;
-    display: flex;
+    margin-left: auto;          /* lo empuja hasta la derecha */
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 6px;
-    color: #bfc6d1;
-    padding: 5px 10px;
-    font-size: 0.82rem;
+    gap: 8px;
+    background-color: transparent;
+    color: var(--white);
+    border: 1px solid var(--console-border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 0.85rem;
+    font-family: inherit;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
 }
 .btn-cerrar-header:hover {
-    background: rgba(255,255,255,0.08);
-    color: #fff;
+    background-color: rgba(224, 82, 99, 0.15);
+    border-color: #e05263;
+    color: #ff9aa5;
 }
 .btn-cerrar-header img {
     width: 18px;
