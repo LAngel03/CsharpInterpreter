@@ -98,6 +98,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     cargarGrupos();
+
+    // Enter en matrícula o contraseña dispara el login, igual que el botón "Entrar".
+    ['login-mat', 'login-pw'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') handleLogin();
+        });
+    });
 });
 
 async function cargarGrupos() {

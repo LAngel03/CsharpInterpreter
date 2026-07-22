@@ -82,123 +82,80 @@ class RecursividadSimulator {
 }
 
 // ════════════════════════════════════════════════════════════
-//  EJEMPLOS — 3 por módulo
+//  EJEMPLOS Y EJERCICIO — conectados a la API (subtema "Recursividad")
 // ════════════════════════════════════════════════════════════
 
-const REC_EXAMPLES = {
-    Recursividad: [
+const recCacheSubtemas = {};
 
-        // Ejemplo 1 — Factorial
-`// Factorial: n! = n * (n-1) * ... * 1
-// Caso base: Factorial(0) = 1
-// Caso recursivo: Factorial(n) = n * Factorial(n-1)
-
-static int Factorial(int n) {
-    if (n <= 1) {
-        return 1;
+async function recObtenerDatosTema(slug) {
+    if (recCacheSubtemas[slug]) return recCacheSubtemas[slug];
+    try {
+        if (!window.ApiClient || typeof window.ApiClient.obtenerSubtemaPorSlug !== 'function') {
+            throw new Error('window.ApiClient.obtenerSubtemaPorSlug no está disponible');
+        }
+        const subtema = await window.ApiClient.obtenerSubtemaPorSlug(slug);
+        if (!subtema) throw new Error('La API devolvió una respuesta vacía para "' + slug + '"');
+        recCacheSubtemas[slug] = subtema;
+        return subtema;
+    } catch (e) {
+        console.warn(`Subtema "${slug}" no encontrado en la API`, e);
+        return { codigo_ejemplo: null, _apiError: e.message }; // null => sin datos, se avisa en pantalla
     }
-    int anterior = Factorial(n - 1);
-    int resultado = n * anterior;
-    return resultado;
 }
 
-int numero = 5;
-int resultado = Factorial(numero);
-Console.WriteLine("Factorial de " + numero + " = " + resultado);`,
-
-        // Ejemplo 2 — Suma de 1 a n
-`// Suma acumulativa: suma(n) = n + suma(n-1)
-// Caso base: suma(1) = 1
-// Caso recursivo: suma(n) = n + suma(n-1)
-
-static int Suma(int n) {
-    if (n <= 1) {
-        return 1;
+function recGetItemsDesdeSubtema(subtema) {
+    if (subtema.codigo_ejemplo === null) {
+        return [{ label: 'Ejemplo 1', codigo: '// No se pudo cargar el ejemplo desde la API.', enunciado: null }];
     }
-    int resto = Suma(n - 1);
-    int total = n + resto;
-    return total;
-}
 
-int numero = 5;
-int resultado = Suma(numero);
-Console.WriteLine("Suma de 1 a " + numero + " = " + resultado);`,
-
-        // Ejemplo 3 — Potencia
-`// Potencia: base elevada a exp
-// Caso base: Potencia(base, 0) = 1
-// Caso recursivo: Potencia(base, exp) = base * Potencia(base, exp - 1)
-
-static int Potencia(int base, int exp) {
-    if (exp == 0) {
-        return 1;
-    }
-    int resto = Potencia(base, exp - 1);
-    int resultado = base * resto;
-    return resultado;
-}
-
-int base = 2;
-int exponente = 6;
-int resultado = Potencia(base, exponente);
-Console.WriteLine(base + " elevado a " + exponente + " = " + resultado);`
-    ]
-};
-
-const REC_EJERCICIOS = {
-    Recursividad: {
-        enunciado: `Una escuela quiere calcular cuántos pasos sigue una cuenta regresiva: partiendo de un número entero positivo, el programa debe restarle 1 en cada llamada hasta llegar a cero y contar cuántas veces se llamó a sí mismo. Por ejemplo, si comienzas en 4, el conteo es 4 → 3 → 2 → 1 → 0, que son <strong>4 pasos</strong>. Usa recursividad: el <strong>caso base</strong> es cuando n es 0 (devuelve 0 pasos) y el <strong>caso recursivo</strong> suma 1 al resultado de llamar a la función con n − 1.`,
-        codigo:
-`// Cuenta cuantos pasos hasta llegar a 0
-static int ContarPasos(int n) {
-    if (n <= 0) {
-        return 0;
-    }
-    int resto = ContarPasos(n - 1);
-    int total = 1 + resto;
-    return total;
-}
-
-int inicio = 4;
-int pasos = ContarPasos(inicio);
-Console.WriteLine("Pasos desde " + inicio + " hasta 0: " + pasos);`
-    }
-};
-
-// ── Helpers de items ─────────────────────────────────────────
-
-function recGetEjemplos(tema) {
-    const ex = REC_EXAMPLES[tema];
-    if (Array.isArray(ex)) return ex.slice();
-    if (typeof ex === 'string') return [ex];
-    return [''];
-}
-
-function recGetItems(tema) {
-    const items = recGetEjemplos(tema).map((code, i) => ({
-        label: 'Ejemplo ' + (i + 1),
-        codigo: code,
-        enunciado: null,
+    // Los ejemplos vienen de su propia tabla (subtema.ejemplos), ya
+    // ordenados por "orden" desde el backend.
+    const ejemplosDb = Array.isArray(subtema.ejemplos) ? subtema.ejemplos : [];
+    const items = ejemplosDb.map((ej, i) => ({
+        label: ejemplosDb.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
+        codigo: ej.codigo || '',
+        enunciado: ej.enunciado || null,
+        titulo: ej.titulo || null,
         esEjercicio: false
     }));
-    const ej = REC_EJERCICIOS[tema];
-    if (ej) items.push({ label: 'Ejercicio', codigo: ej.codigo, enunciado: ej.enunciado, esEjercicio: true });
+
+    // Los ejercicios vienen APARTE, en subtema.ejercicios (lista de la BD).
+    // Campos reales: titulo, descripcion (enunciado) y codigo_csharp (solución).
+    const ejercicios = Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [];
+    ejercicios.forEach((ej, i) => {
+        items.push({
+            label: ejercicios.length > 1 ? 'Ejercicio ' + (i + 1) : 'Ejercicio',
+            codigo: ej.codigo_csharp,
+            enunciado: ej.descripcion,
+            titulo: ej.titulo || null,
+            esEjercicio: true
+        });
+    });
+
+    if (!items.length) {
+        items.push({ label: 'Ejemplo 1', codigo: '// La API no devolvió ejemplos para este tema.', enunciado: null });
+    }
     return items;
 }
 
-function recSetDescripcion(html, esEjercicio) {
-    const elDesc = document.getElementById('tema-descripcion');
+// Recuadro del enunciado propio del ejemplo/ejercicio activo — va debajo del
+// concepto general del tema (#tema-descripcion, que no se toca aquí).
+// tipo: 'ejercicio' | 'ejemplo' | null (oculta el recuadro, no hay enunciado)
+function recSetDescripcion(html, tipo, titulo) {
+    const elDesc = document.getElementById('tema-enunciado');
     if (!elDesc) return;
-    if (html) {
-        elDesc.innerHTML = esEjercicio
-            ? '<span class="sim-ejercicio-badge">Ejercicio: </span>' + html
-            : html;
+    if (html && tipo) {
+        let prefijo = '';
+        if (tipo === 'ejercicio') prefijo = '<span class="sim-ejercicio-badge">Ejercicio: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
+        else if (tipo === 'ejemplo') prefijo = '<span class="sim-ejemplo-badge">Ejemplo: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
+        elDesc.innerHTML = prefijo + html;
         elDesc.style.display = 'block';
-        elDesc.classList.toggle('modo-ejercicio', !!esEjercicio);
+        elDesc.classList.toggle('modo-ejercicio', tipo === 'ejercicio');
+        elDesc.classList.toggle('modo-ejemplo', tipo === 'ejemplo');
     } else {
         elDesc.innerHTML = '';
         elDesc.style.display = 'none';
-        elDesc.classList.remove('modo-ejercicio');
+        elDesc.classList.remove('modo-ejercicio', 'modo-ejemplo');
     }
 }
 
@@ -516,6 +473,121 @@ function recConectarBotones() {
     document.head.appendChild(style);
 })();
 
+// Muestra (o limpia) un mensaje de error visible arriba del editor.
+function recMostrarErrorApi(mensaje) {
+    const editorBody = document.getElementById('editor-body');
+    if (!editorBody) return;
+    let box = document.getElementById('sim-api-error');
+    if (!mensaje) {
+        if (box) box.remove();
+        return;
+    }
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'sim-api-error';
+        box.className = 'sim-api-error';
+        editorBody.parentNode.insertBefore(box, editorBody);
+    }
+    box.textContent = mensaje;
+}
+
+// ── Inicialización (conectada a GET /api/subtemas/slug/:slug) ─
+
+async function initRecursividadSimulador(tema) {
+    const editorBody = document.getElementById('editor-body');
+    if (!editorBody) return;
+
+    let items;
+    try {
+        const subtema = await recObtenerDatosTema(tema);
+        items = recGetItemsDesdeSubtema(subtema);
+        if (subtema._apiError) {
+            recMostrarErrorApi('No se pudo conectar con la API (' + subtema._apiError + '). Mostrando aviso de error.');
+        } else {
+            recMostrarErrorApi(null);
+        }
+    } catch (e) {
+        console.error('Error inicializando el simulador de recursividad para "' + tema + '":', e);
+        recMostrarErrorApi('Error cargando el simulador: ' + e.message);
+        items = [{ label: 'Ejemplo 1', codigo: '// Error cargando el simulador: ' + e.message, enunciado: null }];
+    }
+
+    recCurrentCode = items[0].codigo;
+
+    // Pestañas (primero, van encima de los inputs)
+    let tabsEl = document.getElementById('sim-ejemplos-tabs');
+    if (!tabsEl && items.length > 1) {
+        tabsEl = document.createElement('div');
+        tabsEl.id = 'sim-ejemplos-tabs';
+        editorBody.parentNode.insertBefore(tabsEl, editorBody);
+    }
+
+    // Panel de variables editables (debajo de las pestañas)
+    if (!document.getElementById('rec-vars-editable')) {
+        const varsHost = document.createElement('div');
+        varsHost.id = 'rec-vars-editable';
+        editorBody.parentNode.insertBefore(varsHost, editorBody);
+    }
+
+    // Muestra (o esconde) el recuadro de enunciado propio del item activo;
+    // el concepto general del tema vive aparte, en #tema-descripcion, y no
+    // se toca aquí — sigue visible siempre.
+    function mostrarDescripcionItem(it) {
+        if (it.esEjercicio && it.enunciado) recSetDescripcion(it.enunciado, 'ejercicio', it.titulo);
+        else if (it.enunciado) recSetDescripcion(it.enunciado, 'ejemplo', it.titulo);
+        else recSetDescripcion(null, null);
+    }
+
+    if (tabsEl) {
+        tabsEl.innerHTML = items.map((it, i) =>
+            '<button class="sim-tab' + (i === 0 ? ' activo' : '') +
+            (it.esEjercicio ? ' ejercicio' : '') +
+            '" data-idx="' + i + '">' + it.label + '</button>'
+        ).join('');
+        tabsEl.querySelectorAll('.sim-tab').forEach(btn => {
+            btn.onclick = () => {
+                recStopPlay(_recBtns());
+                const idx = parseInt(btn.dataset.idx);
+                const it = items[idx];
+                tabsEl.querySelectorAll('.sim-tab').forEach(b => b.classList.remove('activo'));
+                btn.classList.add('activo');
+                mostrarDescripcionItem(it);
+                recCurrentCode = it.codigo;
+                if (recMonacoEditor) recMonacoEditor.setValue(it.codigo);
+                recCargarYEjecutar(it.codigo);
+            };
+        });
+    }
+
+    function crearEditorRec() {
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+            recMonacoEditor = monaco.editor.create(editorBody, {
+                value: recCurrentCode,
+                language: 'csharp',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                fontSize: 14,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                readOnly: true
+            });
+            recConectarBotones();
+            mostrarDescripcionItem(items[0]);
+            recCargarYEjecutar(recCurrentCode);
+        });
+    }
+
+    if (window.monaco) crearEditorRec();
+    else if (window.require) crearEditorRec();
+    else {
+        const loader = document.createElement('script');
+        loader.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.js';
+        loader.onload = crearEditorRec;
+        document.head.appendChild(loader);
+    }
+}
+
 // ── Hook en cargarTema ────────────────────────────────────────
 
 (function wrapCargarTemaRecursividad() {
@@ -538,77 +610,6 @@ function recConectarBotones() {
         recTemaActual = nombreTema;
         recPlaying = false;
 
-        const editorBody = document.getElementById('editor-body');
-        if (!editorBody) return;
-
-        const items = recGetItems(nombreTema);
-        recCurrentCode = items[0].codigo;
-
-        // Pestañas (primero, van encima de los inputs)
-        let tabsEl = document.getElementById('sim-ejemplos-tabs');
-        if (!tabsEl && items.length > 1) {
-            tabsEl = document.createElement('div');
-            tabsEl.id = 'sim-ejemplos-tabs';
-            editorBody.parentNode.insertBefore(tabsEl, editorBody);
-        }
-
-        // Panel de variables editables (debajo de las pestañas)
-        if (!document.getElementById('rec-vars-editable')) {
-            const varsHost = document.createElement('div');
-            varsHost.id = 'rec-vars-editable';
-            editorBody.parentNode.insertBefore(varsHost, editorBody);
-        }
-        if (tabsEl) {
-            tabsEl.innerHTML = items.map((it, i) =>
-                '<button class="sim-tab' + (i === 0 ? ' activo' : '') +
-                (it.esEjercicio ? ' ejercicio' : '') +
-                '" data-idx="' + i + '">' + it.label + '</button>'
-            ).join('');
-            tabsEl.querySelectorAll('.sim-tab').forEach(btn => {
-                btn.onclick = () => {
-                    recStopPlay(_recBtns());
-                    const idx = parseInt(btn.dataset.idx);
-                    const it = items[idx];
-                    tabsEl.querySelectorAll('.sim-tab').forEach(b => b.classList.remove('activo'));
-                    btn.classList.add('activo');
-                    const defHtml = (window.temas && window.temas['Recursividad']) ? window.temas['Recursividad'].definicion : '';
-                    recSetDescripcion(it.enunciado || defHtml, !!it.enunciado);
-                    recCurrentCode = it.codigo;
-                    if (recMonacoEditor) recMonacoEditor.setValue(it.codigo);
-                    recCargarYEjecutar(it.codigo);
-                };
-            });
-        }
-
-        // Descripción inicial
-        const defHtml = (window.temas && window.temas['Recursividad']) ? window.temas['Recursividad'].definicion : '';
-        recSetDescripcion(defHtml, false);
-
-        function crearEditorRec() {
-            require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
-            require(['vs/editor/editor.main'], function () {
-                recMonacoEditor = monaco.editor.create(editorBody, {
-                    value: recCurrentCode,
-                    language: 'csharp',
-                    theme: 'vs-dark',
-                    automaticLayout: true,
-                    fontSize: 14,
-                    minimap: { enabled: false },
-                    scrollBeyondLastLine: false,
-                    readOnly: true
-                });
-                recConectarBotones();
-                recCargarYEjecutar(recCurrentCode);
-            });
-        }
-
-        if (window.monaco) crearEditorRec();
-        else if (window.require) crearEditorRec();
-        else {
-            const loader = document.createElement('script');
-            loader.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.js';
-            loader.onload = crearEditorRec;
-            document.head.appendChild(loader);
-        }
+        initRecursividadSimulador(nombreTema); // ya es async, no necesita setTimeout
     };
 })();

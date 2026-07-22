@@ -1,0 +1,763 @@
+/* ============================================================
+   admin-consola.css
+   Copia exacta (mismos selectores/reglas) del diseño de la consola
+   que usan los estudiantes en Inicio/css/styles.css, para que la
+   vista previa del panel de administrador se vea IDÉNTICA.
+   Aislado en su propio archivo — admin.css ya usa nombres como
+   .app-header/.app-sidebar/.sim-tab para su propio layout, así que
+   esto NO se mete dentro de admin.css para evitar pisar esas reglas.
+   ============================================================ */
+
+/* ── Workspace (grid editor + panel lateral) ── */
+.workspace {
+    display: grid;
+    grid-template-columns: 1fr 540px;
+    gap: 18px;
+    align-items: start;
+}
+
+@media (max-width: 1100px) {
+    .workspace {
+        grid-template-columns: 1fr 320px;
+    }
+}
+
+@media (max-width: 860px) {
+    .workspace {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Paneles base ── */
+.console-panel {
+    background-color: var(--dark);
+    border-radius: 10px;
+    border: 1px solid var(--console-border);
+    overflow: hidden;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+}
+
+.console-panel2 {
+    background-color: var(--dark);
+    border-radius: 10px;
+    border: 1px solid var(--console-border);
+    overflow: hidden;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    min-height: 130px;
+    width: 100%;
+}
+
+@media (max-width: 860px) {
+    .console-panel2 {
+        width: 100%;
+        min-height: 110px;
+    }
+}
+
+.console-header {
+    display: flex;
+    align-items: center;
+    background-color: #1e2130;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--console-border);
+    flex-shrink: 0;
+}
+
+.console-header2 {
+    display: flex;
+    align-items: center;
+    background-color: #1e2130;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--console-border);
+    flex-shrink: 0;
+}
+
+.console-title {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--white);
+    flex: 1;
+}
+
+.console-title2 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--white);
+    flex: 1;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.console-body {
+    flex: 1;
+    padding: 14px 16px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+    color: #8a9ab5;
+    background-color: var(--console-bg);
+    overflow-y: auto;
+    min-height: 80px;
+}
+
+.console-body2 {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 12px 16px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+    color: #8a9ab5;
+    background-color: var(--console-bg);
+    overflow-y: auto;
+    gap: 6px;
+}
+
+/* ── Editor ── */
+.editor-panel {
+    min-height: 50px;
+}
+
+.editor-body {
+    height: 300px;
+    padding: 16px 20px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.9rem;
+    color: #8a9ab5;
+    background-color: var(--console-bg);
+    overflow-y: auto;
+    line-height: 1.8;
+}
+
+.side-panels .console-panel .console-body {
+    min-height: 140px;
+}
+
+.editor-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    border-top: 1px solid var(--console-border);
+    background-color: #1e2130;
+    flex-shrink: 0;
+}
+
+.ctrl-btn {
+    padding: 8px 14px;
+    background-color: #252a3a;
+    color: var(--white);
+    border: 1px solid var(--console-border);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: 0.15s;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.ctrl-btn:hover:not(:disabled) {
+    border-color: var(--green-main);
+    color: var(--green-main);
+}
+
+.ctrl-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.ctrl-btn.primary {
+    background-color: var(--green-main);
+    border-color: var(--green-main);
+    color: #000;
+    font-weight: 600;
+}
+
+.ctrl-btn.primary:hover:not(:disabled) {
+    background-color: #03c47e;
+    border-color: #03c47e;
+}
+
+.ctrl-progress {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ctrl-step {
+    font-size: 0.78rem;
+    color: #8a9ab5;
+    font-family: Arial, Helvetica, sans-serif;
+    white-space: nowrap;
+}
+
+.pbar {
+    width: 100px;
+    height: 4px;
+    background-color: #252a3a;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.pbar i {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background-color: var(--green-main);
+    border-radius: 3px;
+}
+
+.side-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* ── Botones Anterior / Siguiente ── */
+.btn-anterior,
+.btn-siguiente {
+    position: relative;
+    background-color: #252a3a;
+    border: 1px solid var(--console-border);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 6px 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+}
+
+.btn-anterior:hover:not(:disabled),
+.btn-siguiente:hover:not(:disabled) {
+    border-color: var(--green-main);
+}
+
+.btn-anterior:disabled,
+.btn-siguiente:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: var(--console-border);
+}
+
+.btn-anterior img,
+.btn-siguiente img {
+    width: 18px;
+    height: 18px;
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.btn-anterior:hover:not(:disabled) img,
+.btn-siguiente:hover:not(:disabled) img {
+    opacity: 1;
+}
+
+.btn-anterior .tooltip-text,
+.btn-siguiente .tooltip-text {
+    visibility: hidden;
+    opacity: 0;
+    background-color: #15161e;
+    border: 1px solid var(--console-border);
+    color: var(--white);
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-family: Arial, Helvetica, sans-serif;
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    transition: opacity 0.15s ease, visibility 0.15s;
+    z-index: 200;
+}
+
+.btn-anterior:hover:not(:disabled) .tooltip-text,
+.btn-siguiente:hover:not(:disabled) .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ── Memoria: variables / arreglos / matrices ── */
+.cs-mem-block {
+    margin-bottom: 14px;
+}
+
+.cs-mem-head {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8a9ab5;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cs-mem-head .n {
+    background: #252a3a;
+    color: #bfc6d1;
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.cs-var-row {
+    font-family: 'Consolas', monospace;
+    font-size: 0.85rem;
+    color: #c5cae9;
+    padding: 3px 0;
+}
+
+.cs-var-row b {
+    color: #fff;
+}
+
+.cs-arr {
+    margin-bottom: 10px;
+}
+
+.cs-arr-name {
+    font-family: 'Consolas', monospace;
+    font-size: 0.82rem;
+    color: #bfc6d1;
+    margin-bottom: 6px;
+}
+
+.cs-arr-name b {
+    color: #fff;
+}
+
+.cs-arr-name .meta {
+    color: #8a9ab5;
+    margin-left: 8px;
+    font-size: 0.76rem;
+}
+
+.cs-cells {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.cs-cell-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.cs-cell-idx {
+    font-size: 0.68rem;
+    color: #8a9ab5;
+    font-family: 'Consolas', monospace;
+}
+
+.cs-cell {
+    min-width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #15161e;
+    border: 1px solid var(--console-border);
+    border-radius: 6px;
+    color: #fff;
+    font-family: 'Consolas', monospace;
+    font-size: 0.85rem;
+    transition: background 0.25s, border-color 0.25s;
+}
+
+.cs-cell.cs-null {
+    color: #55607a;
+}
+
+.cs-mtx {
+    margin-bottom: 10px;
+}
+
+.cs-mtx-name {
+    font-family: 'Consolas', monospace;
+    font-size: 0.82rem;
+    color: #bfc6d1;
+    margin-bottom: 6px;
+}
+
+.cs-mtx-name b {
+    color: #fff;
+}
+
+.cs-mtx-name .meta {
+    color: #8a9ab5;
+    margin-left: 8px;
+    font-size: 0.76rem;
+}
+
+.cs-mtx-table {
+    border-collapse: collapse;
+}
+
+.cs-mtx-table th {
+    font-size: 0.68rem;
+    color: #8a9ab5;
+    font-weight: 600;
+    padding: 2px 6px;
+    font-family: 'Consolas', monospace;
+}
+
+.cs-mtx-table td {
+    padding: 2px;
+}
+
+.cs-mcell {
+    min-width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #15161e;
+    border: 1px solid var(--console-border);
+    border-radius: 5px;
+    color: #fff;
+    font-family: 'Consolas', monospace;
+    font-size: 0.82rem;
+    transition: background 0.25s, border-color 0.25s;
+}
+
+.cs-mcell.cs-null {
+    color: #55607a;
+}
+
+.cs-flash {
+    background: rgba(4, 170, 109, 0.28) !important;
+    border-color: var(--green-main) !important;
+}
+
+.cs-var-row.cs-flash {
+    color: var(--green-main);
+    font-weight: 700;
+    border-color: transparent !important;
+    background: transparent !important;
+}
+
+.cs-read {
+    background: rgba(240, 165, 0, 0.18) !important;
+    border-color: #f0a500 !important;
+    color: #f0a500 !important;
+}
+
+.cs-cell-idx.cs-read-idx {
+    color: #f0a500;
+    font-weight: 700;
+}
+
+/* ── Panel del ciclo "for" activo ── */
+.sim-for-panel {
+    background: #1a1d2a;
+    border: 1px solid #3d4160;
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    font-family: 'Consolas', monospace;
+}
+
+.sim-for-header {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #7c85c2;
+    margin-bottom: 6px;
+}
+
+.sim-for-parts {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.sim-for-part {
+    flex: 1;
+    min-width: 72px;
+    background: #0f1018;
+    border: 1px solid #2d3050;
+    border-radius: 6px;
+    padding: 5px 7px;
+}
+
+.sim-for-label {
+    font-size: 0.60rem;
+    color: #8a9ab5;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 3px;
+}
+
+.sim-for-code {
+    font-family: 'Consolas', monospace;
+    font-size: 0.78rem;
+    color: #c5cae9;
+    display: block;
+    word-break: break-all;
+}
+
+.sim-for-now {
+    font-size: 0.76rem;
+    color: #bfc6d1;
+    margin-top: 3px;
+}
+
+.sim-for-now b { color: #fff; }
+.sim-for-badge { font-size: 0.74rem; font-weight: 700; }
+.sim-for-t { color: var(--green-main); }
+.sim-for-f { color: #e05263; }
+
+.cs-empty-hint {
+    color: #8a9ab5;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.cs-step-line {
+    font-size: 0.82em;
+    color: #8a9ab5;
+}
+
+.cs-step-note {
+    margin-top: 6px;
+    font-size: 0.9em;
+    color: #c5cae9;
+    word-break: break-word;
+}
+
+.cs-step-note.iserr {
+    color: #ff8a65;
+    font-weight: 600;
+}
+
+.cs-line-active {
+    background: rgba(4, 170, 109, 0.15);
+}
+
+.cs-line-error {
+    background: rgba(220, 53, 69, 0.22);
+}
+
+/* ── Inputs editables (variables iniciales del ejemplo/ejercicio) ── */
+#adm-vars-editable {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    background: #1e2130;
+    border: 1px solid #3a3d4a;
+    border-radius: 8px;
+}
+
+#adm-vars-editable:empty {
+    display: none;
+}
+
+.arr-var-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 120px;
+}
+
+.arr-var-field label {
+    font-size: 0.72em;
+    color: #8a9ab5;
+    font-family: monospace;
+    text-transform: none;
+    letter-spacing: 0.02em;
+}
+
+.arr-var-input {
+    background: #15161e;
+    border: 1px solid #3a3d4a;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-family: 'Consolas', monospace;
+    font-size: 0.9em;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.arr-var-input:focus {
+    border-color: #04AA6D;
+}
+
+/* ── Velocidad de reproducción ── */
+.sim-speed-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.sim-speed-row label {
+    font-size: 0.78em;
+    color: #8a9ab5;
+    white-space: nowrap;
+}
+
+.sim-speed-row input[type=range] {
+    flex: 1;
+    accent-color: #04AA6D;
+    cursor: pointer;
+    height: 4px;
+}
+
+.sim-speed-val {
+    font-size: 0.78em;
+    color: #04AA6D;
+    min-width: 30px;
+    text-align: right;
+}
+
+/* ── Pila de llamadas (recursividad) ── */
+.rec-stack-panel {
+    background: #1a1d2a;
+    border: 1px solid #3d4160;
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+}
+
+.rec-stack-header {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #7c85c2;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rec-stack-header .n {
+    background: #2d3050;
+    color: #a0a8d4;
+    border-radius: 10px;
+    padding: 0 6px;
+    font-size: 0.75em;
+}
+
+.rec-frame {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    padding: 3px 6px;
+    border-left: 2px solid #04AA6D;
+    margin-bottom: 3px;
+    background: #0f1018;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.82rem;
+}
+
+.rec-frame-name {
+    color: #04AA6D;
+    font-weight: 700;
+    font-family: 'Consolas', monospace;
+}
+
+.rec-frame-args {
+    color: #c5cae9;
+    font-family: 'Consolas', monospace;
+}
+
+/* ── Sistema de archivos virtual (Archivos) ── */
+.arc-fs-panel {
+    background: #1a1d2a;
+    border: 1px solid #3d4160;
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+}
+
+.arc-fs-header {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #7c85c2;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.arc-fs-header .n {
+    background: #2d3050;
+    color: #a0a8d4;
+    border-radius: 10px;
+    padding: 0 6px;
+    font-size: 0.75em;
+}
+
+.arc-file {
+    background: #0f1018;
+    border: 1px solid #2d3050;
+    border-radius: 6px;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.arc-file-changed {
+    border-color: #04AA6D;
+    background: #071a10;
+    animation: adm-arc-flash 0.5s ease;
+}
+
+@keyframes adm-arc-flash {
+    0%   { background: #0d3320; }
+    100% { background: #071a10; }
+}
+
+.arc-file-name {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #04AA6D;
+    font-family: 'Consolas', monospace;
+    margin-bottom: 4px;
+}
+
+.arc-file-content {
+    font-family: 'Consolas', monospace;
+    font-size: 0.76rem;
+    color: #c5cae9;
+    background: #15161e;
+    border-radius: 4px;
+    padding: 4px 6px;
+    line-height: 1.5;
+    max-height: 120px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.arc-more {
+    color: #7c85c2;
+    font-size: 0.72rem;
+    font-style: italic;
+}

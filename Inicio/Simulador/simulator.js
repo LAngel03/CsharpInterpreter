@@ -1077,7 +1077,7 @@ function simSetDescripcion(html, tipo, titulo) {
     if (html && tipo) {
         let prefijo = '';
         if (tipo === 'ejercicio') prefijo = '<span class="sim-ejercicio-badge">Ejercicio: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
-        else if (tipo === 'ejemplo') prefijo = '<span class="sim-ejemplo-badge">Ejemplo: </span>';
+        else if (tipo === 'ejemplo') prefijo = '<span class="sim-ejemplo-badge">Ejemplo: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
         elDesc.innerHTML = prefijo + html;
         elDesc.style.display = 'block';
         elDesc.classList.toggle('modo-ejercicio', tipo === 'ejercicio');
@@ -1148,7 +1148,8 @@ function simGetItemsDesdeSubtema(subtema, slugFallback) {
     const items = ejemplosDb.map((ej, i) => ({
         label: ejemplosDb.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
         codigo: ej.codigo || '',
-        enunciado: ej.enunciado || null
+        enunciado: ej.enunciado || null,
+        titulo: ej.titulo || null
     }));
 
     // Los ejercicios vienen APARTE, en subtema.ejercicios (lista de la BD).
@@ -1220,7 +1221,7 @@ async function initSimulador(tema) {
     // se toca aquí — sigue visible siempre.
     function mostrarDescripcionItem(it) {
         if (it.esEjercicio && it.enunciado) simSetDescripcion(it.enunciado, 'ejercicio', it.titulo);
-        else if (it.enunciado) simSetDescripcion(it.enunciado, 'ejemplo');
+        else if (it.enunciado) simSetDescripcion(it.enunciado, 'ejemplo', it.titulo);
         else simSetDescripcion(null, null);
     }
 

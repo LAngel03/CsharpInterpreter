@@ -77,108 +77,97 @@ class ArchivosSimulator {
 }
 
 // ════════════════════════════════════════════════════════════
-//  EJEMPLOS
+//  EJEMPLOS Y EJERCICIO — conectados a la API (subtema "Archivos")
 // ════════════════════════════════════════════════════════════
 
-const ARC_EXAMPLES = {
-    Archivos: [
+const arcCacheSubtemas = {};
 
-        // Ejemplo 1 — WriteAllText + ReadAllText
-`// Crear un archivo y leer su contenido
-// File.WriteAllText crea el archivo (o lo sobreescribe si existe)
-// File.ReadAllText devuelve todo el contenido como string
-
-string archivo = "saludo.txt";
-string mensaje = "Hola desde C#!";
-
-File.WriteAllText(archivo, mensaje);
-Console.WriteLine("Archivo creado: " + archivo);
-
-string leido = File.ReadAllText(archivo);
-Console.WriteLine("Contenido leido: " + leido);`,
-
-        // Ejemplo 2 — AppendAllText (registro)
-`// Agregar entradas a un archivo de registro
-// File.AppendAllText agrega al final sin borrar lo anterior
-// Si el archivo no existe, lo crea
-
-string registro = "log.txt";
-
-File.WriteAllText(registro, "Inicio del programa\n");
-File.AppendAllText(registro, "Usuario inicio sesion\n");
-File.AppendAllText(registro, "Operacion completada\n");
-
-string todo = File.ReadAllText(registro);
-Console.WriteLine(todo);`,
-
-        // Ejemplo 3 — Exists + condicional
-`// Verificar si un archivo existe antes de leerlo
-// File.Exists devuelve true o false
-// Util para evitar errores al leer archivos inexistentes
-
-string config = "config.txt";
-
-if (File.Exists(config)) {
-    string datos = File.ReadAllText(config);
-    Console.WriteLine("Configuracion: " + datos);
-} else {
-    File.WriteAllText(config, "tema=oscuro\nidioma=es");
-    Console.WriteLine("Archivo de configuracion creado");
-}
-
-bool existe = File.Exists(config);
-Console.WriteLine("Existe: " + existe);`
-    ]
-};
-
-const ARC_EJERCICIOS = {
-    Archivos: {
-        enunciado: `Una agenda digital guarda los contactos en un archivo de texto. Cada vez que se agrega un contacto, se escribe una nueva línea con el nombre y el teléfono separados por coma. El programa debe: <strong>1)</strong> verificar si el archivo ya existe, <strong>2)</strong> agregar tres contactos usando <code>AppendAllText</code>, y <strong>3)</strong> leer y mostrar el contenido completo. Si el archivo no existía, primero créalo con una cabecera. Observa cómo el panel de archivos muestra el contenido creciendo con cada operación.`,
-        codigo:
-`string agenda = "contactos.txt";
-
-if (!File.Exists(agenda)) {
-    File.WriteAllText(agenda, "NOMBRE,TELEFONO\n");
-    Console.WriteLine("Agenda creada");
-}
-
-File.AppendAllText(agenda, "Ana Lopez,555-1234\n");
-File.AppendAllText(agenda, "Luis Gomez,555-5678\n");
-File.AppendAllText(agenda, "Maria Torres,555-9012\n");
-
-string contenido = File.ReadAllText(agenda);
-Console.WriteLine(contenido);`
+async function arcObtenerDatosTema(slug) {
+    if (arcCacheSubtemas[slug]) return arcCacheSubtemas[slug];
+    try {
+        if (!window.ApiClient || typeof window.ApiClient.obtenerSubtemaPorSlug !== 'function') {
+            throw new Error('window.ApiClient.obtenerSubtemaPorSlug no está disponible');
+        }
+        const subtema = await window.ApiClient.obtenerSubtemaPorSlug(slug);
+        if (!subtema) throw new Error('La API devolvió una respuesta vacía para "' + slug + '"');
+        arcCacheSubtemas[slug] = subtema;
+        return subtema;
+    } catch (e) {
+        console.warn(`Subtema "${slug}" no encontrado en la API`, e);
+        return { codigo_ejemplo: null, _apiError: e.message }; // null => sin datos, se avisa en pantalla
     }
-};
-
-// ── Helpers de items ─────────────────────────────────────────
-
-function arcGetEjemplos(tema) {
-    const ex = ARC_EXAMPLES[tema];
-    if (Array.isArray(ex)) return ex.slice();
-    if (typeof ex === 'string') return [ex];
-    return [''];
 }
 
-function arcGetItems(tema) {
-    const items = arcGetEjemplos(tema).map((code, i) => ({
-        label: 'Ejemplo ' + (i + 1), codigo: code, enunciado: null, esEjercicio: false
+function arcGetItemsDesdeSubtema(subtema) {
+    if (subtema.codigo_ejemplo === null) {
+        return [{ label: 'Ejemplo 1', codigo: '// No se pudo cargar el ejemplo desde la API.', enunciado: null, esEjercicio: false }];
+    }
+
+    // Los ejemplos vienen de su propia tabla (subtema.ejemplos), ya
+    // ordenados por "orden" desde el backend.
+    const ejemplosDb = Array.isArray(subtema.ejemplos) ? subtema.ejemplos : [];
+    const items = ejemplosDb.map((ej, i) => ({
+        label: ejemplosDb.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
+        codigo: ej.codigo || '',
+        enunciado: ej.enunciado || null,
+        titulo: ej.titulo || null,
+        esEjercicio: false
     }));
-    const ej = ARC_EJERCICIOS[tema];
-    if (ej) items.push({ label: 'Ejercicio', codigo: ej.codigo, enunciado: ej.enunciado, esEjercicio: true });
+
+    // Los ejercicios vienen APARTE, en subtema.ejercicios (lista de la BD).
+    // Campos reales: titulo, descripcion (enunciado) y codigo_csharp (solución).
+    const ejercicios = Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [];
+    ejercicios.forEach((ej, i) => {
+        items.push({
+            label: ejercicios.length > 1 ? 'Ejercicio ' + (i + 1) : 'Ejercicio',
+            codigo: ej.codigo_csharp,
+            enunciado: ej.descripcion,
+            titulo: ej.titulo || null,
+            esEjercicio: true
+        });
+    });
+
+    if (!items.length) {
+        items.push({ label: 'Ejemplo 1', codigo: '// La API no devolvió ejemplos para este tema.', enunciado: null, esEjercicio: false });
+    }
     return items;
 }
 
-function arcSetDescripcion(html, esEjercicio) {
-    const el = document.getElementById('tema-descripcion');
+// Recuadro del enunciado propio del ejemplo/ejercicio activo — va debajo del
+// concepto general del tema (#tema-descripcion, que no se toca aquí).
+// tipo: 'ejercicio' | 'ejemplo' | null (oculta el recuadro, no hay enunciado)
+function arcSetDescripcion(html, tipo, titulo) {
+    const el = document.getElementById('tema-enunciado');
     if (!el) return;
-    if (html) {
-        el.innerHTML = esEjercicio ? '<span class="sim-ejercicio-badge">Ejercicio: </span>' + html : html;
+    if (html && tipo) {
+        let prefijo = '';
+        if (tipo === 'ejercicio') prefijo = '<span class="sim-ejercicio-badge">Ejercicio: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
+        else if (tipo === 'ejemplo') prefijo = '<span class="sim-ejemplo-badge">Ejemplo: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
+        el.innerHTML = prefijo + html;
         el.style.display = 'block';
-        el.classList.toggle('modo-ejercicio', !!esEjercicio);
+        el.classList.toggle('modo-ejercicio', tipo === 'ejercicio');
+        el.classList.toggle('modo-ejemplo', tipo === 'ejemplo');
     } else {
-        el.innerHTML = ''; el.style.display = 'none'; el.classList.remove('modo-ejercicio');
+        el.innerHTML = ''; el.style.display = 'none'; el.classList.remove('modo-ejercicio', 'modo-ejemplo');
     }
+}
+
+// Muestra (o limpia) un mensaje de error visible arriba del editor.
+function arcMostrarErrorApi(mensaje) {
+    const editorBody = document.getElementById('editor-body');
+    if (!editorBody) return;
+    let box = document.getElementById('sim-api-error');
+    if (!mensaje) {
+        if (box) box.remove();
+        return;
+    }
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'sim-api-error';
+        box.className = 'sim-api-error';
+        editorBody.parentNode.insertBefore(box, editorBody);
+    }
+    box.textContent = mensaje;
 }
 
 // ── Estado global ─────────────────────────────────────────────
@@ -516,6 +505,103 @@ function arcConectarBotones() {
     document.head.appendChild(style);
 })();
 
+// ── Inicialización (conectada a GET /api/subtemas/slug/:slug) ─
+
+async function initArchivosSimulador(tema) {
+    const editorBody = document.getElementById('editor-body');
+    if (!editorBody) return;
+
+    let items;
+    try {
+        const subtema = await arcObtenerDatosTema(tema);
+        items = arcGetItemsDesdeSubtema(subtema);
+        if (subtema._apiError) {
+            arcMostrarErrorApi('No se pudo conectar con la API (' + subtema._apiError + '). Mostrando aviso de error.');
+        } else {
+            arcMostrarErrorApi(null);
+        }
+    } catch (e) {
+        console.error('Error inicializando el simulador de archivos para "' + tema + '":', e);
+        arcMostrarErrorApi('Error cargando el simulador: ' + e.message);
+        items = [{ label: 'Ejemplo 1', codigo: '// Error cargando el simulador: ' + e.message, enunciado: null, esEjercicio: false }];
+    }
+
+    arcCurrentCode = items[0].codigo;
+
+    // Pestañas
+    let tabsEl = document.getElementById('sim-ejemplos-tabs');
+    if (!tabsEl && items.length > 1) {
+        tabsEl = document.createElement('div');
+        tabsEl.id = 'sim-ejemplos-tabs';
+        editorBody.parentNode.insertBefore(tabsEl, editorBody);
+    }
+
+    // Inputs de variables editables
+    if (!document.getElementById('arc-vars-editable')) {
+        const varsHost = document.createElement('div');
+        varsHost.id = 'arc-vars-editable';
+        editorBody.parentNode.insertBefore(varsHost, editorBody);
+    }
+
+    // Muestra (o esconde) el recuadro de enunciado propio del item activo;
+    // el concepto general del tema vive aparte, en #tema-descripcion, y no
+    // se toca aquí — sigue visible siempre.
+    function mostrarDescripcionItem(it) {
+        if (it.esEjercicio && it.enunciado) arcSetDescripcion(it.enunciado, 'ejercicio', it.titulo);
+        else if (it.enunciado) arcSetDescripcion(it.enunciado, 'ejemplo', it.titulo);
+        else arcSetDescripcion(null, null);
+    }
+
+    if (tabsEl) {
+        tabsEl.innerHTML = items.map((it, i) =>
+            '<button class="sim-tab' + (i === 0 ? ' activo' : '') +
+            (it.esEjercicio ? ' ejercicio' : '') +
+            '" data-idx="' + i + '">' + it.label + '</button>'
+        ).join('');
+        tabsEl.querySelectorAll('.sim-tab').forEach(btn => {
+            btn.onclick = () => {
+                arcStopPlay(_arcBtns());
+                const idx = parseInt(btn.dataset.idx);
+                const it = items[idx];
+                tabsEl.querySelectorAll('.sim-tab').forEach(b => b.classList.remove('activo'));
+                btn.classList.add('activo');
+                mostrarDescripcionItem(it);
+                arcCurrentCode = it.codigo;
+                if (arcMonacoEditor) arcMonacoEditor.setValue(it.codigo);
+                arcCargarYEjecutar(it.codigo);
+            };
+        });
+    }
+
+    function crearEditorArc() {
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+            arcMonacoEditor = monaco.editor.create(editorBody, {
+                value: arcCurrentCode,
+                language: 'csharp',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                fontSize: 14,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                readOnly: true
+            });
+            arcConectarBotones();
+            mostrarDescripcionItem(items[0]);
+            arcCargarYEjecutar(arcCurrentCode);
+        });
+    }
+
+    if (window.monaco) crearEditorArc();
+    else if (window.require) crearEditorArc();
+    else {
+        const loader = document.createElement('script');
+        loader.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.js';
+        loader.onload = crearEditorArc;
+        document.head.appendChild(loader);
+    }
+}
+
 // ── Hook en cargarTema ────────────────────────────────────────
 
 (function wrapCargarTemaArchivos() {
@@ -539,77 +625,6 @@ function arcConectarBotones() {
         arcTemaActual = nombreTema;
         arcPlaying = false;
 
-        const editorBody = document.getElementById('editor-body');
-        if (!editorBody) return;
-
-        const items = arcGetItems(nombreTema);
-        arcCurrentCode = items[0].codigo;
-
-        // Pestañas
-        let tabsEl = document.getElementById('sim-ejemplos-tabs');
-        if (!tabsEl && items.length > 1) {
-            tabsEl = document.createElement('div');
-            tabsEl.id = 'sim-ejemplos-tabs';
-            editorBody.parentNode.insertBefore(tabsEl, editorBody);
-        }
-        if (tabsEl) {
-            tabsEl.innerHTML = items.map((it, i) =>
-                '<button class="sim-tab' + (i === 0 ? ' activo' : '') +
-                (it.esEjercicio ? ' ejercicio' : '') +
-                '" data-idx="' + i + '">' + it.label + '</button>'
-            ).join('');
-            tabsEl.querySelectorAll('.sim-tab').forEach(btn => {
-                btn.onclick = () => {
-                    arcStopPlay(_arcBtns());
-                    const idx = parseInt(btn.dataset.idx);
-                    const it = items[idx];
-                    tabsEl.querySelectorAll('.sim-tab').forEach(b => b.classList.remove('activo'));
-                    btn.classList.add('activo');
-                    const defHtml = (window.temas && window.temas['Archivos']) ? window.temas['Archivos'].definicion : '';
-                    arcSetDescripcion(it.enunciado || defHtml, !!it.enunciado);
-                    arcCurrentCode = it.codigo;
-                    if (arcMonacoEditor) arcMonacoEditor.setValue(it.codigo);
-                    arcCargarYEjecutar(it.codigo);
-                };
-            });
-        }
-
-        // Inputs de variables editables
-        if (!document.getElementById('arc-vars-editable')) {
-            const varsHost = document.createElement('div');
-            varsHost.id = 'arc-vars-editable';
-            editorBody.parentNode.insertBefore(varsHost, editorBody);
-        }
-
-        // Descripción inicial
-        const defHtml = (window.temas && window.temas['Archivos']) ? window.temas['Archivos'].definicion : '';
-        arcSetDescripcion(defHtml, false);
-
-        function crearEditorArc() {
-            require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
-            require(['vs/editor/editor.main'], function () {
-                arcMonacoEditor = monaco.editor.create(editorBody, {
-                    value: arcCurrentCode,
-                    language: 'csharp',
-                    theme: 'vs-dark',
-                    automaticLayout: true,
-                    fontSize: 14,
-                    minimap: { enabled: false },
-                    scrollBeyondLastLine: false,
-                    readOnly: true
-                });
-                arcConectarBotones();
-                arcCargarYEjecutar(arcCurrentCode);
-            });
-        }
-
-        if (window.monaco) crearEditorArc();
-        else if (window.require) crearEditorArc();
-        else {
-            const loader = document.createElement('script');
-            loader.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.js';
-            loader.onload = crearEditorArc;
-            document.head.appendChild(loader);
-        }
+        initArchivosSimulador(nombreTema); // ya es async, no necesita setTimeout
     };
 })();

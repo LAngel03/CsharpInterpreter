@@ -200,6 +200,7 @@ function arrGetItemsDesdeSubtema(subtema, slug) {
         label: ejemplosDb.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
         codigo: ej.codigo || '',
         enunciado: ej.enunciado || null,
+        titulo: ej.titulo || null,
         esEjercicio: false
     }));
 
@@ -239,7 +240,7 @@ function arrSetDescripcion(html, tipo, titulo) {
     if (html && tipo) {
         let prefijo = '';
         if (tipo === 'ejercicio') prefijo = '<span class="sim-ejercicio-badge">Ejercicio: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
-        else if (tipo === 'ejemplo') prefijo = '<span class="sim-ejemplo-badge">Ejemplo: </span>';
+        else if (tipo === 'ejemplo') prefijo = '<span class="sim-ejemplo-badge">Ejemplo: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
         elDesc.innerHTML = prefijo + html;
         elDesc.style.display = 'block';
         elDesc.classList.toggle('modo-ejercicio', tipo === 'ejercicio');
@@ -588,7 +589,7 @@ async function initArraySimulator(nombreTema) {
         if (it.esEjercicio && it.enunciado) {
             arrSetDescripcion(it.enunciado, 'ejercicio', it.titulo);
         } else if (it.enunciado) {
-            arrSetDescripcion(it.enunciado, 'ejemplo');
+            arrSetDescripcion(it.enunciado, 'ejemplo', it.titulo);
         } else {
             arrSetDescripcion(null, null);
         }

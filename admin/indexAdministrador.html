@@ -19,6 +19,7 @@
     <title>Panel de Administrador — Simulador C#</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
     <link rel="stylesheet" href="../admin/css/admin.css">
+    <link rel="stylesheet" href="../admin/css/admin-consola.css">
 </head>
 
 <body>
@@ -266,6 +267,10 @@
                         </div>
                         <div class="grow"></div>
                         <div class="head-actions" data-seccion="ejemplos">
+                            <button type="button" class="tab-add-btn tab-add-btn--ejemplo" id="btnAgregarEjemplo"
+                                onclick="agregarEjemplo()">+ Ejemplo</button>
+                            <button type="button" class="tab-add-btn tab-add-btn--ejercicio" id="btnAgregarEjercicio"
+                                onclick="agregarEjercicio()">+ Ejercicio</button>
                             <span class="status"><span class="dotpulse"></span><span class="status-text">Sin
                             cambios</span></span>
                             <button class="btn btn--ghost btn--sm" onclick="cancelarCambios()">Cancelar</button>
@@ -282,6 +287,10 @@
                     </div>
                     <div class="block__body">
                         <div class="editor-tabs" id="editorTabs"></div>
+                        <div class="field" id="tituloEjemploWrap" style="display:none"><label>Título del ejemplo
+                                <span class="hint">(opcional)</span></label><input type="text" class="input" id="f-titulo-ejemplo"
+                                oninput="markDirty('ejemplos')">
+                        </div>
                         <div class="field" id="enunciadoEjemploWrap" style="display:none"><label>Enunciado del ejemplo
                                 <span class="hint">(opcional)</span></label><textarea class="textarea" id="f-enunciado-ejemplo"
                                 oninput="markDirty('ejemplos')"></textarea>
@@ -294,12 +303,65 @@
                                 <span class="req">*</span></label><textarea class="textarea" id="f-enunciado"
                                 oninput="markDirty('ejemplos')"></textarea>
                         </div>
-                        <div class="code-shell">
-                            <div class="code-shell__bar"><span class="dot r"></span><span class="dot y"></span><span
-                                    class="dot g"></span><span class="name" id="codeFileName">ejemplo.cs</span></div>
-                            <div id="monaco-editor"></div>
-                            <textarea class="code-fallback" id="codeFallback" style="display:none"
-                                oninput="markDirty('ejemplos')"></textarea>
+                        <!-- Consola de vista previa: MISMO diseño que ve el estudiante
+                             (Inicio/Simulador). Editable aquí (el admin escribe el código);
+                             la simulación paso a paso se recalcula sola con cada cambio. -->
+                        <div class="workspace">
+                            <div class="console-panel editor-panel">
+                                <div class="console-header">
+                                    <span class="console-title">Editor</span>
+                                </div>
+                                <div id="adm-vars-editable"></div>
+                                <div class="editor-body" id="monaco-editor"></div>
+                                <textarea class="code-fallback" id="codeFallback" style="display:none"
+                                    oninput="markDirty('ejemplos')"></textarea>
+                                <div class="editor-controls">
+                                    <button class="ctrl-btn" id="adm-btn-reiniciar">Volver al inicio</button>
+
+                                    <button class="btn-anterior" id="adm-btn-anterior" disabled>
+                                        <img src="../img/iconos/Atras.png" alt="Paso anterior">
+                                        <span class="tooltip-text">Paso anterior</span>
+                                    </button>
+
+                                    <button class="btn-siguiente" id="adm-btn-siguiente">
+                                        <img src="../img/iconos/Siguiente.png" alt="Paso siguiente">
+                                        <span class="tooltip-text">Paso siguiente</span>
+                                    </button>
+
+                                    <button class="ctrl-btn primary" id="adm-btn-reproducir">
+                                        <img src="../img/iconos/play.png" alt="Reproducir">
+                                        <span class="tooltip-text">Reproducir</span>
+                                    </button>
+
+                                    <div class="ctrl-progress">
+                                        <span class="ctrl-step" id="adm-ctrl-step">Paso 0 / 0</span>
+                                        <div class="pbar"><i id="adm-pbar-fill"></i></div>
+                                    </div>
+
+                                    <div class="sim-speed-row">
+                                        <label>Velocidad</label>
+                                        <input type="range" id="adm-speed-slider" min="1" max="100" value="40">
+                                        <span class="sim-speed-val" id="adm-speed-val">1×</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="side-panels">
+                                <div class="console-panel2">
+                                    <div class="console-header2"><span class="console-title2">Paso actual</span></div>
+                                    <div class="console-body2" id="adm-panel-paso"></div>
+                                </div>
+
+                                <div class="console-panel">
+                                    <div class="console-header"><span class="console-title">Variables</span></div>
+                                    <div class="console-body" id="adm-panel-vars"></div>
+                                </div>
+
+                                <div class="console-panel">
+                                    <div class="console-header"><span class="console-title">Salida</span></div>
+                                    <div class="console-body" id="adm-panel-salida"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -378,6 +440,8 @@
     </script>
 
     <script src="../api.js"></script>
+    <script src="../Inicio/Simulador/engine.js"></script>
+    <script src="../admin/js/admin-consola.js"></script>
     <script src="../admin/js/admin.js"></script>
 </body>
 

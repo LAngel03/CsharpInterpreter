@@ -193,7 +193,8 @@ function mostrarVistaTema(slug) {
 
 // Temas que no vienen de la API (100% locales en el simulador del alumno):
 // editarlos aquí no tendría ningún efecto para los estudiantes.
-const TEMAS_NO_EDITABLES = ['Glosario', 'Recursividad', 'Archivos'];
+// Recursividad y Archivos ya se conectaron a la API — se quitaron de esta lista.
+const TEMAS_NO_EDITABLES = ['Glosario'];
 
 document.querySelectorAll('.nav-sub-btn[data-tema]:not(.has-sub2), .nav-sub2-btn[data-tema], .nav-btn[data-tema]:not(.has-sub)').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -246,9 +247,7 @@ function renderEditorTabs() {
         const claseActivo = i === tabActivo ? ' activo' : '';
         const quitar = esUltimoEjemplo ? '' : `<span class="tab-remove" data-tab-remove="${i}" title="Quitar">&times;</span>`;
         return `<span class="sim-tab${claseTipo}${claseActivo}" data-tab="${i}">${etiquetas[i]}${quitar}</span>`;
-    }).join('') +
-        `<button type="button" class="tab-add-btn tab-add-btn--ejemplo" id="btnAgregarEjemplo">+ Ejemplo</button>` +
-        `<button type="button" class="tab-add-btn tab-add-btn--ejercicio" id="btnAgregarEjercicio">+ Ejercicio</button>`;
+    }).join('');
 
     cont.querySelectorAll('[data-tab-remove]').forEach(el => {
         el.addEventListener('click', (ev) => { ev.stopPropagation(); eliminarTab(Number(el.dataset.tabRemove)); });
@@ -256,10 +255,6 @@ function renderEditorTabs() {
     cont.querySelectorAll('.sim-tab').forEach(el => {
         el.addEventListener('click', () => seleccionarTab(Number(el.dataset.tab)));
     });
-    const btnEj = document.getElementById('btnAgregarEjemplo');
-    if (btnEj) btnEj.addEventListener('click', agregarEjemplo);
-    const btnEjer = document.getElementById('btnAgregarEjercicio');
-    if (btnEjer) btnEjer.addEventListener('click', agregarEjercicio);
 }
 
 // Guarda en itemsActuales lo que haya en el editor/enunciado antes de cambiar de pestaña
@@ -275,6 +270,8 @@ function volcarTabActivaAEstado() {
     } else {
         const elEnunEj = document.getElementById('f-enunciado-ejemplo');
         if (elEnunEj) item.enunciado = elEnunEj.value;
+        const elTitEj = document.getElementById('f-titulo-ejemplo');
+        if (elTitEj) item.titulo = elTitEj.value;
     }
 }
 
@@ -300,18 +297,20 @@ function seleccionarTab(i, { volcar = true } = {}) {
 
     const enunciadoEjemploWrap = document.getElementById('enunciadoEjemploWrap');
     if (enunciadoEjemploWrap) enunciadoEjemploWrap.style.display = esEjercicio ? 'none' : '';
+    const tituloEjemploWrap = document.getElementById('tituloEjemploWrap');
+    if (tituloEjemploWrap) tituloEjemploWrap.style.display = esEjercicio ? 'none' : '';
     if (!esEjercicio) {
         document.getElementById('f-enunciado-ejemplo').value = item.enunciado || '';
+        document.getElementById('f-titulo-ejemplo').value = item.titulo || '';
     }
-
-    document.getElementById('codeFileName').textContent = etiquetasItems()[tabActivo].toLowerCase().replace(/\s+/g, '_') + '.cs';
 
     if (monacoEditor) {
         // setValue() dispara onDidChangeModelContent aunque el cambio sea
         // programático (no del usuario) — se silencia para no marcar dirty
-        // solo por cambiar de pestaña.
+        // solo por cambiar de pestaña. AdmConsola sí vuelve a ejecutar la
+        // simulación con el código de la pestaña nueva (eso siempre debe pasar).
         suprimirDirtyEditor = true;
-        monacoEditor.setValue(item.codigo || '');
+        AdmConsola.cargarCodigo(item.codigo || '');
         suprimirDirtyEditor = false;
     } else {
         document.getElementById('codeFallback').value = item.codigo || '';
@@ -320,7 +319,7 @@ function seleccionarTab(i, { volcar = true } = {}) {
 
 function agregarEjemplo() {
     volcarTabActivaAEstado();
-    itemsActuales.push({ tipo: 'ejemplo', codigo: '', enunciado: '' });
+    itemsActuales.push({ tipo: 'ejemplo', codigo: '', enunciado: '', titulo: '' });
     renderEditorTabs();
     seleccionarTab(itemsActuales.length - 1, { volcar: false });
     markDirty('ejemplos');
@@ -354,6 +353,9 @@ function eliminarTab(i) {
 
 /* ════ Carga de un tema (conectado a GET /api/subtemas/slug/:slug) ════ */
 async function cargarTema(slug) {
+    // Corta cualquier reproducción en curso del tema anterior antes de cargar uno nuevo.
+    if (window.AdmConsola) AdmConsola.limpiar();
+
     let t;
     try {
         t = await cargarTemaDesdeAPI(slug);
@@ -367,12 +369,12 @@ async function cargarTema(slug) {
     // Los ejemplos viven en su propia tabla (t.ejemplos), ya ordenada por
     // "orden" desde el backend.
     itemsActuales = (Array.isArray(t.ejemplos) ? t.ejemplos : []).map(ej => ({
-        tipo: 'ejemplo', codigo: ej.codigo || '', enunciado: ej.enunciado || ''
+        tipo: 'ejemplo', codigo: ej.codigo || '', enunciado: ej.enunciado || '', titulo: ej.titulo || ''
     }));
     (Array.isArray(t.ejercicios) ? t.ejercicios : []).forEach(ej => {
         itemsActuales.push({ tipo: 'ejercicio', codigo: ej.codigo_csharp || '', descripcion: ej.descripcion || '', titulo: ej.titulo || '' });
     });
-    if (!itemsActuales.length) itemsActuales.push({ tipo: 'ejemplo', codigo: '', enunciado: '' });
+    if (!itemsActuales.length) itemsActuales.push({ tipo: 'ejemplo', codigo: '', enunciado: '', titulo: '' });
 
     temaActual = slug;
     document.getElementById('temaTitulo').textContent = t.titulo;
@@ -410,7 +412,7 @@ async function guardarCambios() {
     // (crea/actualiza/borra por posición), igual que ya hace con ejercicios.
     const ejemplos = itemsActuales
         .filter(it => it.tipo === 'ejemplo')
-        .map(it => ({ enunciado: (it.enunciado || '').trim(), codigo: it.codigo || '' }));
+        .map(it => ({ titulo: (it.titulo || '').trim(), enunciado: (it.enunciado || '').trim(), codigo: it.codigo || '' }));
     const ejercicios = itemsActuales
         .filter(it => it.tipo === 'ejercicio')
         .map(it => ({ titulo: (it.titulo || '').trim(), descripcion: (it.descripcion || '').trim(), codigo_csharp: it.codigo || '' }));
@@ -477,7 +479,7 @@ function itemEstaVacio(it) {
     if (it.tipo === 'ejercicio') {
         return !(it.codigo || '').trim() && !(it.descripcion || '').trim() && !(it.titulo || '').trim();
     }
-    return !(it.codigo || '').trim() && !(it.enunciado || '').trim();
+    return !(it.codigo || '').trim() && !(it.enunciado || '').trim() && !(it.titulo || '').trim();
 }
 
 function itemsParaComparar(items) {
@@ -546,14 +548,15 @@ function flashStatus(msg, ok, secciones) {
 
 function confirmDiscard() { if (!hayCambiosPendientes()) return true; return confirm('Tienes cambios sin guardar. ¿Deseas descartarlos?'); }
 
-/* ════ Monaco ════ */
+/* ════ Monaco (vía AdmConsola — misma consola paso a paso que ven los alumnos) ════ */
 require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
 
 require(['vs/editor/editor.main'], function () {
-    monacoEditor = monaco.editor.create(document.getElementById('monaco-editor'), {
-        value: '', language: 'csharp', theme: 'vs-dark', automaticLayout: true,
-        fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false
-    });
+    AdmConsola.crearEditor(document.getElementById('monaco-editor'));
+    monacoEditor = AdmConsola.editor;
+    // Listener propio del admin: solo decide si hay que marcar "dirty".
+    // AdmConsola ya tiene su propio listener (siempre activo) que vuelve a
+    // correr la simulación; ambos conviven sin pisarse.
     monacoEditor.onDidChangeModelContent(() => { if (temaActual && !suprimirDirtyEditor) markDirty('ejemplos'); });
     document.getElementById('codeFallback').style.display = 'none';
 });
