@@ -1068,12 +1068,13 @@ function simGetItems(tema) {
     return items;
 }
 
-// Cambia el texto de arriba: concepto normal, enunciado de ejemplo o de ejercicio.
-// tipo: 'ejercicio' | 'ejemplo' | null (concepto normal del tema)
+// Recuadro del enunciado propio del ejemplo/ejercicio activo — va debajo del
+// concepto general del tema (#tema-descripcion, que no se toca aquí).
+// tipo: 'ejercicio' | 'ejemplo' | null (oculta el recuadro, no hay enunciado)
 function simSetDescripcion(html, tipo, titulo) {
-    const elDesc = document.getElementById('tema-descripcion');
+    const elDesc = document.getElementById('tema-enunciado');
     if (!elDesc) return;
-    if (html) {
+    if (html && tipo) {
         let prefijo = '';
         if (tipo === 'ejercicio') prefijo = '<span class="sim-ejercicio-badge">Ejercicio: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
         else if (tipo === 'ejemplo') prefijo = '<span class="sim-ejemplo-badge">Ejemplo: </span>';
@@ -1203,12 +1204,11 @@ async function initSimulador(tema) {
     if (!editorBody) return;
     simTemaActual = tema;
 
-    let subtema, items, codigo, defOriginal;
+    let subtema, items, codigo;
     try {
         subtema = await simObtenerDatosTema(tema); // "tema" == slug
         items = simGetItemsDesdeSubtema(subtema, tema);
         codigo = items[0].codigo;
-        defOriginal = subtema.definicion || ((window.temas && window.temas[tema]) ? window.temas[tema].definicion : '');
 
         // FIX: si hubo fallback por error de API, mostramos un aviso visible
         // en vez de dejarlo solo en la consola.
@@ -1243,13 +1243,13 @@ async function initSimulador(tema) {
         editorBody.parentNode.insertBefore(varsHost, editorBody);
     }
 
-    // Muestra el enunciado propio del item activo (ejemplo o ejercicio) en vez
-    // del concepto general del tema; si el item no tiene enunciado propio,
-    // cae de vuelta al concepto general.
+    // Muestra (o esconde) el recuadro de enunciado propio del item activo;
+    // el concepto general del tema vive aparte, en #tema-descripcion, y no
+    // se toca aquí — sigue visible siempre.
     function mostrarDescripcionItem(it) {
         if (it.esEjercicio && it.enunciado) simSetDescripcion(it.enunciado, 'ejercicio', it.titulo);
         else if (it.enunciado) simSetDescripcion(it.enunciado, 'ejemplo');
-        else simSetDescripcion(defOriginal, null);
+        else simSetDescripcion(null, null);
     }
 
     function activarTabs() {

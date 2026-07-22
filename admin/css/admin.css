@@ -1368,18 +1368,36 @@ tbody td.num {
 }
 
 .tab-add-btn {
-    background: transparent;
-    color: var(--text-dim);
-    border: 1px dashed var(--console-border);
     border-radius: 8px;
     padding: 6px 12px;
     font-size: 0.82rem;
+    font-weight: 600;
     font-family: inherit;
     cursor: pointer;
     transition: 0.15s;
 }
 
-.tab-add-btn:hover {
-    border-color: var(--green-main);
+/* Colores fijos (no solo al pasar el mouse) para distinguir de un vistazo
+   cuál botón agrega un ejemplo y cuál un ejercicio — mismo código de color
+   que ya usan las pestañas y los badges del enunciado. */
+.tab-add-btn--ejemplo {
+    background: rgba(4, 170, 109, 0.14);
     color: var(--green-main);
+    border: 1px solid rgba(4, 170, 109, 0.5);
+}
+
+.tab-add-btn--ejemplo:hover {
+    background: rgba(4, 170, 109, 0.24);
+    border-color: var(--green-main);
+}
+
+.tab-add-btn--ejercicio {
+    background: rgba(123, 44, 191, 0.16);
+    color: #c9a3ff;
+    border: 1px solid rgba(123, 44, 191, 0.55);
+}
+
+.tab-add-btn--ejercicio:hover {
+    background: rgba(123, 44, 191, 0.28);
+    border-color: #7B2CBF;
 }

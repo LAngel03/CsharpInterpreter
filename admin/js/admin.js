@@ -16,6 +16,9 @@ const RUTA_LOGIN = '../index.html';
 /* ════════ Estado global ════════ */
 let temaActual = null, originalSnapshot = null, monacoEditor = null;
 let dirtySecciones = { concepto: false, ejemplos: false };
+// Se pone en true mientras el código carga el editor por su cuenta (cambio de
+// pestaña, cancelar, etc.) para que Monaco no dispare markDirty por eso.
+let suprimirDirtyEditor = false;
 let estudiantesCache = [];
 
 // Filtro activo de la tabla de usuarios: 'todos' | 'pendientes' | 'activos'
@@ -262,8 +265,8 @@ function renderEditorTabs() {
         const quitar = esUltimoEjemplo ? '' : `<span class="tab-remove" data-tab-remove="${i}" title="Quitar">&times;</span>`;
         return `<span class="sim-tab${claseTipo}${claseActivo}" data-tab="${i}">${etiquetas[i]}${quitar}</span>`;
     }).join('') +
-        `<button type="button" class="tab-add-btn" id="btnAgregarEjemplo">+ Ejemplo</button>` +
-        `<button type="button" class="tab-add-btn" id="btnAgregarEjercicio">+ Ejercicio</button>`;
+        `<button type="button" class="tab-add-btn tab-add-btn--ejemplo" id="btnAgregarEjemplo">+ Ejemplo</button>` +
+        `<button type="button" class="tab-add-btn tab-add-btn--ejercicio" id="btnAgregarEjercicio">+ Ejercicio</button>`;
 
     cont.querySelectorAll('[data-tab-remove]').forEach(el => {
         el.addEventListener('click', (ev) => { ev.stopPropagation(); eliminarTab(Number(el.dataset.tabRemove)); });
@@ -321,8 +324,16 @@ function seleccionarTab(i, { volcar = true } = {}) {
 
     document.getElementById('codeFileName').textContent = etiquetasItems()[tabActivo].toLowerCase().replace(/\s+/g, '_') + '.cs';
 
-    if (monacoEditor) monacoEditor.setValue(item.codigo || '');
-    else document.getElementById('codeFallback').value = item.codigo || '';
+    if (monacoEditor) {
+        // setValue() dispara onDidChangeModelContent aunque el cambio sea
+        // programático (no del usuario) — se silencia para no marcar dirty
+        // solo por cambiar de pestaña.
+        suprimirDirtyEditor = true;
+        monacoEditor.setValue(item.codigo || '');
+        suprimirDirtyEditor = false;
+    } else {
+        document.getElementById('codeFallback').value = item.codigo || '';
+    }
 }
 
 function agregarEjemplo() {
@@ -331,6 +342,9 @@ function agregarEjemplo() {
     renderEditorTabs();
     seleccionarTab(itemsActuales.length - 1, { volcar: false });
     markDirty('ejemplos');
+    // Deja el cursor listo para escribir el código del ejemplo nuevo.
+    if (monacoEditor) monacoEditor.focus();
+    else document.getElementById('codeFallback').focus();
 }
 
 function agregarEjercicio() {
@@ -339,6 +353,9 @@ function agregarEjercicio() {
     renderEditorTabs();
     seleccionarTab(itemsActuales.length - 1, { volcar: false });
     markDirty('ejemplos');
+    // El título es lo primero que se pide, así que el cursor arranca ahí.
+    const elTit = document.getElementById('f-titulo-ejercicio');
+    if (elTit) elTit.focus();
 }
 
 function eliminarTab(i) {
@@ -462,8 +479,44 @@ function cancelarCambios() {
 /* ════ Estado "dirty" (independiente por recuadro: "concepto" o "ejemplos") ════
    El PUT guarda todo el subtema junto, así que ambos botones "Guardar cambios"
    disparan el mismo guardarCambios(); solo el indicador visual se independiza
-   para que editar un recuadro no marque el otro como pendiente. */
-function markDirty(seccion) { setSeccionDirty(seccion || 'ejemplos', true); }
+   para que editar un recuadro no marque el otro como pendiente.
+
+   markDirty() no activa el botón a ciegas por cualquier evento: recalcula si
+   el estado actual REALMENTE difiere del último guardado/cargado
+   (originalSnapshot). Así, escribir algo y volver a dejarlo igual que antes
+   (o borrar una pestaña vacía recién agregada) no deja el botón activo. */
+function markDirty(seccion) { reevaluarDirty(seccion || 'ejemplos'); }
+
+// Un ejemplo/ejercicio recién agregado y todavía sin contenido no cuenta
+// como cambio real — ni al compararlo ni al decidir si guardar está permitido.
+function itemEstaVacio(it) {
+    if (it.tipo === 'ejercicio') {
+        return !(it.codigo || '').trim() && !(it.descripcion || '').trim() && !(it.titulo || '').trim();
+    }
+    return !(it.codigo || '').trim() && !(it.enunciado || '').trim();
+}
+
+function itemsParaComparar(items) {
+    return (items || []).filter(it => !itemEstaVacio(it));
+}
+
+function reevaluarDirty(seccion) {
+    if (!temaActual || !originalSnapshot) return;
+    const snap = JSON.parse(originalSnapshot);
+
+    if (seccion === 'concepto') {
+        const titulo = document.getElementById('f-titulo').value.trim();
+        const definicion = document.getElementById('f-definicion').value.trim();
+        const cambio = titulo !== (snap.titulo || '') || definicion !== (snap.definicion || '');
+        setSeccionDirty('concepto', cambio);
+        return;
+    }
+
+    volcarTabActivaAEstado();
+    const actual = JSON.stringify(itemsParaComparar(itemsActuales));
+    const original = JSON.stringify(itemsParaComparar(snap.items));
+    setSeccionDirty('ejemplos', actual !== original);
+}
 
 function setSeccionDirty(seccion, v) {
     dirtySecciones[seccion] = v;
@@ -517,7 +570,7 @@ require(['vs/editor/editor.main'], function () {
         value: '', language: 'csharp', theme: 'vs-dark', automaticLayout: true,
         fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false
     });
-    monacoEditor.onDidChangeModelContent(() => { if (temaActual) markDirty('ejemplos'); });
+    monacoEditor.onDidChangeModelContent(() => { if (temaActual && !suprimirDirtyEditor) markDirty('ejemplos'); });
     document.getElementById('codeFallback').style.display = 'none';
 });
 

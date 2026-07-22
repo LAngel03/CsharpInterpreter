@@ -249,11 +249,13 @@ function arrGetItemsLocal(tema) {
     return items;
 }
 
-// tipo: 'ejercicio' | 'ejemplo' | null (concepto normal del tema)
+// Recuadro del enunciado propio del ejemplo/ejercicio activo — va debajo del
+// concepto general del tema (#tema-descripcion, que no se toca aquí).
+// tipo: 'ejercicio' | 'ejemplo' | null (oculta el recuadro, no hay enunciado)
 function arrSetDescripcion(html, tipo, titulo) {
-    const elDesc = document.getElementById('tema-descripcion');
+    const elDesc = document.getElementById('tema-enunciado');
     if (!elDesc) return;
-    if (html) {
+    if (html && tipo) {
         let prefijo = '';
         if (tipo === 'ejercicio') prefijo = '<span class="sim-ejercicio-badge">Ejercicio: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
         else if (tipo === 'ejemplo') prefijo = '<span class="sim-ejemplo-badge">Ejemplo: </span>';
@@ -556,12 +558,10 @@ async function initArraySimulator(nombreTema) {
     arrTemaActual = nombreTema;
 
     // 1) Pide los datos a la API (con respaldo local si falla)
-    let subtema, items, defOriginal;
+    let subtema, items;
     try {
         subtema = await arrObtenerDatosTema(nombreTema);
         items = arrGetItemsDesdeSubtema(subtema, nombreTema);
-        defOriginal = subtema.definicion ||
-            ((window.temas && window.temas[nombreTema]) ? window.temas[nombreTema].definicion : '');
 
         if (subtema._apiError) {
             arrMostrarErrorApi('No se pudo conectar con la API de arreglos (' + subtema._apiError + '). Mostrando datos de respaldo.');
@@ -571,7 +571,6 @@ async function initArraySimulator(nombreTema) {
     } catch (e) {
         console.error('Error inicializando el simulador de arreglos para "' + nombreTema + '":', e);
         items = arrGetItemsLocal(nombreTema);
-        defOriginal = (window.temas && window.temas[nombreTema]) ? window.temas[nombreTema].definicion : '';
         arrMostrarErrorApi('Error cargando datos: ' + e.message + '. Mostrando respaldo local.');
     }
 
@@ -601,16 +600,16 @@ async function initArraySimulator(nombreTema) {
     const codigoInicial = items[0].codigo;
     arrCurrentCode = codigoInicial;
 
-    // Muestra el enunciado propio del item activo (ejemplo o ejercicio) en vez
-    // del concepto general del tema; si el item no tiene enunciado propio,
-    // cae de vuelta al concepto general.
+    // Muestra (o esconde) el recuadro de enunciado propio del item activo;
+    // el concepto general del tema vive aparte, en #tema-descripcion, y no
+    // se toca aquí — sigue visible siempre.
     function mostrarDescripcionItem(it) {
         if (it.esEjercicio && it.enunciado) {
             arrSetDescripcion(it.enunciado, 'ejercicio', it.titulo);
         } else if (it.enunciado) {
             arrSetDescripcion(it.enunciado, 'ejemplo');
         } else {
-            arrSetDescripcion(defOriginal, null);
+            arrSetDescripcion(null, null);
         }
     }
 

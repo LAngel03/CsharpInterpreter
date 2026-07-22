@@ -103,11 +103,19 @@ document.querySelectorAll('.nav-sub-btn:not(.has-sub2), .nav-sub2-btn, .nav-btn[
 function mostrarDescripcion(titulo, definicion) {
     const elTitulo = document.getElementById('tema-titulo');
     const elDesc = document.getElementById('tema-descripcion');
+    const elEnun = document.getElementById('tema-enunciado');
     if (elTitulo) elTitulo.innerHTML = titulo ? `<h2 class="tema-titulo-text">${titulo}</h2>` : '';
     if (elDesc) {
         elDesc.classList.remove('modo-ejercicio');   // ← AÑADE ESTA LÍNEA
         if (definicion) { elDesc.innerHTML = definicion; elDesc.style.display = 'block'; }
         else { elDesc.innerHTML = ''; elDesc.style.display = 'none'; }
+    }
+    // Se limpia aquí; si el tema tiene ejemplos/ejercicios con enunciado
+    // propio, el simulador lo vuelve a mostrar para la pestaña activa.
+    if (elEnun) {
+        elEnun.innerHTML = '';
+        elEnun.style.display = 'none';
+        elEnun.classList.remove('modo-ejercicio', 'modo-ejemplo');
     }
 }
 
