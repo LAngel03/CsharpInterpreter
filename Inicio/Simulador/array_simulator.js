@@ -166,26 +166,6 @@ for (int f = 0; f < ventas.GetLength(0); f++) {
 
 const arrCacheSubtemas = {};
 
-function arrNormalizarEjemplos(codigo_ejemplo) {
-    if (typeof codigo_ejemplo === 'string') return [codigo_ejemplo];
-    if (Array.isArray(codigo_ejemplo)) return codigo_ejemplo;
-    if (codigo_ejemplo && typeof codigo_ejemplo === 'object' && Array.isArray(codigo_ejemplo.ejemplos)) {
-        return codigo_ejemplo.ejemplos;
-    }
-    return [];
-}
-
-// enunciados_ejemplo viaja aparte de codigo_ejemplo pero acepta la misma
-// forma (string | array | {ejemplos:[...]}); se empareja por índice.
-function arrNormalizarEnunciadosEjemplo(enunciados_ejemplo) {
-    if (typeof enunciados_ejemplo === 'string') return [enunciados_ejemplo];
-    if (Array.isArray(enunciados_ejemplo)) return enunciados_ejemplo;
-    if (enunciados_ejemplo && typeof enunciados_ejemplo === 'object' && Array.isArray(enunciados_ejemplo.ejemplos)) {
-        return enunciados_ejemplo.ejemplos;
-    }
-    return [];
-}
-
 async function arrObtenerDatosTema(slug) {
     if (arrCacheSubtemas[slug]) return arrCacheSubtemas[slug];
     try {
@@ -207,18 +187,19 @@ async function arrObtenerDatosTema(slug) {
 }
 
 function arrGetItemsDesdeSubtema(subtema, slug) {
-    if (!subtema || subtema.codigo_ejemplo === null || subtema.codigo_ejemplo === undefined) {
+    if (!subtema || subtema.codigo_ejemplo === null) {
         return arrGetItemsLocal(slug);
     }
 
-    const ejemplos = arrNormalizarEjemplos(subtema.codigo_ejemplo);
-    if (!ejemplos.length) return arrGetItemsLocal(slug);
+    // Los ejemplos ahora vienen de su propia tabla (subtema.ejemplos), ya
+    // ordenados por "orden" desde el backend.
+    const ejemplosDb = Array.isArray(subtema.ejemplos) ? subtema.ejemplos : [];
+    if (!ejemplosDb.length) return arrGetItemsLocal(slug);
 
-    const enunciadosEjemplo = arrNormalizarEnunciadosEjemplo(subtema.enunciados_ejemplo);
-    const items = ejemplos.map((code, i) => ({
-        label: ejemplos.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
-        codigo: code,
-        enunciado: enunciadosEjemplo[i] || null,
+    const items = ejemplosDb.map((ej, i) => ({
+        label: ejemplosDb.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
+        codigo: ej.codigo || '',
+        enunciado: ej.enunciado || null,
         esEjercicio: false
     }));
 

@@ -218,31 +218,13 @@ if (btnInicio) {
 }
 
 /* ════ Ejemplos y ejercicio del tema ════
-   itemsActuales: [{tipo:'ejemplo', codigo}] o [{tipo:'ejercicio', codigo, descripcion}]
-   Mismo contrato que simNormalizarCodigoEjemplo (Inicio/Simulador/simulator.js):
-   codigo_ejemplo puede ser string | array de strings | {ejemplos:[...]}. */
+   itemsActuales: [{tipo:'ejemplo', codigo, enunciado}] o
+   [{tipo:'ejercicio', codigo, descripcion, titulo}].
+   Los ejemplos viven en su propia tabla del backend (subtema.ejemplos,
+   ya ordenada por "orden"); se sincronizan por posición igual que los
+   ejercicios — el panel no necesita el id individual de cada fila. */
 let itemsActuales = [];
 let tabActivo = 0;
-
-function normalizarCodigoEjemplo(codigo_ejemplo) {
-    if (typeof codigo_ejemplo === 'string') return [codigo_ejemplo];
-    if (Array.isArray(codigo_ejemplo)) return codigo_ejemplo;
-    if (codigo_ejemplo && typeof codigo_ejemplo === 'object' && Array.isArray(codigo_ejemplo.ejemplos)) {
-        return codigo_ejemplo.ejemplos;
-    }
-    return [''];
-}
-
-// enunciados_ejemplo viaja aparte de codigo_ejemplo pero acepta la misma
-// forma (string | array | {ejemplos:[...]}); se empareja por índice.
-function normalizarEnunciadosEjemplo(enunciados_ejemplo) {
-    if (typeof enunciados_ejemplo === 'string') return [enunciados_ejemplo];
-    if (Array.isArray(enunciados_ejemplo)) return enunciados_ejemplo;
-    if (enunciados_ejemplo && typeof enunciados_ejemplo === 'object' && Array.isArray(enunciados_ejemplo.ejemplos)) {
-        return enunciados_ejemplo.ejemplos;
-    }
-    return [];
-}
 
 // Etiquetas "Ejemplo N" / "Ejercicio N" según la posición dentro de su propio tipo
 function etiquetasItems() {
@@ -382,14 +364,15 @@ async function cargarTema(slug) {
     }
     if (!t) return;
 
-    const enunciadosEjemplo = normalizarEnunciadosEjemplo(t.enunciados_ejemplo);
-    itemsActuales = normalizarCodigoEjemplo(t.codigo_ejemplo).map((codigo, i) => ({
-        tipo: 'ejemplo', codigo: codigo || '', enunciado: enunciadosEjemplo[i] || ''
+    // Los ejemplos viven en su propia tabla (t.ejemplos), ya ordenada por
+    // "orden" desde el backend.
+    itemsActuales = (Array.isArray(t.ejemplos) ? t.ejemplos : []).map(ej => ({
+        tipo: 'ejemplo', codigo: ej.codigo || '', enunciado: ej.enunciado || ''
     }));
     (Array.isArray(t.ejercicios) ? t.ejercicios : []).forEach(ej => {
         itemsActuales.push({ tipo: 'ejercicio', codigo: ej.codigo_csharp || '', descripcion: ej.descripcion || '', titulo: ej.titulo || '' });
     });
-    if (!itemsActuales.length) itemsActuales.push({ tipo: 'ejemplo', codigo: '' });
+    if (!itemsActuales.length) itemsActuales.push({ tipo: 'ejemplo', codigo: '', enunciado: '' });
 
     temaActual = slug;
     document.getElementById('temaTitulo').textContent = t.titulo;
@@ -423,10 +406,11 @@ async function guardarCambios() {
     const definicion = document.getElementById('f-definicion').value.trim();
     if (!titulo) { alert('El título no puede estar vacío.'); return; }
 
-    const itemsEjemplo = itemsActuales.filter(it => it.tipo === 'ejemplo');
-    const ejemplos = itemsEjemplo.map(it => it.codigo || '');
-    // Se manda emparejado por posición con "ejemplos" (mismo contrato que codigo_ejemplo).
-    const enunciadosEjemplo = itemsEjemplo.map(it => (it.enunciado || '').trim());
+    // Formato nuevo: la API sincroniza esto contra su propia tabla "ejemplos"
+    // (crea/actualiza/borra por posición), igual que ya hace con ejercicios.
+    const ejemplos = itemsActuales
+        .filter(it => it.tipo === 'ejemplo')
+        .map(it => ({ enunciado: (it.enunciado || '').trim(), codigo: it.codigo || '' }));
     const ejercicios = itemsActuales
         .filter(it => it.tipo === 'ejercicio')
         .map(it => ({ titulo: (it.titulo || '').trim(), descripcion: (it.descripcion || '').trim(), codigo_csharp: it.codigo || '' }));
@@ -435,7 +419,7 @@ async function guardarCambios() {
     if (ejercicios.some(ej => !ej.titulo)) { alert('Cada ejercicio necesita un título.'); return; }
     if (ejercicios.some(ej => !ej.descripcion)) { alert('Cada ejercicio necesita un enunciado.'); return; }
 
-    const datos = { titulo, definicion, codigo_ejemplo: ejemplos, enunciados_ejemplo: enunciadosEjemplo, ejercicios };
+    const datos = { titulo, definicion, ejemplos, ejercicios };
 
     try {
         await guardarTemaEnAPI(temaActual, datos);

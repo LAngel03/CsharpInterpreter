@@ -1112,33 +1112,6 @@ function simMostrarErrorApi(mensaje) {
 // ── Conexión con la API (reemplaza EXAMPLES/EJERCICIOS locales) ──
 const simCacheSubtemas = {};
 
-function simNormalizarCodigoEjemplo(codigo_ejemplo) {
-    if (typeof codigo_ejemplo === 'string') {
-        return { ejemplos: [codigo_ejemplo], ejercicio: null };
-    }
-    if (Array.isArray(codigo_ejemplo)) {
-        return { ejemplos: codigo_ejemplo, ejercicio: null };
-    }
-    if (codigo_ejemplo && typeof codigo_ejemplo === 'object') {
-        return {
-            ejemplos: Array.isArray(codigo_ejemplo.ejemplos) ? codigo_ejemplo.ejemplos : [],
-            ejercicio: codigo_ejemplo.ejercicio || null
-        };
-    }
-    return { ejemplos: [''], ejercicio: null };
-}
-
-// enunciados_ejemplo viaja aparte de codigo_ejemplo pero acepta la misma
-// forma (string | array | {ejemplos:[...]}); se empareja por índice.
-function simNormalizarEnunciadosEjemplo(enunciados_ejemplo) {
-    if (typeof enunciados_ejemplo === 'string') return [enunciados_ejemplo];
-    if (Array.isArray(enunciados_ejemplo)) return enunciados_ejemplo;
-    if (enunciados_ejemplo && typeof enunciados_ejemplo === 'object' && Array.isArray(enunciados_ejemplo.ejemplos)) {
-        return enunciados_ejemplo.ejemplos;
-    }
-    return [];
-}
-
 async function simObtenerDatosTema(slug) {
     if (simCacheSubtemas[slug]) return simCacheSubtemas[slug];
     try {
@@ -1169,14 +1142,13 @@ function simGetItemsDesdeSubtema(subtema, slugFallback) {
         return items;
     }
 
-    // Los ejemplos vienen en codigo_ejemplo (lista o string); sus enunciados
-    // viajan aparte en enunciados_ejemplo y se emparejan por posición.
-    const { ejemplos } = simNormalizarCodigoEjemplo(subtema.codigo_ejemplo);
-    const enunciadosEjemplo = simNormalizarEnunciadosEjemplo(subtema.enunciados_ejemplo);
-    const items = ejemplos.map((code, i) => ({
-        label: ejemplos.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
-        codigo: code,
-        enunciado: enunciadosEjemplo[i] || null
+    // Los ejemplos ahora vienen de su propia tabla (subtema.ejemplos), ya
+    // ordenados por "orden" desde el backend.
+    const ejemplosDb = Array.isArray(subtema.ejemplos) ? subtema.ejemplos : [];
+    const items = ejemplosDb.map((ej, i) => ({
+        label: ejemplosDb.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
+        codigo: ej.codigo || '',
+        enunciado: ej.enunciado || null
     }));
 
     // Los ejercicios vienen APARTE, en subtema.ejercicios (lista de la BD).
