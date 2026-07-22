@@ -153,27 +153,20 @@ async function eliminarUsuario(id) {
 
 pintarUsuarios();
 
-const toggleBtn = document.getElementById('sidebarToggle');
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('sidebarOverlay');
 
-function openSidebar() {
-    sidebar.classList.add('open');
-    overlay.classList.add('active');
-    document.body.classList.add('sidebar-open');
-}
-
+// Abrir/cerrar el sidebar en móvil (click del botón hamburguesa + overlay)
+// lo maneja el <script> inline al final de indexAdministrador.html — aquí
+// solo queda closeSidebar(), que sí se usa más abajo al elegir un tema.
+// (Antes había un segundo listener duplicado aquí mismo: al hacer click
+// se abría y, en el mismo evento, el otro listener lo veía "abierto" y lo
+// volvía a cerrar — por eso el menú nunca se desplegaba.)
 function closeSidebar() {
     sidebar.classList.remove('open');
     overlay.classList.remove('active');
     document.body.classList.remove('sidebar-open');
 }
-
-if (toggleBtn) toggleBtn.addEventListener('click', () => {
-    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
-});
-
-if (overlay) overlay.addEventListener('click', closeSidebar);
 
 /* ════ Navegación del sidebar → vista de edición de temas ════ */
 const viewInicio = document.getElementById('view-inicio');

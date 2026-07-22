@@ -290,6 +290,59 @@
     opacity: 1;
 }
 
+/* ── Botón Reproducir: ícono con tooltip, sin texto visible (como en Anterior/Siguiente) ── */
+#adm-btn-reproducir {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.78rem;
+    font-weight: normal;
+    letter-spacing: normal;
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+
+#adm-btn-reproducir img {
+    width: 18px;
+    height: 18px;
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+
+#adm-btn-reproducir:hover img {
+    opacity: 1;
+}
+
+#adm-btn-reproducir .tooltip-text {
+    visibility: hidden;
+    opacity: 0;
+    background-color: #15161e;
+    border: 1px solid var(--console-border);
+    color: var(--white);
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-family: Arial, Helvetica, sans-serif;
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    transition: opacity 0.15s ease, visibility 0.15s;
+    z-index: 200;
+}
+
+#adm-btn-reproducir:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
 /* ── Memoria: variables / arreglos / matrices ── */
 .cs-mem-block {
     margin-bottom: 14px;
