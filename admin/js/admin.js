@@ -230,6 +230,17 @@ function normalizarCodigoEjemplo(codigo_ejemplo) {
     return [''];
 }
 
+// enunciados_ejemplo viaja aparte de codigo_ejemplo pero acepta la misma
+// forma (string | array | {ejemplos:[...]}); se empareja por índice.
+function normalizarEnunciadosEjemplo(enunciados_ejemplo) {
+    if (typeof enunciados_ejemplo === 'string') return [enunciados_ejemplo];
+    if (Array.isArray(enunciados_ejemplo)) return enunciados_ejemplo;
+    if (enunciados_ejemplo && typeof enunciados_ejemplo === 'object' && Array.isArray(enunciados_ejemplo.ejemplos)) {
+        return enunciados_ejemplo.ejemplos;
+    }
+    return [];
+}
+
 // Etiquetas "Ejemplo N" / "Ejercicio N" según la posición dentro de su propio tipo
 function etiquetasItems() {
     let iEj = 0, iEjer = 0;
@@ -276,6 +287,9 @@ function volcarTabActivaAEstado() {
         if (elEnun) item.descripcion = elEnun.value;
         const elTit = document.getElementById('f-titulo-ejercicio');
         if (elTit) item.titulo = elTit.value;
+    } else {
+        const elEnunEj = document.getElementById('f-enunciado-ejemplo');
+        if (elEnunEj) item.enunciado = elEnunEj.value;
     }
 }
 
@@ -299,6 +313,12 @@ function seleccionarTab(i, { volcar = true } = {}) {
         document.getElementById('f-titulo-ejercicio').value = item.titulo || '';
     }
 
+    const enunciadoEjemploWrap = document.getElementById('enunciadoEjemploWrap');
+    if (enunciadoEjemploWrap) enunciadoEjemploWrap.style.display = esEjercicio ? 'none' : '';
+    if (!esEjercicio) {
+        document.getElementById('f-enunciado-ejemplo').value = item.enunciado || '';
+    }
+
     document.getElementById('codeFileName').textContent = etiquetasItems()[tabActivo].toLowerCase().replace(/\s+/g, '_') + '.cs';
 
     if (monacoEditor) monacoEditor.setValue(item.codigo || '');
@@ -307,7 +327,7 @@ function seleccionarTab(i, { volcar = true } = {}) {
 
 function agregarEjemplo() {
     volcarTabActivaAEstado();
-    itemsActuales.push({ tipo: 'ejemplo', codigo: '' });
+    itemsActuales.push({ tipo: 'ejemplo', codigo: '', enunciado: '' });
     renderEditorTabs();
     seleccionarTab(itemsActuales.length - 1, { volcar: false });
     markDirty('ejemplos');
@@ -345,7 +365,10 @@ async function cargarTema(slug) {
     }
     if (!t) return;
 
-    itemsActuales = normalizarCodigoEjemplo(t.codigo_ejemplo).map(codigo => ({ tipo: 'ejemplo', codigo: codigo || '' }));
+    const enunciadosEjemplo = normalizarEnunciadosEjemplo(t.enunciados_ejemplo);
+    itemsActuales = normalizarCodigoEjemplo(t.codigo_ejemplo).map((codigo, i) => ({
+        tipo: 'ejemplo', codigo: codigo || '', enunciado: enunciadosEjemplo[i] || ''
+    }));
     (Array.isArray(t.ejercicios) ? t.ejercicios : []).forEach(ej => {
         itemsActuales.push({ tipo: 'ejercicio', codigo: ej.codigo_csharp || '', descripcion: ej.descripcion || '', titulo: ej.titulo || '' });
     });
@@ -383,7 +406,10 @@ async function guardarCambios() {
     const definicion = document.getElementById('f-definicion').value.trim();
     if (!titulo) { alert('El título no puede estar vacío.'); return; }
 
-    const ejemplos = itemsActuales.filter(it => it.tipo === 'ejemplo').map(it => it.codigo || '');
+    const itemsEjemplo = itemsActuales.filter(it => it.tipo === 'ejemplo');
+    const ejemplos = itemsEjemplo.map(it => it.codigo || '');
+    // Se manda emparejado por posición con "ejemplos" (mismo contrato que codigo_ejemplo).
+    const enunciadosEjemplo = itemsEjemplo.map(it => (it.enunciado || '').trim());
     const ejercicios = itemsActuales
         .filter(it => it.tipo === 'ejercicio')
         .map(it => ({ titulo: (it.titulo || '').trim(), descripcion: (it.descripcion || '').trim(), codigo_csharp: it.codigo || '' }));
@@ -392,7 +418,7 @@ async function guardarCambios() {
     if (ejercicios.some(ej => !ej.titulo)) { alert('Cada ejercicio necesita un título.'); return; }
     if (ejercicios.some(ej => !ej.descripcion)) { alert('Cada ejercicio necesita un enunciado.'); return; }
 
-    const datos = { titulo, definicion, codigo_ejemplo: ejemplos, ejercicios };
+    const datos = { titulo, definicion, codigo_ejemplo: ejemplos, enunciados_ejemplo: enunciadosEjemplo, ejercicios };
 
     try {
         await guardarTemaEnAPI(temaActual, datos);

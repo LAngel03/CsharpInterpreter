@@ -1068,20 +1068,23 @@ function simGetItems(tema) {
     return items;
 }
 
-// Cambia el texto de arriba: concepto normal o enunciado del ejercicio
-function simSetDescripcion(html, esEjercicio, titulo) {
+// Cambia el texto de arriba: concepto normal, enunciado de ejemplo o de ejercicio.
+// tipo: 'ejercicio' | 'ejemplo' | null (concepto normal del tema)
+function simSetDescripcion(html, tipo, titulo) {
     const elDesc = document.getElementById('tema-descripcion');
     if (!elDesc) return;
     if (html) {
-        elDesc.innerHTML = esEjercicio
-            ? '<span class="sim-ejercicio-badge">Ejercicio: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '') + html
-            : html;
+        let prefijo = '';
+        if (tipo === 'ejercicio') prefijo = '<span class="sim-ejercicio-badge">Ejercicio: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
+        else if (tipo === 'ejemplo') prefijo = '<span class="sim-ejemplo-badge">Ejemplo: </span>';
+        elDesc.innerHTML = prefijo + html;
         elDesc.style.display = 'block';
-        elDesc.classList.toggle('modo-ejercicio', !!esEjercicio);
+        elDesc.classList.toggle('modo-ejercicio', tipo === 'ejercicio');
+        elDesc.classList.toggle('modo-ejemplo', tipo === 'ejemplo');
     } else {
         elDesc.innerHTML = '';
         elDesc.style.display = 'none';
-        elDesc.classList.remove('modo-ejercicio');
+        elDesc.classList.remove('modo-ejercicio', 'modo-ejemplo');
     }
 }
 
@@ -1124,6 +1127,17 @@ function simNormalizarCodigoEjemplo(codigo_ejemplo) {
     return { ejemplos: [''], ejercicio: null };
 }
 
+// enunciados_ejemplo viaja aparte de codigo_ejemplo pero acepta la misma
+// forma (string | array | {ejemplos:[...]}); se empareja por índice.
+function simNormalizarEnunciadosEjemplo(enunciados_ejemplo) {
+    if (typeof enunciados_ejemplo === 'string') return [enunciados_ejemplo];
+    if (Array.isArray(enunciados_ejemplo)) return enunciados_ejemplo;
+    if (enunciados_ejemplo && typeof enunciados_ejemplo === 'object' && Array.isArray(enunciados_ejemplo.ejemplos)) {
+        return enunciados_ejemplo.ejemplos;
+    }
+    return [];
+}
+
 async function simObtenerDatosTema(slug) {
     if (simCacheSubtemas[slug]) return simCacheSubtemas[slug];
     try {
@@ -1154,12 +1168,14 @@ function simGetItemsDesdeSubtema(subtema, slugFallback) {
         return items;
     }
 
-    // Los ejemplos vienen en codigo_ejemplo (lista o string)
+    // Los ejemplos vienen en codigo_ejemplo (lista o string); sus enunciados
+    // viajan aparte en enunciados_ejemplo y se emparejan por posición.
     const { ejemplos } = simNormalizarCodigoEjemplo(subtema.codigo_ejemplo);
+    const enunciadosEjemplo = simNormalizarEnunciadosEjemplo(subtema.enunciados_ejemplo);
     const items = ejemplos.map((code, i) => ({
         label: ejemplos.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
         codigo: code,
-        enunciado: null
+        enunciado: enunciadosEjemplo[i] || null
     }));
 
     // Los ejercicios vienen APARTE, en subtema.ejercicios (lista de la BD).
@@ -1227,6 +1243,15 @@ async function initSimulador(tema) {
         editorBody.parentNode.insertBefore(varsHost, editorBody);
     }
 
+    // Muestra el enunciado propio del item activo (ejemplo o ejercicio) en vez
+    // del concepto general del tema; si el item no tiene enunciado propio,
+    // cae de vuelta al concepto general.
+    function mostrarDescripcionItem(it) {
+        if (it.esEjercicio && it.enunciado) simSetDescripcion(it.enunciado, 'ejercicio', it.titulo);
+        else if (it.enunciado) simSetDescripcion(it.enunciado, 'ejemplo');
+        else simSetDescripcion(defOriginal, null);
+    }
+
     function activarTabs() {
         const tabs = document.getElementById('sim-ejemplos-tabs');
         if (!tabs) return;
@@ -1238,8 +1263,7 @@ async function initSimulador(tema) {
                 tabs.querySelectorAll('.sim-tab').forEach(b => b.classList.remove('activo'));
                 btn.classList.add('activo');
 
-                if (it.enunciado) simSetDescripcion(it.enunciado, true, it.titulo);
-                else simSetDescripcion(defOriginal, false);
+                mostrarDescripcionItem(it);
 
                 if (simEditor) simEditor.setValue(it.codigo);
                 simCargarYEjecutar(it.codigo);
@@ -1262,6 +1286,7 @@ async function initSimulador(tema) {
             });
             conectarBotones();
             activarTabs();
+            mostrarDescripcionItem(items[0]);
             simCargarYEjecutar(codigo);
         });
     }

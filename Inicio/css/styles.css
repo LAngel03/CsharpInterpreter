@@ -1459,6 +1459,23 @@ pre {
     background: rgba(112, 38, 176, 0.156);
 }
 
+/* Caja del enunciado cuando estás viendo un ejemplo con enunciado propio */
+.explanation-text.modo-ejemplo {
+    border-color: rgba(4, 170, 109, 0.25);
+    background: rgba(4, 170, 109, 0.12);
+}
+
+.sim-ejemplo-badge {
+    display: inline-block;
+    color: var(--green-main);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 2px -1px;
+    border-radius: 20px;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
 .sim-api-error {
     background: rgba(224, 82, 99, 0.12);
     border: 1px solid #e05263;

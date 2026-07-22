@@ -175,6 +175,17 @@ function arrNormalizarEjemplos(codigo_ejemplo) {
     return [];
 }
 
+// enunciados_ejemplo viaja aparte de codigo_ejemplo pero acepta la misma
+// forma (string | array | {ejemplos:[...]}); se empareja por índice.
+function arrNormalizarEnunciadosEjemplo(enunciados_ejemplo) {
+    if (typeof enunciados_ejemplo === 'string') return [enunciados_ejemplo];
+    if (Array.isArray(enunciados_ejemplo)) return enunciados_ejemplo;
+    if (enunciados_ejemplo && typeof enunciados_ejemplo === 'object' && Array.isArray(enunciados_ejemplo.ejemplos)) {
+        return enunciados_ejemplo.ejemplos;
+    }
+    return [];
+}
+
 async function arrObtenerDatosTema(slug) {
     if (arrCacheSubtemas[slug]) return arrCacheSubtemas[slug];
     try {
@@ -203,10 +214,11 @@ function arrGetItemsDesdeSubtema(subtema, slug) {
     const ejemplos = arrNormalizarEjemplos(subtema.codigo_ejemplo);
     if (!ejemplos.length) return arrGetItemsLocal(slug);
 
+    const enunciadosEjemplo = arrNormalizarEnunciadosEjemplo(subtema.enunciados_ejemplo);
     const items = ejemplos.map((code, i) => ({
         label: ejemplos.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
         codigo: code,
-        enunciado: null,
+        enunciado: enunciadosEjemplo[i] || null,
         esEjercicio: false
     }));
 
@@ -237,19 +249,22 @@ function arrGetItemsLocal(tema) {
     return items;
 }
 
-function arrSetDescripcion(html, esEjercicio, titulo) {
+// tipo: 'ejercicio' | 'ejemplo' | null (concepto normal del tema)
+function arrSetDescripcion(html, tipo, titulo) {
     const elDesc = document.getElementById('tema-descripcion');
     if (!elDesc) return;
     if (html) {
-        elDesc.innerHTML = esEjercicio
-            ? '<span class="sim-ejercicio-badge">Ejercicio: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '') + html
-            : html;
+        let prefijo = '';
+        if (tipo === 'ejercicio') prefijo = '<span class="sim-ejercicio-badge">Ejercicio: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
+        else if (tipo === 'ejemplo') prefijo = '<span class="sim-ejemplo-badge">Ejemplo: </span>';
+        elDesc.innerHTML = prefijo + html;
         elDesc.style.display = 'block';
-        elDesc.classList.toggle('modo-ejercicio', !!esEjercicio);
+        elDesc.classList.toggle('modo-ejercicio', tipo === 'ejercicio');
+        elDesc.classList.toggle('modo-ejemplo', tipo === 'ejemplo');
     } else {
         elDesc.innerHTML = '';
         elDesc.style.display = 'none';
-        elDesc.classList.remove('modo-ejercicio');
+        elDesc.classList.remove('modo-ejercicio', 'modo-ejemplo');
     }
 }
 
@@ -586,6 +601,19 @@ async function initArraySimulator(nombreTema) {
     const codigoInicial = items[0].codigo;
     arrCurrentCode = codigoInicial;
 
+    // Muestra el enunciado propio del item activo (ejemplo o ejercicio) en vez
+    // del concepto general del tema; si el item no tiene enunciado propio,
+    // cae de vuelta al concepto general.
+    function mostrarDescripcionItem(it) {
+        if (it.esEjercicio && it.enunciado) {
+            arrSetDescripcion(it.enunciado, 'ejercicio', it.titulo);
+        } else if (it.enunciado) {
+            arrSetDescripcion(it.enunciado, 'ejemplo');
+        } else {
+            arrSetDescripcion(defOriginal, null);
+        }
+    }
+
     function activarTabs() {
         const tabs = document.getElementById('arr-ejemplos-tabs');
         if (!tabs) return;
@@ -598,11 +626,7 @@ async function initArraySimulator(nombreTema) {
                 tabs.querySelectorAll('.sim-tab').forEach(b => b.classList.remove('activo'));
                 btn.classList.add('activo');
 
-                if (it.enunciado) {
-                    arrSetDescripcion(it.enunciado, true, it.titulo);
-                } else {
-                    arrSetDescripcion(defOriginal, false);
-                }
+                mostrarDescripcionItem(it);
 
                 arrCurrentCode = it.codigo;
                 if (arrMonacoEditor) arrMonacoEditor.setValue(it.codigo);
@@ -626,6 +650,7 @@ async function initArraySimulator(nombreTema) {
             });
             arrConectarBotones();
             activarTabs();
+            mostrarDescripcionItem(items[0]);
             arrCargarYEjecutar(codigoInicial);
         });
     }
