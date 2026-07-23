@@ -93,39 +93,82 @@ class ArraySimulator {
 
 const ARR_EXAMPLES = {
     Array_unidimensional:
-`int[] numeros = new int[5];
+`// =============================================
+// EJEMPLO: Array Unidimensional - Calificaciones
+// =============================================
 
-for (int i = 0; i < numeros.Length; i++) {
-  numeros[i] = (i + 1) * 10;
+Console.WriteLine("=== CALIFICACIONES DE ALUMNOS ===\n");
+
+// 1. Creamos el arreglo
+int[] calificaciones = new int[5];
+
+// 2. Llenamos el arreglo (uno por uno)
+calificaciones[0] = 8;
+calificaciones[1] = 9;
+calificaciones[2] = 7;
+calificaciones[3] = 10;
+calificaciones[4] = 6;
+
+Console.WriteLine("Calificaciones guardadas:");
+
+// 3. Mostramos cada elemento
+for (int i = 0; i < calificaciones.Length; i++) {
+    Console.WriteLine("Alumno " + i + ": " + calificaciones[i]);
 }
 
+// 4. Calculamos la suma y el promedio
 int suma = 0;
-for (int i = 0; i < numeros.Length; i++) {
-  suma += numeros[i];
+for (int i = 0; i < calificaciones.Length; i++) {
+    suma += calificaciones[i];
 }
 
-Console.WriteLine("Elemento [2] = " + numeros[2]);
-Console.WriteLine("Longitud = " + numeros.Length);
-Console.WriteLine("Suma total = " + suma);`,
+double promedio = suma / calificaciones.Length;
+
+Console.WriteLine("\nSuma total = " + suma);
+Console.WriteLine("Promedio del grupo = " + promedio);
+Console.WriteLine("Cantidad de alumnos = " + calificaciones.Length);`,
 
     Array_bidimensional:
-`// Llenado y recorrido de una matriz 3x2
-int[,] matriz = new int[3,2];
+`// =============================================
+// EJEMPLO: Array Bidimensional - Ventas por vendedor
+// =============================================
 
-for (int f = 0; f < matriz.GetLength(0); f++) {
-  for (int c = 0; c < matriz.GetLength(1); c++) {
-    matriz[f,c] = (f + 1) * (c + 1);
-  }
+Console.WriteLine("=== VENTAS POR VENDEDOR ===\n");
+
+// 1. Creamos la matriz (3 vendedores x 4 dias)
+int[,] ventas = new int[3, 4];
+
+// 2. Llenamos la matriz
+ventas[0,0] = 120; ventas[0,1] = 150; ventas[0,2] = 180; ventas[0,3] = 90;
+ventas[1,0] = 80;  ventas[1,1] = 200; ventas[1,2] = 110; ventas[1,3] = 130;
+ventas[2,0] = 150; ventas[2,1] = 170; ventas[2,2] = 140; ventas[2,3] = 160;
+
+// 3. Mostramos la tabla completa (armamos cada fila como texto)
+Console.WriteLine("Tabla de ventas (filas = vendedores, columnas = dias):");
+for (int f = 0; f < ventas.GetLength(0); f++) {
+    string fila = "Vendedor " + (f + 1) + ": ";
+    for (int c = 0; c < ventas.GetLength(1); c++) {
+        fila = fila + ventas[f,c] + "  ";
+    }
+    Console.WriteLine(fila);
 }
 
-Console.WriteLine("matriz[2,1] = " + matriz[2,1]);
-Console.WriteLine("Filas: " + matriz.GetLength(0));
-Console.WriteLine("Columnas: " + matriz.GetLength(1));`
+// 4. Calculamos el total por vendedor (ciclos anidados)
+Console.WriteLine("\nTotal de ventas por vendedor:");
+for (int f = 0; f < ventas.GetLength(0); f++) {
+    int totalVendedor = 0;
+
+    for (int c = 0; c < ventas.GetLength(1); c++) {
+        totalVendedor += ventas[f,c];
+    }
+
+    Console.WriteLine("Vendedor " + (f + 1) + " vendio en total: " + totalVendedor);
+}`
 };
 
 const ARR_EJERCICIOS = {
     Array_unidimensional: {
-        enunciado: `Una maestra registró las calificaciones de 5 alumnos. Crea un arreglo <code>int[]</code> de tamaño 5, llénalo con las calificaciones <strong>7, 8, 6, 9, 10</strong> y calcula el promedio del grupo usando un ciclo <code>for</code>.`,
+        enunciado: `Una maestra registró las calificaciones de 5 alumnos. Crea un arreglo <code>int[]</code> de tamaño 5, llénalo con las calificaciones <strong>7, 8, 6, 9, 10</strong> y calcula el promedio del grupo usando un ciclo <code>for</code>. Muestra también cuántos alumnos hay y cuál fue la calificación más alta.`,
         codigo:
 `int[] calificaciones = new int[5];
 calificaciones[0] = 7;
@@ -135,27 +178,50 @@ calificaciones[3] = 9;
 calificaciones[4] = 10;
 
 int suma = 0;
+int maxima = calificaciones[0];
 for (int i = 0; i < calificaciones.Length; i++) {
-  suma += calificaciones[i];
+    suma += calificaciones[i];
+    if (calificaciones[i] > maxima) {
+        maxima = calificaciones[i];
+    }
 }
 
 double promedio = suma / calificaciones.Length;
+
 Console.WriteLine("Suma total = " + suma);
-Console.WriteLine("Promedio = " + promedio);`
+Console.WriteLine("Promedio = " + promedio);
+Console.WriteLine("Cantidad de alumnos = " + calificaciones.Length);
+Console.WriteLine("Calificacion mas alta = " + maxima);`
     },
     Array_bidimensional: {
-        enunciado: `Una tienda registra las ventas de 2 vendedores durante 3 días en una matriz <code>int[,]</code> de 2 filas por 3 columnas. Llena la matriz con valores de ejemplo y calcula el total de ventas de cada vendedor (cada fila) usando ciclos <code>for</code> anidados.`,
+        enunciado: `Una tienda registra las ventas de 3 vendedores durante 4 días en una matriz <code>int[,]</code>. Llena la matriz con valores de ejemplo, muestra la tabla completa y calcula el total de ventas de cada vendedor usando ciclos <code>for</code> anidados.`,
         codigo:
-`int[,] ventas = new int[2,3];
-ventas[0,0] = 100; ventas[0,1] = 150; ventas[0,2] = 120;
-ventas[1,0] = 80;  ventas[1,1] = 200; ventas[1,2] = 90;
+`int[,] ventas = new int[3,4];
 
+// Llenado de datos
+ventas[0,0] = 100; ventas[0,1] = 150; ventas[0,2] = 120; ventas[0,3] = 180;
+ventas[1,0] = 80;  ventas[1,1] = 200; ventas[1,2] = 90;  ventas[1,3] = 110;
+ventas[2,0] = 150; ventas[2,1] = 170; ventas[2,2] = 140; ventas[2,3] = 160;
+
+Console.WriteLine("Ventas por vendedor y dia:\n");
+
+// Mostrar tabla (armamos cada fila como texto)
 for (int f = 0; f < ventas.GetLength(0); f++) {
-  int totalFila = 0;
-  for (int c = 0; c < ventas.GetLength(1); c++) {
-    totalFila += ventas[f,c];
-  }
-  Console.WriteLine("Vendedor " + (f + 1) + " vendio en total: " + totalFila);
+    string fila = "Vendedor " + (f + 1) + ": ";
+    for (int c = 0; c < ventas.GetLength(1); c++) {
+        fila = fila + ventas[f,c] + "  ";
+    }
+    Console.WriteLine(fila);
+}
+
+// Calcular totales
+Console.WriteLine("\nTotal por vendedor:");
+for (int f = 0; f < ventas.GetLength(0); f++) {
+    int total = 0;
+    for (int c = 0; c < ventas.GetLength(1); c++) {
+        total += ventas[f,c];
+    }
+    Console.WriteLine("Vendedor " + (f + 1) + ": $" + total);
 }`
     }
 };
