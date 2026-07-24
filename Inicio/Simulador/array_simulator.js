@@ -544,6 +544,19 @@ function arrBuildMemoriaHtml(state) {
     return html;
 }
 
+// Caja "Operación": muestra la expresión de la asignación con los valores
+// actuales ya sustituidos (ej. "(1 + 1) * 10") y el resultado resaltado,
+// para que se note claramente por qué la celda queda con ese valor.
+function arrBuildAssignBoxHtml(ctx) {
+    if (!ctx || !ctx.showResolved) return '';
+    return '<div class="cs-assign-box">' +
+        '<div class="cs-assign-label">Operación</div>' +
+        '<code class="cs-assign-code">' + arrEscape(ctx.resolvedText) +
+        '<span class="cs-assign-eq">=</span>' +
+        '<span class="cs-assign-result">' + arrEscape(String(ctx.result)) + '</span></code>' +
+        '</div>';
+}
+
 function arrRender(state, info) {
     if (!state) { arrClearPanels(); return; }
     arrHighlightLine(state.currentLine, state.isError);
@@ -555,6 +568,7 @@ function arrRender(state, info) {
             : '';
         panelPaso.innerHTML =
             (state.currentLine ? '<div class="cs-step-line">Línea ' + state.currentLine + ': ' + src + '</div>' : '') +
+            arrBuildAssignBoxHtml(state.assignCtx) +
             '<div class="cs-step-note' + (state.isError ? ' iserr' : '') + '">' + arrEscape(state.description || '') + '</div>';
     }
 

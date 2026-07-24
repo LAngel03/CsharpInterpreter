@@ -1758,6 +1758,44 @@ pre {
     font-weight: 600;
 }
 
+/* Caja "Operación" — muestra la expresión de la asignación ya resuelta
+   con los valores actuales, para explicar por qué la celda queda con
+   ese resultado (ej. numeros[1] = (1 + 1) * 10 → 20). */
+.cs-assign-box {
+    margin-top: 8px;
+    background: #1a1d2a;
+    border: 1px solid #3d4160;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-family: 'Consolas', monospace;
+}
+
+.cs-assign-label {
+    font-size: 0.60rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #7c85c2;
+    margin-bottom: 4px;
+}
+
+.cs-assign-code {
+    font-size: 0.86rem;
+    color: #c5cae9;
+    word-break: break-word;
+}
+
+.cs-assign-eq {
+    color: #8a9ab5;
+    margin: 0 4px;
+}
+
+.cs-assign-result {
+    color: var(--green-main);
+    font-weight: 700;
+    font-size: 1.02em;
+}
+
 /* Resaltado de línea en Monaco (arreglos) */
 .cs-line-active {
     background: rgba(4, 170, 109, 0.15);

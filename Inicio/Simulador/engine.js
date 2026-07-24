@@ -548,6 +548,7 @@
     this._reads = new Set();
     this._activeFor = null;
     this._lastCondResult = null;
+    this._lastAssignCtx = null;
     this._functions = {};
     this._callStack = [];
     this._files = {};
@@ -626,11 +627,13 @@
       changed: Array.from(changed || []),
       read: Array.from(this._reads),
       forCtx,
+      assignCtx: this._lastAssignCtx,
       callStack: this._callStack.map(f => ({ name: f.name, args: Object.assign({}, f.args) })),
       files: Object.assign({}, this._files),
       isError: !!isError
     });
     this._reads = new Set();
+    this._lastAssignCtx = null;
   };
 
   Interpreter.prototype.withScope = function (env, fn) {
@@ -1041,11 +1044,55 @@
       }
     }
     result = coerce(cellType, result);
+
+    // Para asignaciones a celdas de arreglo/matriz con una operación real de
+    // por medio (no un literal/variable suelto), guardamos cómo se resuelve
+    // la expresión con los valores actuales, para explicarla en el panel de
+    // "Paso actual" (ej. "(pos + 1) * 10" → "(1 + 1) * 10" → 20).
+    if (node.operator === "=" && (t.type === "ArrayAccess" || t.type === "MatrixAccess") &&
+        (node.value.type === "Binary" || node.value.type === "Unary")) {
+      const exprText = this.src(node.value);
+      const resolvedText = this.srcResolved(node.value, env);
+      this._lastAssignCtx = {
+        label, exprText, resolvedText,
+        showResolved: exprText !== resolvedText,
+        result
+      };
+    } else {
+      this._lastAssignCtx = null;
+    }
+
     setter(result);
     changed.add(name);
     if (t.type !== "Variable") changed.add(label);
     node.__label = label; node.__result = result;
     return result;
+  };
+
+  // Igual que this.src(), pero sustituye variables y lecturas de
+  // arreglo/matriz por su VALOR actual (para mostrar la operación resuelta).
+  Interpreter.prototype.srcResolved = function (n, env) {
+    if (!n) return "";
+    switch (n.type) {
+      case "Literal":
+        if (n.raw === "string") return '"' + n.value + '"';
+        if (n.raw === "char") return "'" + n.value + "'";
+        return String(n.value);
+      case "Variable": {
+        const cell = env.lookup(n.name);
+        return (cell && cell.kind === "scalar" && cell.value !== null) ? String(cell.value) : n.name;
+      }
+      case "Binary":
+        return this.binOperandText(n.left, n.operator, false, (c) => this.srcResolved(c, env)) + " " + n.operator + " " +
+               this.binOperandText(n.right, n.operator, true, (c) => this.srcResolved(c, env));
+      case "Unary":
+        return n.operator + this.srcResolved(n.argument, env);
+      case "ArrayAccess":
+      case "MatrixAccess":
+        try { return String(this.evalExpr(n, env, new Set())); } catch (e) { return this.src(n); }
+      default:
+        return this.src(n);
+    }
   };
 
   Interpreter.prototype.evalUpdate = function (node, env, changed) {
@@ -1107,6 +1154,28 @@
     }
   };
 
+  // Precedencia de operadores binarios (igual que el orden de parseo:
+  // multiplicativo > aditivo > relacional > igualdad > && > ||).
+  // Sirve para reconstruir paréntesis al mostrar una expresión como texto:
+  // el AST no recuerda si venían del código fuente, así que sin esto
+  // "(i + 1) * 10" se imprimiría como "i + 1 * 10" (matemáticamente distinto).
+  const BIN_PREC = {
+    "*": 5, "/": 5, "%": 5,
+    "+": 4, "-": 4,
+    "<": 3, "<=": 3, ">": 3, ">=": 3,
+    "==": 2, "!=": 2,
+    "&&": 1, "||": 0
+  };
+
+  Interpreter.prototype.binOperandText = function (child, parentOp, isRight, renderFn) {
+    const text = renderFn(child);
+    if (child.type !== "Binary") return text;
+    const childPrec = BIN_PREC[child.operator];
+    const parentPrec = BIN_PREC[parentOp];
+    const needsParens = isRight ? (childPrec <= parentPrec) : (childPrec < parentPrec);
+    return needsParens ? "(" + text + ")" : text;
+  };
+
   Interpreter.prototype.describeExprStmt = function (expr, result) {
     if (expr.type === "Assignment") return (expr.__label || this.src(expr.target)) + " = " + fmt(expr.__result);
     if (expr.type === "Update")
@@ -1123,7 +1192,9 @@
         if (n.raw === "char") return "'" + n.value + "'";
         return String(n.value);
       case "Variable": return n.name;
-      case "Binary": return this.src(n.left) + " " + n.operator + " " + this.src(n.right);
+      case "Binary":
+        return this.binOperandText(n.left, n.operator, false, (c) => this.src(c)) + " " + n.operator + " " +
+               this.binOperandText(n.right, n.operator, true, (c) => this.src(c));
       case "Unary": return n.operator + this.src(n.argument);
       case "Update": return n.prefix ? n.operator + this.src(n.argument) : this.src(n.argument) + n.operator;
       case "Assignment": return this.src(n.target) + " " + n.operator + " " + this.src(n.value);
