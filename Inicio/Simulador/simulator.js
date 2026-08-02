@@ -734,7 +734,6 @@ class Simulador {
 }
 
 const TEMAS_SOPORTADOS = [
-    'if', 'switch', 'ternario',
     'Ciclos_for', 'Ciclos_while', 'Ciclos_dowhile',
     'if_simple', 'switch_simple', 'ternario_simple',
     'if_anidada', 'switch_anidada', 'ternario_anidada',
@@ -1125,7 +1124,7 @@ async function simObtenerDatosTema(slug) {
     } catch (e) {
         console.warn(`Subtema "${slug}" no encontrado en la API, usando datos locales de respaldo`, e);
         return {
-            definicion: (window.temas && window.temas[slug]) ? window.temas[slug].definicion : '',
+            definicion: '',
             codigo_ejemplo: null, // null => se usa EXAMPLES/EJERCICIOS local como respaldo
             _apiError: e.message
         };
@@ -1182,6 +1181,10 @@ async function initSimulador(tema) {
         subtema = await simObtenerDatosTema(tema); // "tema" == slug
         items = simGetItemsDesdeSubtema(subtema, tema);
         codigo = items[0].codigo;
+
+        // Título y definición del tema vienen de la BD (vía admin); se
+        // pintan aquí porque cargarTema() ya no trae texto local.
+        mostrarDescripcion(subtema.titulo || '', subtema.definicion || '');
 
         // FIX: si hubo fallback por error de API, mostramos un aviso visible
         // en vez de dejarlo solo en la consola.

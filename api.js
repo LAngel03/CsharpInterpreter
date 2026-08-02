@@ -8,6 +8,9 @@ function getToken() {
 async function apiFetch(path, options = {}) {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
+    // GET sin esto puede servirse cacheado por el navegador (perfil,
+    // progreso) y mostrar datos viejos hasta un refresh manual.
+    cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${getToken()}`,
@@ -75,6 +78,18 @@ function actualizarSubtemaPorSlug(slug, datos) {
   });
 }
 
+// ── Ejercicios de práctica ("Ponte a prueba") ─────────────
+function listarEjerciciosPractica() {
+  return apiFetch('/ejercicios/practica');
+}
+
+function validarEjercicio(id, output) {
+  return apiFetch(`/ejercicios/${id}/validar`, {
+    method: 'POST',
+    body: JSON.stringify({ output })
+  });
+}
+
 // ── Glosario ──────────────────────────────
 function listarGlosario({ q, unidad } = {}) {
   const params = new URLSearchParams();
@@ -121,6 +136,8 @@ window.ApiClient = {
   obtenerSubtemaPorSlug,
   listarSubtemasPorCategoria,
   actualizarSubtemaPorSlug,
+  listarEjerciciosPractica,
+  validarEjercicio,
   listarGlosario,
   guardarSesion,
   cerrarSesion,

@@ -245,7 +245,7 @@ async function arrObtenerDatosTema(slug) {
     } catch (e) {
         console.warn(`Arreglos "${slug}" no encontrado en la API, usando respaldo local`, e);
         return {
-            definicion: (window.temas && window.temas[slug]) ? window.temas[slug].definicion : '',
+            definicion: '',
             codigo_ejemplo: null,
             _apiError: e.message
         };
@@ -624,6 +624,10 @@ async function initArraySimulator(nombreTema) {
     try {
         subtema = await arrObtenerDatosTema(nombreTema);
         items = arrGetItemsDesdeSubtema(subtema, nombreTema);
+
+        // Título y definición del tema vienen de la BD (vía admin); se
+        // pintan aquí porque cargarTema() ya no trae texto local.
+        mostrarDescripcion(subtema.titulo || '', subtema.definicion || '');
 
         if (subtema._apiError) {
             arrMostrarErrorApi('No se pudo conectar con la API de arreglos (' + subtema._apiError + '). Mostrando datos de respaldo.');

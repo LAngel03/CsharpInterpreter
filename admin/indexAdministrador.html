@@ -174,11 +174,46 @@
                     </div>
 
                 </div>
+
+                <!-- Pendientes de activación: aparte del ranking para que no lo
+                     contaminen (nunca han iniciado sesión, así que "compiten" con
+                     0 ejercicios) y para que salten a la vista sin tener que
+                     buscarlos — activarlos suele ser urgente. Se oculta solo si
+                     no hay ninguno (ver renderPendientes() en admin.js). -->
+                <div class="card" id="cardPendientes" style="display:none;">
+                    <div class="card__head">
+                        <div>
+                            <h3>Pendientes de activación</h3>
+                            <div class="sub">No pueden iniciar sesión hasta que los actives</div>
+                        </div>
+                        <div class="grow"></div>
+                        <span class="badge badge--pend" id="statPendientes">0</span>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Matrícula</th>
+                                    <th class="num">Fecha de registro</th>
+                                    <th style="text-align:right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userRowsPendientes"></tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card__head">
                         <div>
                             <h3>Estudiantes registrados</h3>
                             <div class="sub">Ordenados por ranking de actividades completadas</div>
+                        </div>
+                        <div class="sort-toggle">
+                            <span class="sort-toggle__label">Ordenar por</span>
+                            <button class="sort-toggle__btn activo" data-orden="ejercicios" onclick="cambiarOrdenUsuarios('ejercicios')">Más ejercicios</button>
+                            <button class="sort-toggle__btn" data-orden="puntos" onclick="cambiarOrdenUsuarios('puntos')">Más puntos</button>
                         </div>
                         <div class="grow"></div>
                         <button class="btn-add">+ Nuevo estudiante</button>

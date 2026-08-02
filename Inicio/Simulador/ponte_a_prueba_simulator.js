@@ -1,38 +1,50 @@
 // ============================================================
 //  Simulador/ponte_a_prueba_simulator.js
-//  Consola del apartado "Ponte a prueba": banco de ejercicios de
-//  repaso general (sin tema fijo). Usa CSharpEngine como motor,
-//  igual que Arreglos/Recursividad/Archivos, así que soporta
-//  variables, arreglos, matrices, ciclos, condicionales y archivos.
-//
-//  CÓMO AGREGAR UN EJERCICIO NUEVO (mientras no venga de la API):
-//    Agrega un objeto { enunciado, codigo } al arreglo
-//    PP_EJERCICIOS.Ponte_a_prueba, más abajo en este archivo.
-//    Cada objeto aparece como una pestaña "Ejercicio N" aparte.
-//
-//  Si en el backend se registra un subtema con slug "Ponte_a_prueba"
-//  y una lista de ejercicios, esos se muestran automáticamente y el
-//  respaldo local de este archivo deja de usarse.
+//  Consola del apartado "Ponte a prueba": banco global de ejercicios
+//  con bugs (GET /ejercicios/practica, ejercicios con modo='practica'
+//  de cualquier subtema). El estudiante corrige codigo_con_errores
+//  solo en las líneas marcadas como editables (soluciones_validacion.
+//  lineas_editables), ejecuta con CSharpEngine y valida su salida
+//  contra el backend (POST /ejercicios/:id/validar).
 // ============================================================
 
-// ── CSS del panel de variables editables ───────────────────────
+// ── CSS del panel ───────────────────────────
 
 (function injectPpStyles() {
     if (document.getElementById('pp-styles')) return;
     const style = document.createElement('style');
     style.id = 'pp-styles';
     style.textContent = `
-        #pp-vars-editable {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 14px;
-            padding: 10px 14px;
-            margin-bottom: 8px;
-            background: #1e2130;
-            border: 1px solid #3a3d4a;
-            border-radius: 8px;
+        .pp-line-editable { background: rgba(4,170,109,0.15); }
+        .pp-line-editable-gutter { border-left: 3px solid #04aa6d; }
+        .pp-ejercicio-meta { font-size: 0.85em; opacity: .75; margin-bottom: 4px; }
+        .pp-resultado {
+            margin: 8px 14px; padding: 10px 14px; border-radius: 8px;
+            font-family: monospace; white-space: pre-wrap; display: none;
         }
-        #pp-vars-editable:empty { display: none; }
+        .pp-resultado-ok    { background: rgba(4,170,109,0.15);   border: 1px solid #04aa6d; color: #04aa6d; }
+        .pp-resultado-error { background: rgba(220,53,69,0.15);   border: 1px solid #dc3545; color: #dc3545; }
+        .pp-resultado-info  { background: rgba(255,193,7,0.15);   border: 1px solid #ffc107; color: #ffc107; }
+
+        .pp-stepper {
+            display: flex; align-items: center; justify-content: center;
+            gap: 14px; padding: 10px 14px 0;
+        }
+        .pp-stepper__label { font-size: 0.9rem; color: var(--white); min-width: 130px; text-align: center; }
+        .pp-stepper__arrow {
+            width: 30px; height: 30px; border-radius: 6px; flex-shrink: 0;
+            background: transparent; border: 1px solid var(--console-border); color: var(--white);
+            display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.85rem;
+        }
+        .pp-stepper__arrow:hover:not(:disabled) { border-color: #04aa6d; color: #04aa6d; }
+        .pp-stepper__arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+        .pp-stepper__bar {
+            height: 5px; margin: 8px 14px 0; background: #252a3a; border-radius: 3px; overflow: hidden;
+        }
+        .pp-stepper__bar i {
+            display: block; height: 100%; width: 0%; background: #04aa6d; border-radius: 3px;
+            transition: width 0.3s ease;
+        }
     `;
     document.head.appendChild(style);
 })();
@@ -59,9 +71,6 @@ function ppCellText(v) {
     if (typeof v === 'boolean') return v ? 'T' : 'F';
     return String(v);
 }
-
-const _PP_ICON_PLAY  = '<img src="../img/iconos/play.png" alt="Reproducir"><span class="tooltip-text">Reproducir</span>';
-const _PP_ICON_PAUSE = '<img src="../img/iconos/pause.png" alt="Pausar"><span class="tooltip-text">Pausar</span>';
 
 function _ppBtns() {
     return [
@@ -111,115 +120,27 @@ class PonteApruebaSimulator {
 }
 
 // ════════════════════════════════════════════════════════════
-//  EJEMPLOS Y EJERCICIOS — RESPALDO local (usado si la API falla
-//  o todavía no existe un subtema "Ponte_a_prueba" en el backend)
+//  CONEXIÓN CON LA API — banco global de ejercicios modo='practica'
 // ════════════════════════════════════════════════════════════
 
-const PP_EXAMPLES = {
-    Ponte_a_prueba: [
-`// Bienvenido a "Ponte a prueba"
-// Aqui repasaras, con retos combinados, todo lo que ya aprendiste:
-// operadores, condicionales, ciclos, arreglos, recursividad y archivos.
+let ppCachePracticas = null;
 
-string mensaje = "Listo para practicar";
-int intentos = 3;
-
-Console.WriteLine(mensaje);
-Console.WriteLine("Intentos disponibles: " + intentos);`
-    ]
-};
-
-// Banco de ejercicios local. Cada elemento se muestra como una pestaña
-// "Ejercicio N" independiente. Deja el arreglo vacío mientras no haya
-// retos listos; agrega objetos { enunciado, codigo } cuando los tengas.
-const PP_EJERCICIOS = {
-    Ponte_a_prueba: [
-        // { enunciado: 'Enunciado del reto...', codigo: 'int x = 1;' }
-    ]
-};
-
-// ════════════════════════════════════════════════════════════
-//  CONEXIÓN CON LA API (con caché y respaldo local)
-// ════════════════════════════════════════════════════════════
-
-const ppCacheSubtemas = {};
-
-function ppNormalizarEjemplos(codigo_ejemplo) {
-    if (typeof codigo_ejemplo === 'string') return [codigo_ejemplo];
-    if (Array.isArray(codigo_ejemplo)) return codigo_ejemplo;
-    if (codigo_ejemplo && typeof codigo_ejemplo === 'object' && Array.isArray(codigo_ejemplo.ejemplos)) {
-        return codigo_ejemplo.ejemplos;
+async function ppObtenerPracticas() {
+    if (ppCachePracticas) return ppCachePracticas;
+    if (!window.ApiClient || typeof window.ApiClient.listarEjerciciosPractica !== 'function') {
+        throw new Error('ApiClient.listarEjerciciosPractica no está disponible');
     }
-    return [];
+    const lista = await window.ApiClient.listarEjerciciosPractica();
+    ppCachePracticas = Array.isArray(lista) ? lista : [];
+    return ppCachePracticas;
 }
 
-async function ppObtenerDatosTema(slug) {
-    if (ppCacheSubtemas[slug]) return ppCacheSubtemas[slug];
-    try {
-        if (!window.ApiClient || typeof window.ApiClient.obtenerSubtemaPorSlug !== 'function') {
-            throw new Error('ApiClient.obtenerSubtemaPorSlug no está disponible');
-        }
-        const subtema = await window.ApiClient.obtenerSubtemaPorSlug(slug);
-        if (!subtema) throw new Error('La API devolvió una respuesta vacía para "' + slug + '"');
-        ppCacheSubtemas[slug] = subtema;
-        return subtema;
-    } catch (e) {
-        console.warn(`Ponte a prueba "${slug}" no encontrado en la API, usando respaldo local`, e);
-        return {
-            definicion: (window.temas && window.temas[slug]) ? window.temas[slug].definicion : '',
-            codigo_ejemplo: null,
-            ejercicios: null,
-            _apiError: e.message
-        };
-    }
-}
-
-function ppGetItemsLocal(tema) {
-    const ex = PP_EXAMPLES[tema];
-    const ejemplos = Array.isArray(ex) ? ex.slice() : (typeof ex === 'string' ? [ex] : ['']);
-    const items = ejemplos.map((code, i) => ({
-        label: ejemplos.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
-        codigo: code,
-        enunciado: null,
-        esEjercicio: false
-    }));
-    const ejercicios = PP_EJERCICIOS[tema] || [];
-    ejercicios.forEach((ej, i) => {
-        items.push({
-            label: ejercicios.length > 1 ? 'Ejercicio ' + (i + 1) : 'Ejercicio',
-            codigo: ej.codigo,
-            enunciado: ej.enunciado,
-            esEjercicio: true
-        });
-    });
-    return items;
-}
-
-function ppGetItemsDesdeSubtema(subtema, slug) {
-    if (!subtema || subtema.codigo_ejemplo === null || subtema.codigo_ejemplo === undefined) {
-        return ppGetItemsLocal(slug);
-    }
-
-    const ejemplos = ppNormalizarEjemplos(subtema.codigo_ejemplo);
-    if (!ejemplos.length) return ppGetItemsLocal(slug);
-
-    const items = ejemplos.map((code, i) => ({
-        label: ejemplos.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
-        codigo: code,
-        enunciado: null,
-        esEjercicio: false
-    }));
-
-    const ejercicios = Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [];
-    ejercicios.forEach((ej, i) => {
-        items.push({
-            label: ejercicios.length > 1 ? 'Ejercicio ' + (i + 1) : 'Ejercicio',
-            codigo: ej.codigo_csharp,
-            enunciado: ej.descripcion,
-            esEjercicio: true
-        });
-    });
-    return items;
+// Título del tema — a diferencia de los otros simuladores, esta página
+// reusa #tema-descripcion para el enunciado por pestaña (ppSetDescripcion),
+// así que el título se pinta aparte en vez de con mostrarDescripcion().
+function ppSetTitulo(titulo) {
+    const elTitulo = document.getElementById('tema-titulo');
+    if (elTitulo) elTitulo.innerHTML = titulo ? '<h2 class="tema-titulo-text">' + titulo + '</h2>' : '';
 }
 
 function ppSetDescripcion(html, esEjercicio) {
@@ -252,114 +173,191 @@ function ppMostrarErrorApi(mensaje) {
     box.textContent = mensaje;
 }
 
+// ── Caja de resultado (validación / pista) ─────────────────────
+
+function ppResultadoBox() {
+    let box = document.getElementById('pp-resultado');
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'pp-resultado';
+        const desc = document.getElementById('tema-descripcion');
+        if (desc && desc.parentNode) desc.parentNode.insertBefore(box, desc.nextSibling);
+        else document.body.appendChild(box);
+    }
+    box.className = 'pp-resultado';
+    box.style.display = 'block';
+    return box;
+}
+
+function ppOcultarResultado() {
+    const box = document.getElementById('pp-resultado');
+    if (box) { box.style.display = 'none'; box.textContent = ''; }
+}
+
 // ── Estado global del módulo ──────────────────────────────────
 
 const ppSim = new PonteApruebaSimulator();
 let ppMonacoEditor = null;
 let ppDecorations  = [];
+let ppEditableDecorations = [];
 let ppPlayTimer    = null;
 let ppPlaying      = false;
 let ppCurrentCode  = '';
-let ppTemaActual   = '';
+let ppItemActual   = null;
+let ppLineasEditablesActual = [];
+let ppUltimoCodigoValido = '';
 
-// ── Variables escalares editables ────────────────────────────
+// ── Progresión lineal del banco de ejercicios ──────────────────
+// ppItems: banco completo (con "resuelto" que manda la API, ya filtrado
+// por el usuario autenticado). ppCurrentIndex: el primer no resuelto —
+// el límite real de avance, recalculado siempre desde el servidor (nunca
+// desde localStorage), así que sobrevive a un F5 o a cerrar sesión.
+// ppViewIndex: el que se está viendo ahora mismo (puede ser menor que
+// ppCurrentIndex si el alumno retrocedió a revisar uno ya resuelto).
+let ppItems = [];
+let ppCurrentIndex = 0;
+let ppViewIndex = 0;
 
-function ppExtraerVariablesEditables(ast) {
-    if (!ast || !ast.body) return [];
-    return ast.body
-        .filter(n => n.type === 'VariableDeclaration' && n.init && n.init.type === 'Literal' && n.init.value !== null)
-        .map(n => ({ name: n.name, dataType: n.dataType, raw: n.init.raw, value: n.init.value, line: n.line }));
-}
+// ── Restricción de edición a las líneas marcadas ───────────────
 
-function ppReconstruirCodigo(baseCode, variables, valoresNuevos) {
-    const lineas = baseCode.split('\n');
-    for (const v of variables) {
-        const idx = v.line - 1;
-        if (idx < 0 || idx >= lineas.length) continue;
-        const nuevoValor = valoresNuevos[v.name];
-        let valorFormateado;
-        if (v.raw === 'string') {
-            valorFormateado = '"' + String(nuevoValor).replace(/"/g, '\\"') + '"';
-        } else if (v.raw === 'char') {
-            valorFormateado = "'" + String(nuevoValor).charAt(0) + "'";
-        } else if (v.raw === 'bool') {
-            valorFormateado = (nuevoValor === true || nuevoValor === 'true') ? 'true' : 'false';
-        } else {
-            const num = parseFloat(nuevoValor);
-            valorFormateado = isNaN(num) ? String(v.value) : String(num);
-        }
-        const regex = new RegExp('^(\\s*' + v.dataType + '\\s+' + v.name + '\\s*=\\s*).*?(;.*)$');
-        lineas[idx] = lineas[idx].replace(regex, (_, antes, despues) => antes + valorFormateado + despues);
+function ppEsEdicionValida(nuevo, anterior, lineasPermitidas) {
+    if (!lineasPermitidas || !lineasPermitidas.length) return true; // sin metadatos: no se restringe
+    const nuevas = nuevo.split('\n');
+    const viejas = anterior.split('\n');
+    if (nuevas.length !== viejas.length) return false; // no se permite agregar/quitar líneas
+    for (let i = 0; i < nuevas.length; i++) {
+        if (nuevas[i] !== viejas[i] && !lineasPermitidas.includes(i + 1)) return false;
     }
-    return lineas.join('\n');
+    return true;
 }
 
-function ppRenderInputsVariables(variables, codigoBase) {
-    const host = document.getElementById('pp-vars-editable');
-    if (!host) return;
-
-    if (!variables.length) {
-        host.innerHTML = '';
-        host.dataset.ppVarsSignature = '';
-        return;
+function ppOnEditorChange() {
+    if (!ppMonacoEditor) return;
+    const nuevo = ppMonacoEditor.getValue();
+    if (nuevo === ppUltimoCodigoValido) return;
+    if (ppEsEdicionValida(nuevo, ppUltimoCodigoValido, ppLineasEditablesActual)) {
+        ppUltimoCodigoValido = nuevo;
+    } else {
+        const pos = ppMonacoEditor.getPosition();
+        ppMonacoEditor.setValue(ppUltimoCodigoValido);
+        if (pos) ppMonacoEditor.setPosition(pos);
     }
-
-    const signature = variables.map(v => v.name + ':' + v.dataType).join('|');
-    if (host.dataset.ppVarsSignature === signature) return;
-    host.dataset.ppVarsSignature = signature;
-
-    host.innerHTML = variables.map(v => {
-        const tipoInput = (v.dataType === 'int' || v.dataType === 'double' || v.dataType === 'float' || v.dataType === 'long') ? 'number' : 'text';
-        let inputHtml;
-        if (v.dataType === 'bool') {
-            inputHtml =
-                '<select class="arr-var-input" data-var="' + v.name + '">' +
-                    '<option value="true"'  + (v.value === true  ? ' selected' : '') + '>true</option>'  +
-                    '<option value="false"' + (v.value === false ? ' selected' : '') + '>false</option>' +
-                '</select>';
-        } else {
-            inputHtml =
-                '<input class="arr-var-input" type="' + tipoInput + '" data-var="' + v.name + '" value="' + ppEscape(String(v.value)) + '"' +
-                (tipoInput === 'number' && v.dataType !== 'int' && v.dataType !== 'long' ? ' step="0.01"' : '') + '>';
-        }
-        return (
-            '<div class="arr-var-field">' +
-                '<label>' + ppEscape(v.dataType) + ' ' + ppEscape(v.name) + '</label>' +
-                inputHtml +
-            '</div>'
-        );
-    }).join('');
-
-    host.querySelectorAll('.arr-var-input').forEach(input => {
-        const evento = input.tagName === 'SELECT' ? 'change' : 'input';
-        input.addEventListener(evento, () => {
-            const valoresNuevos = {};
-            host.querySelectorAll('.arr-var-input').forEach(inp => {
-                valoresNuevos[inp.dataset.var] = inp.tagName === 'SELECT' ? (inp.value === 'true') : inp.value;
-            });
-            const nuevoCodigo = ppReconstruirCodigo(codigoBase, variables, valoresNuevos);
-            if (ppMonacoEditor) ppMonacoEditor.setValue(nuevoCodigo);
-            ppEjecutarSinTocarInputs(nuevoCodigo);
-        });
-    });
 }
 
-function ppEjecutarSinTocarInputs(codigo) {
+function ppResaltarLineasEditables(lineas) {
+    if (!ppMonacoEditor || !window.monaco) return;
+    const decos = (lineas || []).map(l => ({
+        range: new monaco.Range(l, 1, l, 1),
+        options: { isWholeLine: true, className: 'pp-line-editable', linesDecorationsClassName: 'pp-line-editable-gutter' }
+    }));
+    ppEditableDecorations = ppMonacoEditor.deltaDecorations(ppEditableDecorations, decos);
+}
+
+// ── Ejecutar código y refrescar los paneles ────────────────────
+
+function ppEjecutar(codigo) {
     const first = ppSim.load(codigo);
     ppRender(first, ppSim.info());
     const btns = _ppBtns();
     if (btns[1]) btns[1].disabled = true;
-    if (btns[3]) { ppPlaying = false; btns[3].innerHTML = _PP_ICON_PLAY; }
+    ppPlaying = false;
 }
 
-function ppCargarYEjecutar(codigo) {
-    const first    = ppSim.load(codigo);
-    const variables = ppExtraerVariablesEditables(ppSim.lastAst);
-    ppRenderInputsVariables(variables, codigo);
-    ppRender(first, ppSim.info());
+// ── Comprobar: reproduce la ejecución paso a paso y, hasta que esa
+// reproducción termina (llega al último paso que se pudo ejecutar),
+// pinta el veredicto del backend — no antes, aunque la red responda
+// más rápido que la animación. Este botón sustituye al viejo
+// "Reproducir" (ver ppConectarBotones).
+
+function ppComprobarSolucion() {
+    if (!ppItemActual || !ppItemActual.id || !ppMonacoEditor) return;
     const btns = _ppBtns();
-    if (btns[1]) btns[1].disabled = true;
-    if (btns[3]) { ppPlaying = false; btns[3].innerHTML = _PP_ICON_PLAY; }
+    ppStopPlay(btns);
+    const codigo = ppMonacoEditor.getValue();
+
+    ppOcultarResultado();
+    ppEjecutar(codigo);
+
+    // La llamada al backend se lanza ya (por la latencia de red), pero
+    // el resultado se guarda y no se muestra hasta ppMostrarVeredicto().
+    const veredictoPromise = ppValidarConBackend(codigo);
+    const mostrarAlTerminar = () => { veredictoPromise.then(ppMostrarVeredicto); };
+
+    if (ppSim.info().total > 1) {
+        ppPlaying = true;
+        ppPlayTimer = setTimeout(() => ppAutoPlay(btns, mostrarAlTerminar), ppGetDelay());
+    } else {
+        // Nada que animar (p. ej. error de compilación en el paso 0):
+        // el veredicto se muestra en cuanto la validación responda.
+        mostrarAlTerminar();
+    }
+}
+
+// ── Validar solución contra el backend ─────────────────────────
+// Devuelve el veredicto en vez de pintarlo — quien llama decide cuándo
+// mostrarlo (ppComprobarSolucion espera a que termine la animación).
+
+async function ppValidarConBackend(codigo) {
+    let resultado;
+    try {
+        resultado = CSharpEngine.compileAndRun(codigo, { maxSteps: 20000 });
+    } catch (e) {
+        return { texto: 'El código no compiló: ' + (e.message || 'error desconocido'), clase: 'pp-resultado-error' };
+    }
+    if (resultado.error) {
+        return { texto: 'Error al ejecutar: ' + (resultado.error.message || resultado.error), clase: 'pp-resultado-error' };
+    }
+
+    try {
+        const veredicto = await window.ApiClient.validarEjercicio(ppItemActual.id, resultado.output || []);
+        if (veredicto.correcto) {
+            return {
+                texto: '✅ ¡Correcto! +' + veredicto.puntos + ' puntos',
+                clase: 'pp-resultado-ok',
+                correcto: true,
+                // primeraVez lo manda el backend — evita que un reintento sobre
+                // un ejercicio ya resuelto vuelva a "avanzar" o sumar puntos.
+                esNuevo: !!veredicto.primeraVez,
+            };
+        }
+        return {
+            texto: '❌ Aún no es correcto. Salida esperada:\n' + (veredicto.salida_esperada || []).join('\n'),
+            clase: 'pp-resultado-error'
+        };
+    } catch (e) {
+        return { texto: 'No se pudo validar: ' + e.message, clase: 'pp-resultado-error' };
+    }
+}
+
+function ppMostrarVeredicto(v) {
+    const caja = ppResultadoBox();
+    caja.textContent = v.texto;
+    caja.className = 'pp-resultado ' + v.clase;
+    if (!v.correcto) return;
+
+    if (ppItemActual) ppItemActual.resuelto = true;
+
+    if (v.esNuevo) {
+        // Invalida el caché: la próxima vez que se entre a esta pestaña
+        // (o se recargue la página) se vuelve a pedir al backend, que es
+        // la única fuente de verdad de qué se resolvió.
+        ppCachePracticas = null;
+        ppCurrentIndex = ppItems.findIndex(it => !it.resuelto);
+        if (ppCurrentIndex === -1) ppCurrentIndex = ppItems.length - 1;
+        ppRenderStepper();
+        if (typeof window.actualizarProgresoUsuario === 'function') window.actualizarProgresoUsuario();
+    }
+}
+
+function ppMostrarPista() {
+    const caja = ppResultadoBox();
+    if (!ppItemActual || !ppItemActual.pista) {
+        caja.textContent = 'Este ejercicio no tiene pista disponible.';
+        caja.className = 'pp-resultado pp-resultado-info';
+        return;
+    }
+    caja.textContent = '💡 ' + ppItemActual.pista;
+    caja.className = 'pp-resultado pp-resultado-info';
 }
 
 // ── Render de memoria (variables, arreglos y matrices) ────────
@@ -514,97 +512,133 @@ function ppClearPanels() {
     if (fill)        fill.style.width       = '0%';
 }
 
-// ── Inicialización del editor con sistema de tabs (async) ─────
+// ── Navegación lineal (selector "Ejercicio N de M") ────────────
+
+function ppAplicarItem(it) {
+    ppItemActual = it;
+    ppLineasEditablesActual = it.lineasEditables;
+    ppCurrentCode = it.codigo;
+    ppUltimoCodigoValido = it.codigo;
+    ppSetDescripcion(
+        (it.subtemaTitulo ? '<div class="pp-ejercicio-meta">Tema: <b>' + ppEscape(it.subtemaTitulo) + '</b></div>' : '') +
+        (it.enunciado || ''),
+        true
+    );
+    ppOcultarResultado();
+}
+
+// Solo se puede navegar entre 0 y ppCurrentIndex (el primer no resuelto):
+// retroceder para revisar está permitido, adelantarse no.
+function ppIrA(idx) {
+    if (idx < 0 || idx > ppCurrentIndex || idx >= ppItems.length) return;
+    ppViewIndex = idx;
+    const it = ppItems[idx];
+    ppAplicarItem(it);
+    if (ppMonacoEditor) ppMonacoEditor.setValue(it.codigo);
+    ppResaltarLineasEditables(it.lineasEditables);
+    ppEjecutar(it.codigo);
+    ppRenderStepper();
+}
+
+function ppRenderStepper() {
+    const label = document.getElementById('pp-step-label');
+    const prevBtn = document.getElementById('pp-step-prev');
+    const nextBtn = document.getElementById('pp-step-next');
+    const fill = document.getElementById('pp-stepper-fill');
+    if (label) label.textContent = 'Ejercicio ' + (ppViewIndex + 1) + ' de ' + ppItems.length;
+    if (prevBtn) prevBtn.disabled = (ppViewIndex <= 0);
+    if (nextBtn) nextBtn.disabled = (ppViewIndex >= ppCurrentIndex);
+    if (fill) {
+        const resueltos = ppItems.filter(it => it.resuelto).length;
+        const pct = ppItems.length ? Math.round((resueltos / ppItems.length) * 100) : 0;
+        fill.style.width = pct + '%';
+    }
+}
+
+// ── Inicialización del editor (async) ──────────────────────────
 
 async function initPonteApruebaSimulator(nombreTema) {
     const editorBody = document.getElementById('editor-body');
     if (!editorBody) return;
 
-    ppTemaActual = nombreTema;
+    ppSetTitulo('Ponte a prueba');
 
-    let subtema, items, defOriginal;
+    let items;
     try {
-        subtema = await ppObtenerDatosTema(nombreTema);
-        items = ppGetItemsDesdeSubtema(subtema, nombreTema);
-        defOriginal = subtema.definicion ||
-            ((window.temas && window.temas[nombreTema]) ? window.temas[nombreTema].definicion : '');
-
-        // Si aún no existe un subtema "Ponte_a_prueba" en el backend, se usa
-        // el respaldo local en silencio (no es un error, es lo esperado).
+        const practicas = await ppObtenerPracticas();
+        items = practicas.map((ej, i) => ({
+            id: ej.id,
+            label: 'Ejercicio ' + (i + 1),
+            codigo: ej.codigo_con_errores || '',
+            enunciado: ej.descripcion || '',
+            subtemaTitulo: (ej.subtemas && ej.subtemas.titulo) || '',
+            lineasEditables: (ej.soluciones_validacion && ej.soluciones_validacion.lineas_editables) || [],
+            pista: (ej.soluciones_validacion && ej.soluciones_validacion.pista) || '',
+            resuelto: !!ej.resuelto,
+        }));
         ppMostrarErrorApi(null);
     } catch (e) {
-        console.error('Error inicializando "Ponte a prueba":', e);
-        items = ppGetItemsLocal(nombreTema);
-        defOriginal = (window.temas && window.temas[nombreTema]) ? window.temas[nombreTema].definicion : '';
+        console.error('Error cargando "Ponte a prueba":', e);
+        items = [];
+        ppMostrarErrorApi('No se pudieron cargar los ejercicios de práctica.');
     }
 
-    if (!items || !items.length) {
-        items = [{ label: 'Ejemplo', codigo: '// Todavía no hay ejercicios cargados.', enunciado: null, esEjercicio: false }];
+    if (!items.length) {
+        items = [{
+            id: null, label: 'Sin ejercicios',
+            codigo: '// Todavía no hay ejercicios de práctica cargados.',
+            enunciado: '', subtemaTitulo: '', lineasEditables: [], pista: '', resuelto: false
+        }];
     }
 
-    if (!document.getElementById('pp-vars-editable')) {
-        const varsHost = document.createElement('div');
-        varsHost.id = 'pp-vars-editable';
-        editorBody.parentNode.insertBefore(varsHost, editorBody);
+    ppItems = items;
+    // El límite de avance sale siempre de "resuelto" (lo manda la API según
+    // el usuario autenticado) — nunca de localStorage, así que un F5, un
+    // cambio de pestaña o cerrar sesión y volver a entrar cae en el mismo
+    // ejercicio donde el alumno se quedó.
+    ppCurrentIndex = items.findIndex(it => !it.resuelto);
+    if (ppCurrentIndex === -1) ppCurrentIndex = items.length - 1; // ya resolvió todo el banco
+    ppViewIndex = ppCurrentIndex;
+
+    if (!document.getElementById('pp-stepper') && items.length > 1) {
+        const stepper = document.createElement('div');
+        stepper.id = 'pp-stepper';
+        stepper.className = 'pp-stepper';
+        stepper.innerHTML =
+            '<button class="pp-stepper__arrow" id="pp-step-prev">◀</button>' +
+            '<span class="pp-stepper__label" id="pp-step-label"></span>' +
+            '<button class="pp-stepper__arrow" id="pp-step-next">▶</button>';
+        editorBody.parentNode.insertBefore(stepper, editorBody);
+
+        const bar = document.createElement('div');
+        bar.className = 'pp-stepper__bar';
+        bar.innerHTML = '<i id="pp-stepper-fill"></i>';
+        editorBody.parentNode.insertBefore(bar, editorBody);
+
+        document.getElementById('pp-step-prev').onclick = () => { ppStopPlay(_ppBtns()); ppIrA(ppViewIndex - 1); };
+        document.getElementById('pp-step-next').onclick = () => { ppStopPlay(_ppBtns()); ppIrA(ppViewIndex + 1); };
     }
 
-    if (!document.getElementById('pp-ejemplos-tabs') && items.length > 1) {
-        const tabs = document.createElement('div');
-        tabs.id = 'pp-ejemplos-tabs';
-        tabs.innerHTML = items.map((it, i) =>
-            '<button class="sim-tab' + (i === 0 ? ' activo' : '') +
-            (it.esEjercicio ? ' ejercicio' : '') +
-            '" data-idx="' + i + '">' + it.label + '</button>'
-        ).join('');
-        editorBody.parentNode.insertBefore(tabs, editorBody.parentNode.querySelector('#pp-vars-editable'));
-    }
-
-    const codigoInicial = items[0].codigo;
-    ppCurrentCode = codigoInicial;
-    if (items[0].enunciado) ppSetDescripcion(items[0].enunciado, true);
-    else ppSetDescripcion(defOriginal, false);
-
-    function activarTabs() {
-        const tabs = document.getElementById('pp-ejemplos-tabs');
-        if (!tabs) return;
-        tabs.querySelectorAll('.sim-tab').forEach(btn => {
-            btn.onclick = () => {
-                ppStopPlay(_ppBtns());
-                const idx = parseInt(btn.dataset.idx);
-                const it  = items[idx];
-
-                tabs.querySelectorAll('.sim-tab').forEach(b => b.classList.remove('activo'));
-                btn.classList.add('activo');
-
-                if (it.enunciado) {
-                    ppSetDescripcion(it.enunciado, true);
-                } else {
-                    ppSetDescripcion(defOriginal, false);
-                }
-
-                ppCurrentCode = it.codigo;
-                if (ppMonacoEditor) ppMonacoEditor.setValue(it.codigo);
-                ppCargarYEjecutar(it.codigo);
-            };
-        });
-    }
+    ppAplicarItem(items[ppViewIndex]);
+    ppRenderStepper();
 
     function crearEditor() {
         require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
         require(['vs/editor/editor.main'], function () {
             ppMonacoEditor = monaco.editor.create(editorBody, {
-                value: codigoInicial,
+                value: items[ppViewIndex].codigo,
                 language: 'csharp',
                 theme: 'vs-dark',
                 automaticLayout: true,
                 fontSize: 14,
                 minimap: { enabled: false },
                 scrollBeyondLastLine: false,
-                readOnly: true
+                readOnly: false
             });
+            ppMonacoEditor.onDidChangeModelContent(ppOnEditorChange);
             ppConectarBotones();
-            activarTabs();
-            ppCargarYEjecutar(codigoInicial);
+            ppResaltarLineasEditables(items[ppViewIndex].lineasEditables);
+            ppEjecutar(items[ppViewIndex].codigo);
         });
     }
 
@@ -628,21 +662,29 @@ function ppGetDelay() {
     return Math.round(2000 - (val / 100) * 1800);
 }
 
-function ppStopPlay(btns) {
+function ppStopPlay() {
     clearTimeout(ppPlayTimer);
     ppPlayTimer = null;
     ppPlaying   = false;
-    const btnR = (btns && btns[3]) ? btns[3] : document.getElementById('btn-reproducir');
-    if (btnR) btnR.innerHTML = _PP_ICON_PLAY;
+    // A diferencia de los otros simuladores, aquí btns[3] ya no es un
+    // botón play/pausa — es "Comprobar" de forma permanente (ver
+    // ppConectarBotones), así que no se le toca el innerHTML al detener.
 }
 
-function ppAutoPlay(btns) {
+// onDone (opcional) se dispara una sola vez, justo al llegar al último
+// paso que se pudo ejecutar — lo usa ppComprobarSolucion para no pintar
+// el veredicto hasta que la animación termina.
+function ppAutoPlay(btns, onDone) {
     const info = ppSim.info();
-    if (info.index >= info.total - 1) { ppStopPlay(btns); return; }
+    if (info.index >= info.total - 1) {
+        ppStopPlay(btns);
+        if (onDone) onDone();
+        return;
+    }
     const state = ppSim.next();
     ppRender(state, ppSim.info());
     if (btns[1]) btns[1].disabled = (ppSim.info().index <= 0);
-    ppPlayTimer = setTimeout(() => ppAutoPlay(btns), ppGetDelay());
+    ppPlayTimer = setTimeout(() => ppAutoPlay(btns, onDone), ppGetDelay());
 }
 
 // ── Conexión de botones ───────────────────────────────────────
@@ -653,7 +695,7 @@ function ppConectarBotones() {
     if (btns[0]) btns[0].onclick = () => {
         ppStopPlay(btns);
         const codigoActual = ppMonacoEditor ? ppMonacoEditor.getValue() : ppCurrentCode;
-        ppEjecutarSinTocarInputs(codigoActual);
+        ppEjecutar(codigoActual);
     };
 
     if (btns[1]) {
@@ -673,20 +715,29 @@ function ppConectarBotones() {
         if (btns[1]) btns[1].disabled = (ppSim.info().index <= 0);
     };
 
-    if (btns[3]) btns[3].onclick = () => {
-        if (ppPlaying) { ppStopPlay(btns); return; }
-        if (ppSim.info().total === 0) {
-            const first = ppSim.load(ppMonacoEditor.getValue());
-            ppRender(first, ppSim.info());
-            if (!first || first.isError) return;
-            if (btns[1]) btns[1].disabled = true;
-        }
-        ppPlaying = true;
-        btns[3].innerHTML = _PP_ICON_PAUSE;
-        ppPlayTimer = setTimeout(() => ppAutoPlay(btns), ppGetDelay());
-    };
+    // btns[3] era el botón "Reproducir" del skeleton compartido
+    // (consolas.js). En esta página no hay reproducción suelta: el mismo
+    // botón reproduce la ejecución paso a paso Y valida contra el backend
+    // a la vez (ver ppComprobarSolucion). El resto de los simuladores
+    // siguen usando el botón original sin tocar — esto es solo un
+    // relabel del elemento dentro de esta página.
+    if (btns[3]) {
+        btns[3].innerHTML = '✅ Comprobar';
+        btns[3].onclick = ppComprobarSolucion;
+    }
 
     const controls = document.querySelector('.editor-controls');
+
+    // "Pista" va en la misma fila que Comprobar, justo antes — prev/anterior
+    // y siguiente se conservan tal cual, sin tocarlos.
+    if (controls && btns[3] && !document.getElementById('pp-btn-pista')) {
+        const pista = document.createElement('button');
+        pista.className = 'ctrl-btn';
+        pista.id = 'pp-btn-pista';
+        pista.textContent = '💡 Pista';
+        pista.onclick = ppMostrarPista;
+        controls.insertBefore(pista, btns[3]);
+    }
     if (controls && !document.getElementById('pp-speed-slider')) {
         const speedRow = document.createElement('div');
         speedRow.className = 'sim-speed-row';
@@ -702,6 +753,7 @@ function ppConectarBotones() {
             valLbl.textContent = (parseFloat(slider.value) / 40).toFixed(1) + '×';
         });
     }
+
 }
 
 // ── Hook a cargarTema ─────────────────────────────────────────
@@ -714,8 +766,10 @@ function ppConectarBotones() {
             ppMonacoEditor.dispose();
             ppMonacoEditor = null;
             ppDecorations  = [];
+            ppEditableDecorations = [];
         }
         ppSim.clear();
+        ppOcultarResultado();
 
         if (typeof _cargarTema === 'function') _cargarTema(nombreTema);
 

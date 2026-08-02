@@ -938,6 +938,47 @@ body {
     overflow: hidden
 }
 
+.card + .card {
+    margin-top: 20px;
+}
+
+/* Tarjeta de pendientes: chica y compacta — un rectángulo para un vistazo
+   rápido, no una tabla que se estire todo el ancho de la pantalla. */
+#cardPendientes {
+    max-width: 620px;
+}
+
+#cardPendientes .card__head {
+    padding: 12px 20px;
+}
+
+#cardPendientes table {
+    font-size: .8rem;
+    min-width: 0;
+    width: 100%;
+    table-layout: fixed;
+}
+
+#cardPendientes thead th {
+    padding: 8px 14px;
+}
+
+#cardPendientes tbody td {
+    padding: 9px 14px;
+}
+
+#cardPendientes th:nth-child(1), #cardPendientes td:nth-child(1) { width: 42%; }
+#cardPendientes th:nth-child(2), #cardPendientes td:nth-child(2) { width: 20%; }
+#cardPendientes th:nth-child(3), #cardPendientes td:nth-child(3) { width: 20%; }
+#cardPendientes th:nth-child(4), #cardPendientes td:nth-child(4) { width: 18%; }
+
+#cardPendientes .u-name b, #cardPendientes .u-name small {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
 .card__head {
     display: flex;
     align-items: center;
@@ -960,6 +1001,43 @@ body {
 
 .card__head .grow {
     flex: 1
+}
+
+.sort-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sort-toggle__label {
+    color: var(--text-dim);
+    font-size: .78rem;
+    white-space: nowrap;
+}
+
+.sort-toggle__btn {
+    border: 1px solid var(--console-border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 5px 12px;
+    border-radius: 99px;
+    font-size: .78rem;
+    font-weight: 600;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: .15s;
+}
+
+.sort-toggle__btn:hover {
+    border-color: var(--green-main);
+    color: var(--green-main);
+}
+
+.sort-toggle__btn.activo {
+    background: var(--green-main);
+    border-color: var(--green-main);
+    color: #fff;
 }
 
 .btn-add {

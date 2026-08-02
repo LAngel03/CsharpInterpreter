@@ -119,6 +119,60 @@ function mostrarDescripcion(titulo, definicion) {
     }
 }
 
+// ── Perfil en el header (avatar con inicial + nombre) ──────────────
+// Usa el usuario ya guardado en localStorage al iniciar sesión, así
+// que no depende de ninguna llamada a la API.
+function pintarPerfilHeader() {
+    const widget = document.getElementById('header-perfil');
+    if (!widget || !window.ApiClient || !window.ApiClient.obtenerUsuarioLocal) return;
+    const usuario = window.ApiClient.obtenerUsuarioLocal();
+    if (!usuario) return;
+
+    const nombre = (usuario.nombre || usuario.matricula || 'Alumno').trim();
+    const avatarEl = document.getElementById('header-perfil-avatar');
+    const nombreEl = document.getElementById('header-perfil-nombre');
+    if (avatarEl) avatarEl.textContent = nombre.charAt(0).toUpperCase();
+    if (nombreEl) nombreEl.textContent = nombre;
+    widget.style.display = 'flex';
+}
+pintarPerfilHeader();
+
+// ── Progreso del alumno (barra "X / Y ejercicios resueltos") ──────
+// El total sale de /ejercicios/practica (mismo banco que usa "Ponte a
+// prueba"); lo resuelto sale del perfil del alumno. Si el backend
+// todavía no expone `ejercicios_resueltos` en /auth/perfil, el widget
+// simplemente se queda oculto en vez de mostrar un dato falso.
+async function actualizarProgresoUsuario() {
+    const heroWidget = document.getElementById('hero-progreso');
+    if (!heroWidget || !window.ApiClient) return;
+    try {
+        const [perfil, practicas] = await Promise.all([
+            window.ApiClient.obtenerPerfil(),
+            window.ApiClient.listarEjerciciosPractica()
+        ]);
+        const total = Array.isArray(practicas) ? practicas.length : 0;
+        const resueltos = (perfil && typeof perfil.ejercicios_resueltos === 'number')
+            ? perfil.ejercicios_resueltos : null;
+
+        if (resueltos === null || !total) {
+            heroWidget.style.display = 'none';
+            return;
+        }
+
+        const pct = Math.max(0, Math.min(100, Math.round((resueltos / total) * 100)));
+        const numEl = document.getElementById('hero-progreso-num');
+        const fillEl = document.getElementById('hero-progreso-fill');
+        if (numEl) numEl.textContent = resueltos + ' / ' + total;
+        if (fillEl) fillEl.style.width = pct + '%';
+        heroWidget.style.display = 'block';
+    } catch (e) {
+        console.warn('No se pudo cargar el progreso del usuario', e);
+        heroWidget.style.display = 'none';
+    }
+}
+window.actualizarProgresoUsuario = actualizarProgresoUsuario;
+actualizarProgresoUsuario();
+
 function limpiarPantalla() {
     const workspace = document.getElementById('workspace-container');
     const gridModulos = document.getElementById('grid-modulos');
@@ -128,9 +182,10 @@ function limpiarPantalla() {
 }
 
 function cargarTema(nombreTema) {
-    if (!window.temas || !window.temas[nombreTema]) return;
-    const datos = window.temas[nombreTema];
-    mostrarDescripcion(datos.titulo, datos.definicion);
+    if (!nombreTema) return;
+    // Título y definición ya no viven aquí: los trae cada simulador desde
+    // la API (subtema.titulo / subtema.definicion) y los pinta al resolver.
+    mostrarDescripcion('', '');
     if (typeof insertarConsolas === 'function') insertarConsolas();
     history.replaceState(null, '', '#' + nombreTema);
 }
@@ -311,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const hashTema = location.hash.slice(1);
-    if (hashTema && window.temas && window.temas[hashTema]) {
+    if (hashTema) {
         mostrarPantallaTema();
         cargarTema(hashTema);
     } else {

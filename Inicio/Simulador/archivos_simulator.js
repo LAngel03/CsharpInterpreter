@@ -515,6 +515,11 @@ async function initArchivosSimulador(tema) {
     try {
         const subtema = await arcObtenerDatosTema(tema);
         items = arcGetItemsDesdeSubtema(subtema);
+
+        // Título y definición del tema vienen de la BD (vía admin); se
+        // pintan aquí porque cargarTema() ya no trae texto local.
+        mostrarDescripcion(subtema.titulo || '', subtema.definicion || '');
+
         if (subtema._apiError) {
             arcMostrarErrorApi('No se pudo conectar con la API (' + subtema._apiError + '). Mostrando aviso de error.');
         } else {

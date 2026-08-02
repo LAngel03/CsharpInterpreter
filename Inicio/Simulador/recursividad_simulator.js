@@ -501,6 +501,11 @@ async function initRecursividadSimulador(tema) {
     try {
         const subtema = await recObtenerDatosTema(tema);
         items = recGetItemsDesdeSubtema(subtema);
+
+        // Título y definición del tema vienen de la BD (vía admin); se
+        // pintan aquí porque cargarTema() ya no trae texto local.
+        mostrarDescripcion(subtema.titulo || '', subtema.definicion || '');
+
         if (subtema._apiError) {
             recMostrarErrorApi('No se pudo conectar con la API (' + subtema._apiError + '). Mostrando aviso de error.');
         } else {
