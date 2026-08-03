@@ -312,7 +312,7 @@ async function ppValidarConBackend(codigo) {
         const veredicto = await window.ApiClient.validarEjercicio(ppItemActual.id, resultado.output || []);
         if (veredicto.correcto) {
             return {
-                texto: '✅ ¡Correcto! +' + veredicto.puntos + ' puntos',
+                texto: '¡Correcto! +' + veredicto.puntos + ' puntos',
                 clase: 'pp-resultado-ok',
                 correcto: true,
                 // primeraVez lo manda el backend — evita que un reintento sobre
@@ -321,7 +321,7 @@ async function ppValidarConBackend(codigo) {
             };
         }
         return {
-            texto: '❌ Aún no es correcto. Salida esperada:\n' + (veredicto.salida_esperada || []).join('\n'),
+            texto: 'Aún no es correcto. Salida esperada:\n' + (veredicto.salida_esperada || []).join('\n'),
             clase: 'pp-resultado-error'
         };
     } catch (e) {
@@ -356,7 +356,7 @@ function ppMostrarPista() {
         caja.className = 'pp-resultado pp-resultado-info';
         return;
     }
-    caja.textContent = '💡 ' + ppItemActual.pista;
+    caja.textContent = ppItemActual.pista;
     caja.className = 'pp-resultado pp-resultado-info';
 }
 
@@ -540,12 +540,25 @@ function ppIrA(idx) {
     ppRenderStepper();
 }
 
+// Número a mostrar para el ejercicio en idx — NO es su posición en el
+// arreglo (esa cambia cada vez que el banco crece y se vuelve a mezclar),
+// sino su lugar real entre los resueltos: si ya está resuelto, cuántos
+// resueltos hay hasta su posición inclusive; si es el actual (sin resolver),
+// el conteo total de resueltos + 1. Así siempre coincide con lo que cuenta
+// el backend (usuarios.ejercicios_resueltos), sin importar cómo se haya
+// reordenado el banco para este alumno.
+function ppNumeroMostrado(idx) {
+    const it = ppItems[idx];
+    if (it.resuelto) return ppItems.slice(0, idx + 1).filter(x => x.resuelto).length;
+    return ppItems.filter(x => x.resuelto).length + 1;
+}
+
 function ppRenderStepper() {
     const label = document.getElementById('pp-step-label');
     const prevBtn = document.getElementById('pp-step-prev');
     const nextBtn = document.getElementById('pp-step-next');
     const fill = document.getElementById('pp-stepper-fill');
-    if (label) label.textContent = 'Ejercicio ' + (ppViewIndex + 1) + ' de ' + ppItems.length;
+    if (label) label.textContent = 'Ejercicio ' + ppNumeroMostrado(ppViewIndex) + ' de ' + ppItems.length;
     if (prevBtn) prevBtn.disabled = (ppViewIndex <= 0);
     if (nextBtn) nextBtn.disabled = (ppViewIndex >= ppCurrentIndex);
     if (fill) {
@@ -722,7 +735,7 @@ function ppConectarBotones() {
     // siguen usando el botón original sin tocar — esto es solo un
     // relabel del elemento dentro de esta página.
     if (btns[3]) {
-        btns[3].innerHTML = '✅ Comprobar';
+        btns[3].innerHTML = 'Comprobar';
         btns[3].onclick = ppComprobarSolucion;
     }
 
@@ -734,7 +747,7 @@ function ppConectarBotones() {
         const pista = document.createElement('button');
         pista.className = 'ctrl-btn';
         pista.id = 'pp-btn-pista';
-        pista.textContent = '💡 Pista';
+        pista.textContent = 'Pista';
         pista.onclick = ppMostrarPista;
         controls.insertBefore(pista, btns[3]);
     }

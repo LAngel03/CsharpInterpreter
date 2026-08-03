@@ -6,17 +6,34 @@ function getToken() {
 }
 
 async function apiFetch(path, options = {}) {
+  // skipAuthRedirect: para /auth/login y /auth/register, que también
+  // responden 401 por credenciales incorrectas (no por sesión vencida) —
+  // ahí el 401 se debe mostrar como error de formulario, no mandar al login.
+  const { skipAuthRedirect, ...fetchOptions } = options;
+
   const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
+    ...fetchOptions,
     // GET sin esto puede servirse cacheado por el navegador (perfil,
     // progreso) y mostrar datos viejos hasta un refresh manual.
     cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${getToken()}`,
-      ...(options.headers || {})
+      ...(fetchOptions.headers || {})
     }
   });
+
+  // Token ausente/inválido/vencido: seguir usando la página solo genera más
+  // errores en cadena (como los que viste: 401 tras 401 en cada petición).
+  // Se cierra la sesión local y se manda directo al login.
+  if (res.status === 401 && !skipAuthRedirect) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
+    if (!/(^|\/)index\.html$/.test(location.pathname) && location.pathname !== '/') {
+      window.location.replace('../index.html');
+    }
+    throw new Error('Tu sesión expiró. Inicia sesión de nuevo.');
+  }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -28,11 +45,14 @@ async function apiFetch(path, options = {}) {
 // ── Autenticación ─────────────────────────────────────────
 // Ambas rutas son públicas en el backend (sin authMiddleware), así que
 // el header Authorization: Bearer null que manda apiFetch por defecto
-// simplemente se ignora ahí.
+// simplemente se ignora ahí. skipAuthRedirect porque login SÍ responde 401
+// para "matrícula o contraseña incorrectos" — eso es un error de formulario,
+// no una sesión vencida, así que no debe redirigir a ningún lado.
 
 function login(matricula, password) {
   return apiFetch('/auth/login', {
     method: 'POST',
+    skipAuthRedirect: true,
     body: JSON.stringify({ matricula, password })
   });
 }
@@ -40,6 +60,7 @@ function login(matricula, password) {
 function register({ matricula, nombre, apellido_paterno, apellido_materno, password, grupo_id }) {
   return apiFetch('/auth/register', {
     method: 'POST',
+    skipAuthRedirect: true,
     body: JSON.stringify({ matricula, nombre, apellido_paterno, apellido_materno, password, grupo_id })
   });
 }

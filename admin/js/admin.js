@@ -26,6 +26,11 @@ let ordenUsuarios = 'ejercicios';
 // Tamaño total del banco de "Ponte a prueba", para mostrar "X de Y ejercicios".
 // null mientras no se sabe (el "de Y" simplemente se omite, no se inventa un número).
 let totalPracticas = null;
+// true mientras hay una petición en curso que va a repintar la tabla (carga
+// inicial, activar/desactivar/eliminar, o el refresco automático) — evita que
+// dos de estas se pisen entre sí (p. ej. el refresco de fondo borrando el
+// "…" de un botón que el admin acaba de presionar).
+let usuariosOcupado = false;
 
 /* ════ Inicio: usuarios (conectado a GET /api/usuarios) ════ */
 
@@ -57,30 +62,62 @@ function cambiarOrdenUsuarios(criterio) {
     });
 }
 
-/* Pide los estudiantes a la API y los pinta */
+/* Pide los estudiantes (y el total de prácticas, para el "X de Y") a la API.
+   No toca el DOM más que el contador de arriba — lo reusan la carga inicial
+   y el refresco silencioso de fondo. */
+async function obtenerEstudiantesYTotal() {
+    const [data, practicas] = await Promise.all([
+        ApiClient.listarEstudiantes(),
+        ApiClient.listarEjerciciosPractica().catch(() => null),
+    ]);
+    // El total del banco es solo informativo para el "X de Y" de cada fila;
+    // si falla, se conserva el último valor conocido en vez de borrarlo.
+    totalPracticas = Array.isArray(practicas) ? practicas.length : totalPracticas;
+    estudiantesCache = [...data];
+    // Solo cuenta activos — los pendientes todavía no son "estudiantes" con
+    // acceso real, viven aparte en su propia tarjeta (ver renderPendientes).
+    document.getElementById('statEstudiantes').textContent = estudiantesCache.filter(estaActivo).length;
+}
+
+/* Pide los estudiantes a la API y los pinta (carga inicial: muestra
+   "Cargando…" y, si falla, el mensaje de error en la tabla). */
 async function pintarUsuarios() {
     const tbody = document.getElementById("userRows");
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px">Cargando estudiantes…</td></tr>`;
 
+    usuariosOcupado = true;
     try {
-        // El total del banco es solo informativo para el "X de Y" de cada fila;
-        // si falla, la tabla igual se pinta (solo se omite el "de Y").
-        const [data, practicas] = await Promise.all([
-            ApiClient.listarEstudiantes(),
-            ApiClient.listarEjerciciosPractica().catch(() => null),
-        ]);
-        totalPracticas = Array.isArray(practicas) ? practicas.length : null;
-
-        estudiantesCache = [...data];
-        document.getElementById('statEstudiantes').textContent = estudiantesCache.length;
-
+        await obtenerEstudiantesYTotal();
         renderTablaUsuarios();
-
     } catch (err) {
         console.error(err);
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--danger,#eb5757)">No se pudieron cargar los estudiantes: ${err.message}</td></tr>`;
+    } finally {
+        usuariosOcupado = false;
     }
 }
+
+/* Refresco automático en segundo plano (cada 20s) para que el ranking del
+   admin no se quede desactualizado mientras un alumno resuelve ejercicios.
+   Silencioso: sin "Cargando…" ni mensajes de error visibles — si falla, se
+   reintenta solo en la siguiente vuelta. Solo corre si la vista de Inicio
+   está en pantalla y no hay otra petición de estudiantes en curso. */
+async function refrescarUsuariosEnSegundoPlano() {
+    if (usuariosOcupado) return;
+    const viewInicioEl = document.getElementById('view-inicio');
+    if (!viewInicioEl || !viewInicioEl.classList.contains('show')) return;
+
+    usuariosOcupado = true;
+    try {
+        await obtenerEstudiantesYTotal();
+        renderTablaUsuarios();
+    } catch (e) {
+        console.warn('No se pudo refrescar la lista de estudiantes en segundo plano:', e);
+    } finally {
+        usuariosOcupado = false;
+    }
+}
+setInterval(refrescarUsuariosEnSegundoPlano, 20000);
 
 /* Dibuja las dos tablas a partir del caché: pendientes (aparte, sin ranking)
    y el ranking de activos. */
@@ -165,6 +202,7 @@ async function cambiarEstadoUsuario(id, activar) {
     const botones = document.querySelectorAll(`button[onclick*="(${id},"]`);
     botones.forEach(b => { b.disabled = true; b.textContent = '…'; });
 
+    usuariosOcupado = true; // que el refresco de fondo no le borre el "…" a este botón
     try {
         await ApiClient.cambiarActivoEstudiante(id, activar);
 
@@ -177,16 +215,21 @@ async function cambiarEstadoUsuario(id, activar) {
     } catch (err) {
         alert('No se pudo cambiar el estado: ' + err.message);
         renderTablaUsuarios();   // restaura los botones
+    } finally {
+        usuariosOcupado = false;
     }
 }
 
 async function eliminarUsuario(id) {
     if (!confirm('¿Eliminar a este estudiante? Esta acción no se puede deshacer.')) return;
+    usuariosOcupado = true;
     try {
         await ApiClient.eliminarEstudiante(id);
+        usuariosOcupado = false; // pintarUsuarios() vuelve a poner el flag por su cuenta
         await pintarUsuarios();
     } catch (err) {
         alert('No se pudo eliminar: ' + err.message);
+        usuariosOcupado = false;
     }
 }
 
