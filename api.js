@@ -120,6 +120,25 @@ function listarGlosario({ q, unidad } = {}) {
   return apiFetch(`/glosario${qs ? '?' + qs : ''}`);
 }
 
+// Administración del glosario (requiere rol admin — verificado en el backend)
+function crearTerminoGlosario({ unidad, termino, definicion, ejemplo, caso, conclusion }) {
+  return apiFetch('/glosario', {
+    method: 'POST',
+    body: JSON.stringify({ unidad, termino, definicion, ejemplo, caso, conclusion })
+  });
+}
+
+function actualizarTerminoGlosario(id, datos) {
+  return apiFetch(`/glosario/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(datos)
+  });
+}
+
+function eliminarTerminoGlosario(id) {
+  return apiFetch(`/glosario/${id}`, { method: 'DELETE' });
+}
+
 // ── Sesión (helpers para el frontend) ─────────────────────
 function guardarSesion({ token, usuario }) {
   localStorage.setItem('token', token);
@@ -160,6 +179,9 @@ window.ApiClient = {
   listarEjerciciosPractica,
   validarEjercicio,
   listarGlosario,
+  crearTerminoGlosario,
+  actualizarTerminoGlosario,
+  eliminarTerminoGlosario,
   guardarSesion,
   cerrarSesion,
   obtenerUsuarioLocal,

@@ -253,28 +253,44 @@ function closeSidebar() {
 /* ════ Navegación del sidebar → vista de edición de temas ════ */
 const viewInicio = document.getElementById('view-inicio');
 const viewTema = document.getElementById('view-tema');
+const viewGlosario = document.getElementById('view-glosario');
 const btnInicio = document.getElementById('btn-inicio');
 
 function mostrarVistaInicio() {
     if (viewTema) viewTema.classList.remove('show');
+    if (viewGlosario) viewGlosario.classList.remove('show');
     if (viewInicio) viewInicio.classList.add('show');
 }
 
 function mostrarVistaTema(slug) {
     if (viewInicio) viewInicio.classList.remove('show');
+    if (viewGlosario) viewGlosario.classList.remove('show');
     if (viewTema) viewTema.classList.add('show');
     cargarTema(slug);
 }
 
+function mostrarVistaGlosarioAdmin() {
+    if (viewInicio) viewInicio.classList.remove('show');
+    if (viewTema) viewTema.classList.remove('show');
+    if (viewGlosario) viewGlosario.classList.add('show');
+    cargarGlosarioAdmin();
+}
+
 // Temas que no vienen de la API (100% locales en el simulador del alumno):
 // editarlos aquí no tendría ningún efecto para los estudiantes.
-// Recursividad y Archivos ya se conectaron a la API — se quitaron de esta lista.
-const TEMAS_NO_EDITABLES = ['Glosario'];
+// Recursividad y Archivos y Glosario ya se conectaron a la API — se quitaron de esta lista.
+const TEMAS_NO_EDITABLES = [];
 
 document.querySelectorAll('.nav-sub-btn[data-tema]:not(.has-sub2), .nav-sub2-btn[data-tema], .nav-btn[data-tema]:not(.has-sub)').forEach(btn => {
     btn.addEventListener('click', () => {
         const tema = btn.dataset.tema;
         if (!tema) return;
+        if (tema === 'Glosario') {
+            if (!confirmDiscard()) return;
+            mostrarVistaGlosarioAdmin();
+            if (window.innerWidth < 768) closeSidebar();
+            return;
+        }
         if (TEMAS_NO_EDITABLES.includes(tema)) {
             alert('Este tema todavía no está conectado a la base de datos: no se puede editar desde el panel.');
             return;
@@ -292,6 +308,169 @@ if (btnInicio) {
         if (window.innerWidth < 768) closeSidebar();
     });
 }
+
+/* ════ Glosario (conectado a GET/POST/PATCH/DELETE /api/glosario) ════ */
+let glosarioCache = [];
+let glosarioEditandoId = null; // null = creando un término nuevo
+// Nombres de unidad actualmente desplegadas — se conserva entre repintados
+// (p. ej. tras guardar o eliminar) para no cerrar de golpe la que el admin
+// estaba viendo.
+const glosarioAbiertas = new Set();
+
+async function cargarGlosarioAdmin() {
+    const cont = document.getElementById('glosarioAcordeon');
+    if (!cont) return;
+    cont.innerHTML = `<div style="text-align:center;padding:24px">Cargando términos…</div>`;
+    cerrarFormularioGlosario();
+
+    try {
+        const datos = await ApiClient.listarGlosario();
+        glosarioCache = Array.isArray(datos) ? datos : [];
+        renderGlosarioAcordeon();
+    } catch (err) {
+        console.error(err);
+        cont.innerHTML = `<div style="text-align:center;padding:24px;color:var(--danger,#eb5757)">No se pudo cargar el glosario: ${err.message}</div>`;
+    }
+}
+
+// Pinta una fila desplegable por unidad; dentro de cada una, sus términos
+// con sus acciones — así en vez de una tabla larga, el admin abre solo la
+// unidad que le interesa.
+function renderGlosarioAcordeon() {
+    const cont = document.getElementById('glosarioAcordeon');
+    const contador = document.getElementById('glosarioContador');
+    if (contador) contador.textContent = glosarioCache.length + (glosarioCache.length === 1 ? ' término' : ' términos');
+    if (!cont) return;
+
+    if (!glosarioCache.length) {
+        cont.innerHTML = `<div style="text-align:center;padding:24px">Todavía no hay términos — agrega el primero.</div>`;
+        return;
+    }
+
+    const porUnidad = {};
+    for (const t of glosarioCache) {
+        const u = t.unidad || 'Sin unidad';
+        (porUnidad[u] = porUnidad[u] || []).push(t);
+    }
+    const unidades = Object.keys(porUnidad).sort();
+
+    cont.innerHTML = unidades.map(u => {
+        const terminos = porUnidad[u].sort((a, b) => (a.termino || '').localeCompare(b.termino || ''));
+        const abierta = glosarioAbiertas.has(u);
+        return `<div class="glosario-unidad${abierta ? ' open' : ''}" data-unidad="${ppEscapeAttr(u)}">
+            <button type="button" class="glosario-unidad__head">
+                <span class="glosario-unidad__arrow">▸</span>
+                <span class="glosario-unidad__nombre">${u}</span>
+                <span class="glosario-unidad__conteo">${terminos.length}</span>
+            </button>
+            <div class="glosario-unidad__body">
+                ${terminos.map(t => {
+                    const defCorta = (t.definicion || '').length > 90 ? t.definicion.slice(0, 90).trim() + '…' : (t.definicion || '');
+                    return `<div class="glosario-termino-row">
+                        <div class="glosario-termino-info">
+                            <b>${t.termino}</b>
+                            <span>${defCorta}</span>
+                        </div>
+                        <div class="row-actions">
+                            <button class="icon-btn" title="Editar" onclick="editarTerminoGlosario(${t.id})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+                            <button class="icon-btn danger" title="Eliminar" onclick="eliminarTerminoGlosario(${t.id})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>`;
+    }).join('');
+
+    cont.querySelectorAll('.glosario-unidad').forEach(el => {
+        el.querySelector('.glosario-unidad__head').addEventListener('click', () => {
+            const u = el.dataset.unidad;
+            const abrir = !el.classList.contains('open');
+            el.classList.toggle('open', abrir);
+            if (abrir) glosarioAbiertas.add(u); else glosarioAbiertas.delete(u);
+        });
+    });
+}
+
+// Escapa comillas para meter el nombre de unidad en un atributo data-*
+function ppEscapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
+
+const GLOSARIO_CAMPOS = ['g-unidad', 'g-termino', 'g-definicion', 'g-ejemplo', 'g-caso', 'g-conclusion'];
+
+function nuevoTerminoGlosario() {
+    glosarioEditandoId = null;
+    document.getElementById('glosarioFormTitulo').textContent = 'Nuevo término';
+    GLOSARIO_CAMPOS.forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('glosarioModal').showModal();
+    document.getElementById('g-termino').focus();
+}
+
+function editarTerminoGlosario(id) {
+    const t = glosarioCache.find(x => x.id === id);
+    if (!t) return;
+    glosarioEditandoId = id;
+    document.getElementById('glosarioFormTitulo').textContent = 'Editar término';
+    document.getElementById('g-unidad').value = t.unidad || '';
+    document.getElementById('g-termino').value = t.termino || '';
+    document.getElementById('g-definicion').value = t.definicion || '';
+    document.getElementById('g-ejemplo').value = t.ejemplo || '';
+    document.getElementById('g-caso').value = t.caso || '';
+    document.getElementById('g-conclusion').value = t.conclusion || '';
+    document.getElementById('glosarioModal').showModal();
+}
+
+function cerrarFormularioGlosario() {
+    const modal = document.getElementById('glosarioModal');
+    if (modal && modal.open) modal.close();
+    glosarioEditandoId = null;
+}
+
+async function guardarTerminoGlosario() {
+    const termino = document.getElementById('g-termino').value.trim();
+    const definicion = document.getElementById('g-definicion').value.trim();
+    if (!termino) { alert('El término no puede estar vacío.'); return; }
+    if (!definicion) { alert('La definición no puede estar vacía.'); return; }
+
+    const datos = {
+        unidad: document.getElementById('g-unidad').value.trim(),
+        termino,
+        definicion,
+        ejemplo: document.getElementById('g-ejemplo').value.trim(),
+        caso: document.getElementById('g-caso').value.trim(),
+        conclusion: document.getElementById('g-conclusion').value.trim(),
+    };
+
+    const btn = document.getElementById('btnGuardarGlosario');
+    btn.disabled = true;
+    try {
+        if (glosarioEditandoId) {
+            await ApiClient.actualizarTerminoGlosario(glosarioEditandoId, datos);
+        } else {
+            await ApiClient.crearTerminoGlosario(datos);
+        }
+        await cargarGlosarioAdmin();
+    } catch (err) {
+        alert('No se pudo guardar: ' + err.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async function eliminarTerminoGlosario(id) {
+    if (!confirm('¿Eliminar este término del glosario? Esta acción no se puede deshacer.')) return;
+    try {
+        await ApiClient.eliminarTerminoGlosario(id);
+        await cargarGlosarioAdmin();
+    } catch (err) {
+        alert('No se pudo eliminar: ' + err.message);
+    }
+}
+
+// Clic en el backdrop (fuera del contenido) cierra el modal, como cualquier
+// diálogo — clic dentro del contenido no debe propagarse hasta aquí.
+(function () {
+    const modal = document.getElementById('glosarioModal');
+    if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) cerrarFormularioGlosario(); });
+})();
 
 /* ════ Ejemplos y ejercicio del tema ════
    itemsActuales: [{tipo:'ejemplo', codigo, enunciado}] o

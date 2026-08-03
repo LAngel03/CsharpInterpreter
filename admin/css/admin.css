@@ -1040,6 +1040,165 @@ body {
     color: #fff;
 }
 
+/* ============================================================
+   GLOSARIO — acordeón por unidad + modal de edición
+   ============================================================ */
+.glosario-unidad {
+    border-bottom: 1px solid var(--console-border);
+}
+
+.glosario-unidad:last-child {
+    border-bottom: none;
+}
+
+.glosario-unidad__head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    border: none;
+    color: var(--white, #fff);
+    padding: 14px 20px;
+    cursor: pointer;
+    font-size: 0.92rem;
+    font-weight: 700;
+    font-family: inherit;
+    text-align: left;
+    transition: background-color 0.15s;
+}
+
+.glosario-unidad__head:hover {
+    background: var(--panel-2);
+}
+
+.glosario-unidad__arrow {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.glosario-unidad.open .glosario-unidad__arrow {
+    transform: rotate(90deg);
+}
+
+.glosario-unidad__conteo {
+    margin-left: auto;
+    background: var(--green-soft);
+    color: var(--green-main);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 99px;
+    flex-shrink: 0;
+}
+
+.glosario-unidad__body {
+    display: none;
+    padding: 0 20px 10px;
+}
+
+.glosario-unidad.open .glosario-unidad__body {
+    display: block;
+}
+
+.glosario-termino-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 10px 0;
+    border-top: 1px solid rgba(58, 61, 74, 0.4);
+}
+
+.glosario-termino-row:first-child {
+    border-top: none;
+}
+
+.glosario-termino-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+}
+
+.glosario-termino-info b {
+    color: var(--white, #fff);
+    font-size: 0.88rem;
+}
+
+.glosario-termino-info span {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.glosario-modal {
+    /* Centrado explícito con position+transform: el auto-centrado por
+       margin:auto que hacen los navegadores en <dialog> no sirve aquí
+       porque el reset "* { margin: 0 }" de este archivo lo pisa. */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    border: 1px solid var(--console-border);
+    border-radius: 14px;
+    padding: 0;
+    background: var(--panel);
+    color: var(--white, #fff);
+    width: min(560px, 92vw);
+    max-height: 88vh;
+}
+
+.glosario-modal::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.glosario-modal__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--console-border);
+}
+
+.glosario-modal__head h3 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.glosario-modal__body {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 60vh;
+}
+
+.glosario-modal__foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--console-border);
+}
+
+.modal-close-x {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.modal-close-x:hover {
+    color: var(--white, #fff);
+}
+
 .btn-add {
     display: inline-flex;
     align-items: center;
