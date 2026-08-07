@@ -719,9 +719,9 @@ if (modalElemento) {
 document.addEventListener('DOMContentLoaded', () => {
     const btnCerrar = document.getElementById('btn-cerrar-sesion');
     if (!btnCerrar) return;
-    btnCerrar.addEventListener('click', () => {
+    btnCerrar.addEventListener('click', async () => {
         if (window.ApiClient && window.ApiClient.cerrarSesion) {
-            window.ApiClient.cerrarSesion();
+            await window.ApiClient.cerrarSesion();
         }
         window.location.href = '../index.html';
     });
