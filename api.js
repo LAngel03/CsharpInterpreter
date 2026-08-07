@@ -145,20 +145,9 @@ function guardarSesion({ token, usuario }) {
   localStorage.setItem('usuario', JSON.stringify(usuario));
 }
 
-// Avisa al backend que libere la sesión (para que la cuenta pueda volver a
-// iniciar sesión en otro dispositivo) y borra el token local. Si la llamada
-// al backend falla (sin conexión, token ya vencido, etc.) se limpia el
-// almacenamiento local igual: el usuario siempre debe poder salir de su
-// propia sesión aunque el aviso al servidor no llegue.
-async function cerrarSesion() {
-  try {
-    await apiFetch('/auth/logout', { method: 'POST' });
-  } catch (e) {
-    console.warn('No se pudo avisar al servidor del cierre de sesión:', e.message);
-  } finally {
-    localStorage.removeItem('token');
-    localStorage.removeItem('usuario');
-  }
+function cerrarSesion() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('usuario');
 }
 
 function obtenerUsuarioLocal() {

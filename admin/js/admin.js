@@ -820,10 +820,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCerrar = document.getElementById('btn-cerrar-sesion');
     if (!btnCerrar) return;
 
-    btnCerrar.addEventListener('click', async () => {
-        // Avisa al backend (libera la sesión) y borra token y usuario del navegador
+    btnCerrar.addEventListener('click', () => {
+        // Borra token y usuario del navegador
         if (window.ApiClient && window.ApiClient.cerrarSesion) {
-            await window.ApiClient.cerrarSesion();
+            window.ApiClient.cerrarSesion();
         }
         // Regresa al login. '../index.html' porque el login está
         // un nivel arriba de este simulador (igual que ../api.js).
