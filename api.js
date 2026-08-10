@@ -91,6 +91,12 @@ function listarSubtemasPorCategoria(categoriaId) {
   return apiFetch(`/subtemas/categoria/${categoriaId}`);
 }
 
+// Categorías con sus subtemas anidados — usado por el panel de admin para
+// el selector "Sección / tema" al crear o mover un ejercicio de práctica.
+function listarCategorias() {
+  return apiFetch('/categorias');
+}
+
 
 function actualizarSubtemaPorSlug(slug, datos) {
   return apiFetch(`/subtemas/slug/${slug}`, {
@@ -109,6 +115,21 @@ function validarEjercicio(id, output) {
     method: 'POST',
     body: JSON.stringify({ output })
   });
+}
+
+// CRUD directo de un ejercicio (admin) — usado por el panel "Ponte a
+// prueba" para crear/editar/borrar un ejercicio de práctica sin pasar por
+// el PUT por subtema (ese sigue siendo solo para ejemplos/demostraciones).
+function crearEjercicio(datos) {
+  return apiFetch('/ejercicios', { method: 'POST', body: JSON.stringify(datos) });
+}
+
+function actualizarEjercicio(id, datos) {
+  return apiFetch(`/ejercicios/${id}`, { method: 'PATCH', body: JSON.stringify(datos) });
+}
+
+function eliminarEjercicio(id) {
+  return apiFetch(`/ejercicios/${id}`, { method: 'DELETE' });
 }
 
 // ── Glosario ──────────────────────────────
@@ -175,9 +196,13 @@ window.ApiClient = {
   eliminarEstudiante,
   obtenerSubtemaPorSlug,
   listarSubtemasPorCategoria,
+  listarCategorias,
   actualizarSubtemaPorSlug,
   listarEjerciciosPractica,
   validarEjercicio,
+  crearEjercicio,
+  actualizarEjercicio,
+  eliminarEjercicio,
   listarGlosario,
   crearTerminoGlosario,
   actualizarTerminoGlosario,
