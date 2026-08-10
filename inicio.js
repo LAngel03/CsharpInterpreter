@@ -163,8 +163,9 @@ async function handleRegister() {
     const apellido_materno = document.getElementById('reg-am').value.trim();
     const grupoVal = document.getElementById('reg-grupo').value;
     const password = document.getElementById('reg-pw').value;
+    const passwordConfirm = document.getElementById('reg-pw-confirm').value;
 
-    if (!matricula || !nombre || !apellido_paterno || !apellido_materno || !password) {
+    if (!matricula || !nombre || !apellido_paterno || !apellido_materno || !password || !passwordConfirm) {
         mostrarError('register', 'Completa todos los campos obligatorios.');
         return;
     }
@@ -175,6 +176,10 @@ async function handleRegister() {
     }
     if (password.length < 6) {
         mostrarError('register', 'La contraseña debe tener al menos 6 caracteres.');
+        return;
+    }
+    if (password !== passwordConfirm) {
+        mostrarError('register', 'Las contraseñas no coinciden.');
         return;
     }
 
