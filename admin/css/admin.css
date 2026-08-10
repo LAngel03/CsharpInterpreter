@@ -1199,6 +1199,146 @@ body {
     color: var(--white, #fff);
 }
 
+/* ── Notificaciones (toasts) — reemplazan alert() ───────────────── */
+#toastContainer {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: min(380px, calc(100vw - 40px));
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: var(--panel);
+    border: 1px solid var(--console-border);
+    border-left: 4px solid var(--text-dim);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+    color: var(--text);
+    font-size: .88rem;
+    line-height: 1.4;
+    pointer-events: auto;
+    animation: toast-in .25s ease-out;
+}
+
+.toast.saliendo {
+    animation: toast-out .2s ease-in forwards;
+}
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toast-out {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(24px); }
+}
+
+.toast__icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: .75rem;
+    font-weight: 700;
+    margin-top: 1px;
+}
+
+.toast__msg {
+    flex: 1;
+    padding-top: 2px;
+}
+
+.toast__close {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.toast__close:hover {
+    color: var(--text);
+}
+
+.toast--exito { border-left-color: var(--green-main); }
+.toast--exito .toast__icon { background: var(--green-soft); color: var(--green-main); }
+
+.toast--error { border-left-color: var(--danger); }
+.toast--error .toast__icon { background: rgba(224, 82, 99, .15); color: var(--danger); }
+
+.toast--advertencia { border-left-color: var(--warn); }
+.toast--advertencia .toast__icon { background: rgba(255, 159, 67, .15); color: var(--warn); }
+
+.toast--info { border-left-color: var(--text-dim); }
+.toast--info .toast__icon { background: rgba(138, 154, 181, .15); color: var(--text-dim); }
+
+/* ── Confirmación (reemplaza confirm()) ─────────────────────────── */
+.confirm-modal {
+    width: min(420px, 92vw);
+}
+
+.confirm-modal__body {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.confirm-modal__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.confirm-modal__icon.peligroso { background: rgba(224, 82, 99, .15); color: var(--danger); }
+.confirm-modal__icon.normal { background: rgba(255, 159, 67, .15); color: var(--warn); }
+
+.confirm-modal__body h3 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.confirm-modal__body p {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: .88rem;
+    line-height: 1.5;
+}
+
+.confirm-modal .glosario-modal__foot {
+    justify-content: center;
+}
+
+.btn--danger {
+    background: var(--danger);
+    color: #fff;
+}
+
+.btn--danger:hover {
+    background: #c8455a;
+}
+
 .btn-add {
     display: inline-flex;
     align-items: center;
@@ -1346,6 +1486,37 @@ tbody tr:last-child td {
 .icon-btn.danger:hover {
     border-color: var(--danger);
     color: var(--danger)
+}
+
+/* Ponte a prueba — lista de ejercicios por categoría */
+.practica-vacio {
+    padding: 24px 16px;
+    color: var(--text-dim);
+    text-align: center
+}
+
+.practica-error {
+    color: var(--danger)
+}
+
+.practica-tab-n {
+    opacity: .7;
+    font-size: .85em
+}
+
+.fila-practica {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--console-border)
+}
+
+.fila-practica .sub {
+    font-size: .82em;
+    color: var(--text-dim);
+    margin-top: 2px
 }
 
 /* ── Vistas ── */

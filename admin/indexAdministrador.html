@@ -16,7 +16,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administrador — Simulador C#</title>
+    <title>Panel de Administrador</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
     <link rel="stylesheet" href="../admin/css/admin.css">
     <link rel="stylesheet" href="../admin/css/admin-consola.css">
@@ -24,14 +24,17 @@
 
 <body>
 
+    <!-- Notificaciones del panel (reemplazan alert()) — apiladas aquí -->
+    <div id="toastContainer" aria-live="polite"></div>
+
     <header class="app-header">
         <div class="logo">C#</div>
         <h1>Interpreter</h1>
         <span class="tag">ADMIN</span>
         <div class="header-spacer"></div>
         <div class="admin-mini">
-            <div class="av">LA</div>
-            <div>L. Ángel<small>Administrador</small></div>
+            <div class="av">A</div>
+            <div>Admin<small>Administrador</small></div>
         </div>
         <button id="btn-cerrar-sesion" class="btn-cerrar-header" aria-label="Cerrar sesión">
             <img src="../img/iconos/Salir.png" alt="">
@@ -184,7 +187,6 @@
                     <div class="card__head">
                         <div>
                             <h3>Pendientes de activación</h3>
-                            <div class="sub">No pueden iniciar sesión hasta que los actives</div>
                         </div>
                         <div class="grow"></div>
                         <span class="badge badge--pend" id="statPendientes">0</span>
@@ -208,15 +210,8 @@
                     <div class="card__head">
                         <div>
                             <h3>Estudiantes registrados</h3>
-                            <div class="sub">Ordenados por ranking de actividades completadas</div>
-                        </div>
-                        <div class="sort-toggle">
-                            <span class="sort-toggle__label">Ordenar por</span>
-                            <button class="sort-toggle__btn activo" data-orden="ejercicios" onclick="cambiarOrdenUsuarios('ejercicios')">Más ejercicios</button>
-                            <button class="sort-toggle__btn" data-orden="puntos" onclick="cambiarOrdenUsuarios('puntos')">Más puntos</button>
                         </div>
                         <div class="grow"></div>
-                        <button class="btn-add">+ Nuevo estudiante</button>
                     </div>
                     <div class="table-wrap">
                         <table>
@@ -259,7 +254,7 @@
                         <div class="grow"></div>
                         <div class="head-actions" data-seccion="concepto">
                             <span class="status"><span class="dotpulse"></span><span class="status-text">Sin
-                            cambios</span></span>
+                                    cambios</span></span>
                             <button class="btn btn--ghost btn--sm" onclick="cancelarCambios()">Cancelar</button>
                             <button class="btn btn--save btn--sm" onclick="guardarCambios()" disabled>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -295,7 +290,7 @@
                             <button type="button" class="tab-add-btn tab-add-btn--ejercicio" id="btnAgregarEjercicio"
                                 onclick="agregarEjercicio()">+ Ejercicio</button>
                             <span class="status"><span class="dotpulse"></span><span class="status-text">Sin
-                            cambios</span></span>
+                                    cambios</span></span>
                             <button class="btn btn--ghost btn--sm" onclick="cancelarCambios()">Cancelar</button>
                             <button class="btn btn--save btn--sm" onclick="guardarCambios()" disabled>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -311,16 +306,16 @@
                     <div class="block__body">
                         <div class="editor-tabs" id="editorTabs"></div>
                         <div class="field" id="tituloEjemploWrap" style="display:none"><label>Título del ejemplo
-                                <span class="hint">(opcional)</span></label><input type="text" class="input" id="f-titulo-ejemplo"
-                                oninput="markDirty('ejemplos')">
+                                <span class="hint">(opcional)</span></label><input type="text" class="input"
+                                id="f-titulo-ejemplo" oninput="markDirty('ejemplos')">
                         </div>
                         <div class="field" id="enunciadoEjemploWrap" style="display:none"><label>Enunciado del ejemplo
-                                <span class="hint">(opcional)</span></label><textarea class="textarea" id="f-enunciado-ejemplo"
-                                oninput="markDirty('ejemplos')"></textarea>
+                                <span class="hint">(opcional)</span></label><textarea class="textarea"
+                                id="f-enunciado-ejemplo" oninput="markDirty('ejemplos')"></textarea>
                         </div>
                         <div class="field" id="tituloEjercicioWrap" style="display:none"><label>Título del ejercicio
-                                <span class="req">*</span></label><input type="text" class="input" id="f-titulo-ejercicio"
-                                oninput="markDirty('ejemplos')">
+                                <span class="req">*</span></label><input type="text" class="input"
+                                id="f-titulo-ejercicio" oninput="markDirty('ejemplos')">
                         </div>
                         <div class="field" id="enunciadoWrap" style="display:none"><label>Enunciado del ejercicio
                                 <span class="req">*</span></label><textarea class="textarea" id="f-enunciado"
@@ -429,6 +424,33 @@
                 </div>
             </section>
 
+            <!-- Ponte a prueba — módulo propio, independiente del editor por
+                 tema: cada ejercicio de práctica pertenece a una sección
+                 (Ciclos, Arreglos, Operadores lógicos...) elegida en el
+                 formulario, no a la pantalla desde donde se creó. -->
+            <section class="view" id="view-practica">
+                <div class="page-head">
+                    <div class="title">
+                        <h2>Ponte a prueba</h2>
+                        <p>Banco de ejercicios de práctica, organizado por sección</p>
+                    </div>
+                    <div class="grow"></div>
+                    <button class="btn-add" onclick="nuevoEjercicioPractica()">+ Nuevo ejercicio</button>
+                </div>
+
+                <div class="editor-tabs" id="practicaTabs"></div>
+
+                <div class="card">
+                    <div class="card__head">
+                        <div>
+                            <h3 id="practicaCategoriaTitulo">—</h3>
+                            <div class="sub" id="practicaContador">—</div>
+                        </div>
+                    </div>
+                    <div id="practicaLista"></div>
+                </div>
+            </section>
+
             <!-- Ventana para crear/editar un término — se abre con .showModal()
                  en vez de vivir pegada al final de la página -->
             <dialog id="glosarioModal" class="glosario-modal">
@@ -437,22 +459,91 @@
                     <button type="button" class="modal-close-x" onclick="cerrarFormularioGlosario()">&times;</button>
                 </div>
                 <div class="glosario-modal__body">
-                    <div class="field"><label>Unidad <span class="hint">(agrupa las tarjetas en "Conceptos Generales")</span></label>
-                        <input class="input" id="g-unidad" type="text" placeholder="Ej. Unidad II — Estructuras de control"></div>
+                    <div class="field"><label>Unidad <span class="hint">(agrupa las tarjetas en "Conceptos
+                                Generales")</span></label>
+                        <select class="input" id="g-unidad"></select>
+                    </div>
                     <div class="field"><label>Término <span class="req">*</span></label>
-                        <input class="input" id="g-termino" type="text"></div>
+                        <input class="input" id="g-termino" type="text">
+                    </div>
                     <div class="field"><label>Definición <span class="req">*</span></label>
-                        <textarea class="textarea" id="g-definicion"></textarea></div>
+                        <textarea class="textarea" id="g-definicion"></textarea>
+                    </div>
                     <div class="field"><label>Ejemplo <span class="hint">(opcional)</span></label>
-                        <textarea class="textarea" id="g-ejemplo"></textarea></div>
+                        <textarea class="textarea" id="g-ejemplo"></textarea>
+                    </div>
                     <div class="field"><label>Caso práctico <span class="hint">(opcional)</span></label>
-                        <textarea class="textarea" id="g-caso"></textarea></div>
+                        <textarea class="textarea" id="g-caso"></textarea>
+                    </div>
                     <div class="field"><label>Conclusión <span class="hint">(opcional)</span></label>
-                        <textarea class="textarea" id="g-conclusion"></textarea></div>
+                        <textarea class="textarea" id="g-conclusion"></textarea>
+                    </div>
                 </div>
                 <div class="glosario-modal__foot">
                     <button class="btn btn--ghost btn--sm" onclick="cerrarFormularioGlosario()">Cancelar</button>
-                    <button class="btn btn--save btn--sm" id="btnGuardarGlosario" onclick="guardarTerminoGlosario()">Guardar término</button>
+                    <button class="btn btn--save btn--sm" id="btnGuardarGlosario"
+                        onclick="guardarTerminoGlosario()">Guardar término</button>
+                </div>
+            </dialog>
+
+            <!-- Crear/editar UN ejercicio de práctica. subtema_id (Sección /
+                 tema) decide en qué pestaña de categoría aparece — no la
+                 pantalla desde donde se abrió el formulario. -->
+            <dialog id="practicaModal" class="glosario-modal">
+                <div class="glosario-modal__head">
+                    <h3 id="practicaFormTitulo">Nuevo ejercicio de práctica</h3>
+                    <button type="button" class="modal-close-x" onclick="cerrarFormularioPractica()">&times;</button>
+                </div>
+                <div class="glosario-modal__body">
+                    <div class="field"><label>Sección / tema <span class="req">*</span></label>
+                        <select class="input" id="p-subtema"></select>
+                    </div>
+                    <div class="field"><label>Título <span class="req">*</span></label>
+                        <input class="input" id="p-titulo" type="text">
+                    </div>
+                    <div class="field"><label>Enunciado <span class="req">*</span></label>
+                        <textarea class="textarea" id="p-descripcion"></textarea>
+                    </div>
+                    <div class="field"><label>Código con errores <span class="req">*</span>
+                            <span class="hint">(lo que ve y corrige el alumno)</span></label>
+                        <textarea class="textarea code-like" id="p-codigo-errores" rows="6"></textarea>
+                    </div>
+                    <div class="field"><label>Código correcto (solución) <span class="req">*</span></label>
+                        <textarea class="textarea code-like" id="p-codigo-correcto" rows="6"></textarea>
+                    </div>
+                    <div class="field"><label>Salida esperada <span class="req">*</span>
+                            <span class="hint">(una línea de Console.WriteLine por renglón, en orden)</span></label>
+                        <textarea class="textarea code-like" id="p-salida-esperada" rows="4"
+                            placeholder="Línea 1 esperada&#10;Línea 2 esperada"></textarea>
+                    </div>
+                    <div class="field"><label>Líneas editables
+                            <span class="hint">(números separados por coma, ej. 3, 4, 7 — vacío = todo
+                                editable)</span></label>
+                        <input class="input" id="p-lineas-editables" type="text" placeholder="3, 4, 7">
+                    </div>
+                    <div class="field"><label>Pista <span class="hint">(opcional)</span></label>
+                        <textarea class="textarea" id="p-pista" rows="2"
+                            placeholder="Se muestra si el alumno presiona 'Pista'."></textarea>
+                    </div>
+                </div>
+                <div class="glosario-modal__foot">
+                    <button class="btn btn--ghost btn--sm" onclick="cerrarFormularioPractica()">Cancelar</button>
+                    <button class="btn btn--save btn--sm" id="btnGuardarPractica"
+                        onclick="guardarEjercicioPractica()">Guardar ejercicio</button>
+                </div>
+            </dialog>
+
+            <!-- Confirmación genérica (reemplaza confirm()) — reusada por todo
+                 el panel vía confirmarAccion() en admin-ui.js. -->
+            <dialog id="confirmModal" class="glosario-modal confirm-modal">
+                <div class="glosario-modal__body confirm-modal__body">
+                    <div id="confirmIcono" class="confirm-modal__icon normal">?</div>
+                    <h3 id="confirmTitulo">¿Confirmas esta acción?</h3>
+                    <p id="confirmMensaje"></p>
+                </div>
+                <div class="glosario-modal__foot">
+                    <button class="btn btn--ghost btn--sm" id="confirmBtnCancel">Cancelar</button>
+                    <button class="btn btn--save btn--sm" id="confirmBtnOk">Confirmar</button>
                 </div>
             </dialog>
 
@@ -516,7 +607,9 @@
     <script src="../api.js"></script>
     <script src="../Inicio/Simulador/engine.js"></script>
     <script src="../admin/js/admin-consola.js"></script>
+    <script src="../admin/js/admin-ui.js"></script>
     <script src="../admin/js/admin.js"></script>
+    <script src="../admin/js/admin-practica.js"></script>
 </body>
 
 </html>

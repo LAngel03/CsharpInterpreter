@@ -72,7 +72,10 @@ async function obtenerEstudiantesYTotal() {
     ]);
     // El total del banco es solo informativo para el "X de Y" de cada fila;
     // si falla, se conserva el último valor conocido en vez de borrarlo.
-    totalPracticas = Array.isArray(practicas) ? practicas.length : totalPracticas;
+    // /ejercicios/practica ahora agrupa por categoría: [{ categoria, ejercicios: [...] }, ...]
+    totalPracticas = Array.isArray(practicas)
+        ? practicas.reduce((suma, grupo) => suma + (grupo.ejercicios ? grupo.ejercicios.length : 0), 0)
+        : totalPracticas;
     estudiantesCache = [...data];
     // Solo cuenta activos — los pendientes todavía no son "estudiantes" con
     // acceso real, viven aparte en su propia tarjeta (ver renderPendientes).
@@ -184,10 +187,10 @@ function renderRanking() {
                 <td class="num"><span class="badge">${fechaRegistro(e.creado_en)}</span></td>
                 <td><div class="estado-cell">
                     <span class="badge">Activo</span>
-                    <button class="btn-estado btn-estado--off" onclick="cambiarEstadoUsuario(${e.id}, false)" title="Desactivar a este estudiante">Desactivar</button>
                 </div></td>
                 <td><div class="row-actions">
-                    <button class="icon-btn" title="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+                                    <button class="btn-estado btn-estado--off" onclick="cambiarEstadoUsuario(${e.id}, false)" title="Desactivar a este estudiante">Desactivar</button>
+
                     <button class="icon-btn danger" title="Eliminar" onclick="eliminarUsuario(${e.id})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
                 </div></td></tr>`;
     }).join("");
@@ -195,7 +198,14 @@ function renderRanking() {
 
 /* Activa o desactiva a un estudiante (PATCH /api/usuarios/:id/activo) */
 async function cambiarEstadoUsuario(id, activar) {
-    if (!activar && !confirm('¿Desactivar a este estudiante? No podrá iniciar sesión hasta que lo actives de nuevo.')) return;
+    if (!activar) {
+        const ok = await confirmarAccion({
+            titulo: 'Desactivar estudiante',
+            mensaje: '¿Desactivar a este estudiante? No podrá iniciar sesión hasta que lo actives de nuevo.',
+            textoConfirmar: 'Desactivar',
+        });
+        if (!ok) return;
+    }
 
     // Deshabilita el botón mientras se procesa, para evitar doble clic — puede
     // estar en .estado-cell (tabla de ranking) o en .row-actions (pendientes).
@@ -213,7 +223,7 @@ async function cambiarEstadoUsuario(id, activar) {
         renderTablaUsuarios();
 
     } catch (err) {
-        alert('No se pudo cambiar el estado: ' + err.message);
+        mostrarToast('No se pudo cambiar el estado: ' + err.message, 'error');
         renderTablaUsuarios();   // restaura los botones
     } finally {
         usuariosOcupado = false;
@@ -221,14 +231,21 @@ async function cambiarEstadoUsuario(id, activar) {
 }
 
 async function eliminarUsuario(id) {
-    if (!confirm('¿Eliminar a este estudiante? Esta acción no se puede deshacer.')) return;
+    const ok = await confirmarAccion({
+        titulo: 'Eliminar estudiante',
+        mensaje: '¿Eliminar a este estudiante? Esta acción no se puede deshacer.',
+        textoConfirmar: 'Eliminar',
+        peligroso: true,
+    });
+    if (!ok) return;
     usuariosOcupado = true;
     try {
         await ApiClient.eliminarEstudiante(id);
         usuariosOcupado = false; // pintarUsuarios() vuelve a poner el flag por su cuenta
         await pintarUsuarios();
+        mostrarToast('Estudiante eliminado.', 'exito');
     } catch (err) {
-        alert('No se pudo eliminar: ' + err.message);
+        mostrarToast('No se pudo eliminar: ' + err.message, 'error');
         usuariosOcupado = false;
     }
 }
@@ -256,22 +273,27 @@ const viewTema = document.getElementById('view-tema');
 const viewGlosario = document.getElementById('view-glosario');
 const btnInicio = document.getElementById('btn-inicio');
 
-function mostrarVistaInicio() {
+function _ocultarTodasLasVistas() {
+    if (viewInicio) viewInicio.classList.remove('show');
     if (viewTema) viewTema.classList.remove('show');
     if (viewGlosario) viewGlosario.classList.remove('show');
+    const viewPractica = document.getElementById('view-practica');
+    if (viewPractica) viewPractica.classList.remove('show');
+}
+
+function mostrarVistaInicio() {
+    _ocultarTodasLasVistas();
     if (viewInicio) viewInicio.classList.add('show');
 }
 
 function mostrarVistaTema(slug) {
-    if (viewInicio) viewInicio.classList.remove('show');
-    if (viewGlosario) viewGlosario.classList.remove('show');
+    _ocultarTodasLasVistas();
     if (viewTema) viewTema.classList.add('show');
     cargarTema(slug);
 }
 
 function mostrarVistaGlosarioAdmin() {
-    if (viewInicio) viewInicio.classList.remove('show');
-    if (viewTema) viewTema.classList.remove('show');
+    _ocultarTodasLasVistas();
     if (viewGlosario) viewGlosario.classList.add('show');
     cargarGlosarioAdmin();
 }
@@ -282,28 +304,36 @@ function mostrarVistaGlosarioAdmin() {
 const TEMAS_NO_EDITABLES = [];
 
 document.querySelectorAll('.nav-sub-btn[data-tema]:not(.has-sub2), .nav-sub2-btn[data-tema], .nav-btn[data-tema]:not(.has-sub)').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
         const tema = btn.dataset.tema;
         if (!tema) return;
         if (tema === 'Glosario') {
-            if (!confirmDiscard()) return;
+            if (!await confirmDiscard()) return;
             mostrarVistaGlosarioAdmin();
             if (window.innerWidth < 768) closeSidebar();
             return;
         }
-        if (TEMAS_NO_EDITABLES.includes(tema)) {
-            alert('Este tema todavía no está conectado a la base de datos: no se puede editar desde el panel.');
+        if (tema === 'Ponte_a_prueba') {
+            // No es un subtema real: es su propio módulo, con las pestañas
+            // de sección adentro (ver admin-practica.js).
+            if (!await confirmDiscard()) return;
+            mostrarVistaPractica();
+            if (window.innerWidth < 768) closeSidebar();
             return;
         }
-        if (!confirmDiscard()) return;
+        if (TEMAS_NO_EDITABLES.includes(tema)) {
+            mostrarToast('Este tema todavía no está conectado a la base de datos: no se puede editar desde el panel.', 'advertencia');
+            return;
+        }
+        if (!await confirmDiscard()) return;
         mostrarVistaTema(tema);
         if (window.innerWidth < 768) closeSidebar();
     });
 });
 
 if (btnInicio) {
-    btnInicio.addEventListener('click', () => {
-        if (!confirmDiscard()) return;
+    btnInicio.addEventListener('click', async () => {
+        if (!await confirmDiscard()) return;
         mostrarVistaInicio();
         if (window.innerWidth < 768) closeSidebar();
     });
@@ -365,8 +395,8 @@ function renderGlosarioAcordeon() {
             </button>
             <div class="glosario-unidad__body">
                 ${terminos.map(t => {
-                    const defCorta = (t.definicion || '').length > 90 ? t.definicion.slice(0, 90).trim() + '…' : (t.definicion || '');
-                    return `<div class="glosario-termino-row">
+            const defCorta = (t.definicion || '').length > 90 ? t.definicion.slice(0, 90).trim() + '…' : (t.definicion || '');
+            return `<div class="glosario-termino-row">
                         <div class="glosario-termino-info">
                             <b>${t.termino}</b>
                             <span>${defCorta}</span>
@@ -376,7 +406,7 @@ function renderGlosarioAcordeon() {
                             <button class="icon-btn danger" title="Eliminar" onclick="eliminarTerminoGlosario(${t.id})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
                         </div>
                     </div>`;
-                }).join('')}
+        }).join('')}
             </div>
         </div>`;
     }).join('');
@@ -396,10 +426,30 @@ function ppEscapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
 
 const GLOSARIO_CAMPOS = ['g-unidad', 'g-termino', 'g-definicion', 'g-ejemplo', 'g-caso', 'g-conclusion'];
 
+// Unidades que YA existen entre los términos cargados — el selector del
+// formulario solo ofrece estas, para que el admin no genere unidades
+// nuevas por error de dedo (ej. "Unidad II" vs "unidad 2" como si fueran
+// distintas y las tarjetas de "Conceptos Generales" se fragmenten).
+function unidadesGlosarioDisponibles() {
+    const vistas = new Set();
+    for (const t of glosarioCache) if (t.unidad) vistas.add(t.unidad);
+    return Array.from(vistas).sort();
+}
+
+function poblarSelectUnidadGlosario(seleccionada) {
+    const sel = document.getElementById('g-unidad');
+    if (!sel) return;
+    const unidades = unidadesGlosarioDisponibles();
+    sel.innerHTML = unidades.map(u =>
+        `<option value="${ppEscapeAttr(u)}"${u === seleccionada ? ' selected' : ''}>${u}</option>`
+    ).join('');
+}
+
 function nuevoTerminoGlosario() {
     glosarioEditandoId = null;
     document.getElementById('glosarioFormTitulo').textContent = 'Nuevo término';
     GLOSARIO_CAMPOS.forEach(id => { document.getElementById(id).value = ''; });
+    poblarSelectUnidadGlosario(null);
     document.getElementById('glosarioModal').showModal();
     document.getElementById('g-termino').focus();
 }
@@ -409,7 +459,7 @@ function editarTerminoGlosario(id) {
     if (!t) return;
     glosarioEditandoId = id;
     document.getElementById('glosarioFormTitulo').textContent = 'Editar término';
-    document.getElementById('g-unidad').value = t.unidad || '';
+    poblarSelectUnidadGlosario(t.unidad || '');
     document.getElementById('g-termino').value = t.termino || '';
     document.getElementById('g-definicion').value = t.definicion || '';
     document.getElementById('g-ejemplo').value = t.ejemplo || '';
@@ -427,8 +477,8 @@ function cerrarFormularioGlosario() {
 async function guardarTerminoGlosario() {
     const termino = document.getElementById('g-termino').value.trim();
     const definicion = document.getElementById('g-definicion').value.trim();
-    if (!termino) { alert('El término no puede estar vacío.'); return; }
-    if (!definicion) { alert('La definición no puede estar vacía.'); return; }
+    if (!termino) { mostrarToast('El término no puede estar vacío.', 'advertencia'); return; }
+    if (!definicion) { mostrarToast('La definición no puede estar vacía.', 'advertencia'); return; }
 
     const datos = {
         unidad: document.getElementById('g-unidad').value.trim(),
@@ -448,20 +498,28 @@ async function guardarTerminoGlosario() {
             await ApiClient.crearTerminoGlosario(datos);
         }
         await cargarGlosarioAdmin();
+        mostrarToast('Término guardado.', 'exito');
     } catch (err) {
-        alert('No se pudo guardar: ' + err.message);
+        mostrarToast('No se pudo guardar: ' + err.message, 'error');
     } finally {
         btn.disabled = false;
     }
 }
 
 async function eliminarTerminoGlosario(id) {
-    if (!confirm('¿Eliminar este término del glosario? Esta acción no se puede deshacer.')) return;
+    const ok = await confirmarAccion({
+        titulo: 'Eliminar término',
+        mensaje: '¿Eliminar este término del glosario? Esta acción no se puede deshacer.',
+        textoConfirmar: 'Eliminar',
+        peligroso: true,
+    });
+    if (!ok) return;
     try {
         await ApiClient.eliminarTerminoGlosario(id);
         await cargarGlosarioAdmin();
+        mostrarToast('Término eliminado.', 'exito');
     } catch (err) {
-        alert('No se pudo eliminar: ' + err.message);
+        mostrarToast('No se pudo eliminar: ' + err.message, 'error');
     }
 }
 
@@ -593,12 +651,18 @@ function agregarEjercicio() {
     if (elTit) elTit.focus();
 }
 
-function eliminarTab(i) {
+async function eliminarTab(i) {
     const item = itemsActuales[i];
     if (!item) return;
     const esUltimoEjemplo = item.tipo === 'ejemplo' && itemsActuales.filter(x => x.tipo === 'ejemplo').length === 1;
-    if (esUltimoEjemplo) { alert('Debe quedar al menos un ejemplo.'); return; }
-    if (!confirm('¿Quitar esta pestaña? Su contenido se perderá al guardar.')) return;
+    if (esUltimoEjemplo) { mostrarToast('Debe quedar al menos un ejemplo.', 'advertencia'); return; }
+    const ok = await confirmarAccion({
+        titulo: 'Quitar pestaña',
+        mensaje: '¿Quitar esta pestaña? Su contenido se perderá al guardar.',
+        textoConfirmar: 'Quitar',
+        peligroso: true,
+    });
+    if (!ok) return;
     itemsActuales.splice(i, 1);
     renderEditorTabs();
     seleccionarTab(Math.min(i, itemsActuales.length - 1), { volcar: false });
@@ -660,7 +724,7 @@ async function guardarCambios() {
 
     const titulo = document.getElementById('f-titulo').value.trim();
     const definicion = document.getElementById('f-definicion').value.trim();
-    if (!titulo) { alert('El título no puede estar vacío.'); return; }
+    if (!titulo) { mostrarToast('El título no puede estar vacío.', 'advertencia'); return; }
 
     // Formato nuevo: la API sincroniza esto contra su propia tabla "ejemplos"
     // (crea/actualiza/borra por posición), igual que ya hace con ejercicios.
@@ -671,9 +735,9 @@ async function guardarCambios() {
         .filter(it => it.tipo === 'ejercicio')
         .map(it => ({ titulo: (it.titulo || '').trim(), descripcion: (it.descripcion || '').trim(), codigo_csharp: it.codigo || '' }));
 
-    if (!ejemplos.length) { alert('Debe haber al menos un ejemplo.'); return; }
-    if (ejercicios.some(ej => !ej.titulo)) { alert('Cada ejercicio necesita un título.'); return; }
-    if (ejercicios.some(ej => !ej.descripcion)) { alert('Cada ejercicio necesita un enunciado.'); return; }
+    if (!ejemplos.length) { mostrarToast('Debe haber al menos un ejemplo.', 'advertencia'); return; }
+    if (ejercicios.some(ej => !ej.titulo)) { mostrarToast('Cada ejercicio necesita un título.', 'advertencia'); return; }
+    if (ejercicios.some(ej => !ej.descripcion)) { mostrarToast('Cada ejercicio necesita un enunciado.', 'advertencia'); return; }
 
     const datos = { titulo, definicion, ejemplos, ejercicios };
 
@@ -800,7 +864,15 @@ function flashStatus(msg, ok, secciones) {
     }, 2200);
 }
 
-function confirmDiscard() { if (!hayCambiosPendientes()) return true; return confirm('Tienes cambios sin guardar. ¿Deseas descartarlos?'); }
+async function confirmDiscard() {
+    if (!hayCambiosPendientes()) return true;
+    return confirmarAccion({
+        titulo: 'Cambios sin guardar',
+        mensaje: 'Tienes cambios sin guardar. ¿Deseas descartarlos?',
+        textoConfirmar: 'Descartar cambios',
+        peligroso: true,
+    });
+}
 
 /* ════ Monaco (vía AdmConsola — misma consola paso a paso que ven los alumnos) ════ */
 require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
@@ -820,7 +892,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCerrar = document.getElementById('btn-cerrar-sesion');
     if (!btnCerrar) return;
 
-    btnCerrar.addEventListener('click', () => {
+    btnCerrar.addEventListener('click', async () => {
+        const ok = await confirmarAccion({
+            titulo: 'Cerrar sesión',
+            mensaje: '¿Seguro que quieres cerrar sesión?',
+            textoConfirmar: 'Cerrar sesión',
+        });
+        if (!ok) return;
         // Borra token y usuario del navegador
         if (window.ApiClient && window.ApiClient.cerrarSesion) {
             window.ApiClient.cerrarSesion();

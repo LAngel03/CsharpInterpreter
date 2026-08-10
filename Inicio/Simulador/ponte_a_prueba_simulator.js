@@ -45,6 +45,23 @@
             display: block; height: 100%; width: 0%; background: #04aa6d; border-radius: 3px;
             transition: width 0.3s ease;
         }
+
+        .pp-grupos {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            padding: 10px 14px 0;
+        }
+        .pp-grupo-tab {
+            background: transparent; border: 1px solid var(--console-border); color: var(--white);
+            border-radius: 999px; padding: 6px 14px; font-size: 0.82rem; cursor: pointer;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .pp-grupo-tab:hover { border-color: #04aa6d; }
+        .pp-grupo-tab.activo { background: #04aa6d; border-color: #04aa6d; color: #08131a; font-weight: 700; }
+        .pp-grupo-tab .n {
+            background: rgba(0,0,0,0.2); border-radius: 10px; padding: 0 7px; font-size: 0.78em;
+        }
+        .pp-grupo-tab.activo .n { background: rgba(0,0,0,0.15); }
+        .pp-grupo-tab.completo:not(.activo) { border-color: #04aa6d; color: #04aa6d; }
     `;
     document.head.appendChild(style);
 })();
@@ -207,16 +224,19 @@ let ppItemActual   = null;
 let ppLineasEditablesActual = [];
 let ppUltimoCodigoValido = '';
 
-// ── Progresión lineal del banco de ejercicios ──────────────────
-// ppItems: banco completo (con "resuelto" que manda la API, ya filtrado
-// por el usuario autenticado). ppCurrentIndex: el primer no resuelto —
-// el límite real de avance, recalculado siempre desde el servidor (nunca
-// desde localStorage), así que sobrevive a un F5 o a cerrar sesión.
-// ppViewIndex: el que se está viendo ahora mismo (puede ser menor que
-// ppCurrentIndex si el alumno retrocedió a revisar uno ya resuelto).
-let ppItems = [];
-let ppCurrentIndex = 0;
-let ppViewIndex = 0;
+// ── Progresión lineal del banco de ejercicios, por módulo ──────
+// ppGroups: un grupo por categoría (Ciclos, Arreglos, Recursividad...),
+// cada uno con su propia lista de ejercicios y su propio avance —
+// el alumno elige en qué módulo trabajar (pestañas ppRenderGrupos),
+// pero dentro de un módulo la progresión sigue siendo lineal: currentIndex
+// es el primer no resuelto DE ESE GRUPO (recalculado del servidor, nunca
+// de localStorage, para sobrevivir a un F5 o cerrar sesión), y viewIndex
+// es el que se está viendo (puede ser menor si el alumno retrocedió a
+// revisar uno ya resuelto).
+let ppGroups = [];
+let ppGroupIndex = 0;
+
+function ppGrupoActual() { return ppGroups[ppGroupIndex] || null; }
 
 // ── Restricción de edición a las líneas marcadas ───────────────
 
@@ -342,8 +362,12 @@ function ppMostrarVeredicto(v) {
         // (o se recargue la página) se vuelve a pedir al backend, que es
         // la única fuente de verdad de qué se resolvió.
         ppCachePracticas = null;
-        ppCurrentIndex = ppItems.findIndex(it => !it.resuelto);
-        if (ppCurrentIndex === -1) ppCurrentIndex = ppItems.length - 1;
+        const grupo = ppGrupoActual();
+        if (grupo) {
+            grupo.currentIndex = grupo.items.findIndex(it => !it.resuelto);
+            if (grupo.currentIndex === -1) grupo.currentIndex = grupo.items.length - 1;
+        }
+        ppRenderGrupos();
         ppRenderStepper();
         if (typeof window.actualizarProgresoUsuario === 'function') window.actualizarProgresoUsuario();
     }
@@ -527,12 +551,15 @@ function ppAplicarItem(it) {
     ppOcultarResultado();
 }
 
-// Solo se puede navegar entre 0 y ppCurrentIndex (el primer no resuelto):
-// retroceder para revisar está permitido, adelantarse no.
+// Solo se puede navegar entre 0 y currentIndex del grupo activo (el primer
+// no resuelto DE ESE MÓDULO): retroceder para revisar está permitido,
+// adelantarse no.
 function ppIrA(idx) {
-    if (idx < 0 || idx > ppCurrentIndex || idx >= ppItems.length) return;
-    ppViewIndex = idx;
-    const it = ppItems[idx];
+    const grupo = ppGrupoActual();
+    if (!grupo) return;
+    if (idx < 0 || idx > grupo.currentIndex || idx >= grupo.items.length) return;
+    grupo.viewIndex = idx;
+    const it = grupo.items[idx];
     ppAplicarItem(it);
     if (ppMonacoEditor) ppMonacoEditor.setValue(it.codigo);
     ppResaltarLineasEditables(it.lineasEditables);
@@ -540,32 +567,66 @@ function ppIrA(idx) {
     ppRenderStepper();
 }
 
-// Número a mostrar para el ejercicio en idx — NO es su posición en el
-// arreglo (esa cambia cada vez que el banco crece y se vuelve a mezclar),
-// sino su lugar real entre los resueltos: si ya está resuelto, cuántos
-// resueltos hay hasta su posición inclusive; si es el actual (sin resolver),
-// el conteo total de resueltos + 1. Así siempre coincide con lo que cuenta
-// el backend (usuarios.ejercicios_resueltos), sin importar cómo se haya
+// Cambia de módulo (pestaña de categoría) y muestra su ejercicio actual.
+function ppIrAGrupo(grupoIdx) {
+    if (grupoIdx < 0 || grupoIdx >= ppGroups.length || grupoIdx === ppGroupIndex) return;
+    ppGroupIndex = grupoIdx;
+    const grupo = ppGrupoActual();
+    ppRenderGrupos();
+    ppIrA(grupo.viewIndex);
+}
+
+// Número a mostrar para el ejercicio en idx dentro de su grupo — NO es su
+// posición en el arreglo (esa cambia cada vez que el banco crece y se
+// vuelve a mezclar), sino su lugar real entre los resueltos DE ESE MÓDULO:
+// si ya está resuelto, cuántos resueltos hay hasta su posición inclusive;
+// si es el actual (sin resolver), el conteo total de resueltos + 1. Así
+// siempre coincide con lo que cuenta el backend, sin importar cómo se haya
 // reordenado el banco para este alumno.
-function ppNumeroMostrado(idx) {
-    const it = ppItems[idx];
-    if (it.resuelto) return ppItems.slice(0, idx + 1).filter(x => x.resuelto).length;
-    return ppItems.filter(x => x.resuelto).length + 1;
+function ppNumeroMostrado(grupo, idx) {
+    const it = grupo.items[idx];
+    if (it.resuelto) return grupo.items.slice(0, idx + 1).filter(x => x.resuelto).length;
+    return grupo.items.filter(x => x.resuelto).length + 1;
 }
 
 function ppRenderStepper() {
+    const grupo = ppGrupoActual();
     const label = document.getElementById('pp-step-label');
     const prevBtn = document.getElementById('pp-step-prev');
     const nextBtn = document.getElementById('pp-step-next');
     const fill = document.getElementById('pp-stepper-fill');
-    if (label) label.textContent = 'Ejercicio ' + ppNumeroMostrado(ppViewIndex) + ' de ' + ppItems.length;
-    if (prevBtn) prevBtn.disabled = (ppViewIndex <= 0);
-    if (nextBtn) nextBtn.disabled = (ppViewIndex >= ppCurrentIndex);
+    if (!grupo) return;
+    if (label) label.textContent = 'Ejercicio ' + ppNumeroMostrado(grupo, grupo.viewIndex) + ' de ' + grupo.items.length;
+    if (prevBtn) prevBtn.disabled = (grupo.viewIndex <= 0);
+    if (nextBtn) nextBtn.disabled = (grupo.viewIndex >= grupo.currentIndex);
     if (fill) {
-        const resueltos = ppItems.filter(it => it.resuelto).length;
-        const pct = ppItems.length ? Math.round((resueltos / ppItems.length) * 100) : 0;
+        const resueltos = grupo.items.filter(it => it.resuelto).length;
+        const pct = grupo.items.length ? Math.round((resueltos / grupo.items.length) * 100) : 0;
         fill.style.width = pct + '%';
     }
+}
+
+// Pestañas de módulo/categoría — una por grupo, con su progreso "X/Y".
+function ppRenderGrupos() {
+    let tabs = document.getElementById('pp-grupos');
+    const editorBody = document.getElementById('editor-body');
+    if (!tabs) {
+        if (!editorBody || ppGroups.length < 2) return;
+        tabs = document.createElement('div');
+        tabs.id = 'pp-grupos';
+        tabs.className = 'pp-grupos';
+        editorBody.parentNode.insertBefore(tabs, editorBody);
+    }
+    tabs.innerHTML = ppGroups.map((g, i) => {
+        const resueltos = g.items.filter(it => it.resuelto).length;
+        const completo = resueltos === g.items.length;
+        return '<button class="pp-grupo-tab' + (i === ppGroupIndex ? ' activo' : '') + (completo ? ' completo' : '') +
+            '" data-idx="' + i + '">' + ppEscape(g.categoria) +
+            '<span class="n">' + resueltos + '/' + g.items.length + '</span></button>';
+    }).join('');
+    tabs.querySelectorAll('.pp-grupo-tab').forEach(btn => {
+        btn.onclick = () => { ppStopPlay(_ppBtns()); ppIrAGrupo(parseInt(btn.dataset.idx)); };
+    });
 }
 
 // ── Inicialización del editor (async) ──────────────────────────
@@ -576,44 +637,53 @@ async function initPonteApruebaSimulator(nombreTema) {
 
     ppSetTitulo('Ponte a prueba');
 
-    let items;
+    let grupos;
     try {
-        const practicas = await ppObtenerPracticas();
-        items = practicas.map((ej, i) => ({
-            id: ej.id,
-            label: 'Ejercicio ' + (i + 1),
-            codigo: ej.codigo_con_errores || '',
-            enunciado: ej.descripcion || '',
-            subtemaTitulo: (ej.subtemas && ej.subtemas.titulo) || '',
-            lineasEditables: (ej.soluciones_validacion && ej.soluciones_validacion.lineas_editables) || [],
-            pista: (ej.soluciones_validacion && ej.soluciones_validacion.pista) || '',
-            resuelto: !!ej.resuelto,
-        }));
+        const practicas = await ppObtenerPracticas(); // [{ categoria_id, categoria, ejercicios: [...] }, ...]
+        grupos = practicas
+            .filter(g => Array.isArray(g.ejercicios) && g.ejercicios.length)
+            .map(g => {
+                const items = g.ejercicios.map((ej, i) => ({
+                    id: ej.id,
+                    label: 'Ejercicio ' + (i + 1),
+                    codigo: ej.codigo_con_errores || '',
+                    enunciado: ej.descripcion || '',
+                    subtemaTitulo: (ej.subtemas && ej.subtemas.titulo) || '',
+                    lineasEditables: (ej.soluciones_validacion && ej.soluciones_validacion.lineas_editables) || [],
+                    pista: (ej.soluciones_validacion && ej.soluciones_validacion.pista) || '',
+                    resuelto: !!ej.resuelto,
+                }));
+                let currentIndex = items.findIndex(it => !it.resuelto);
+                if (currentIndex === -1) currentIndex = items.length - 1; // ya resolvió todo el módulo
+                return { categoriaId: g.categoria_id, categoria: g.categoria, items, currentIndex, viewIndex: currentIndex };
+            });
         ppMostrarErrorApi(null);
     } catch (e) {
         console.error('Error cargando "Ponte a prueba":', e);
-        items = [];
+        grupos = [];
         ppMostrarErrorApi('No se pudieron cargar los ejercicios de práctica.');
     }
 
-    if (!items.length) {
-        items = [{
-            id: null, label: 'Sin ejercicios',
-            codigo: '// Todavía no hay ejercicios de práctica cargados.',
-            enunciado: '', subtemaTitulo: '', lineasEditables: [], pista: '', resuelto: false
+    if (!grupos.length) {
+        grupos = [{
+            categoriaId: 0, categoria: 'Ponte a prueba',
+            items: [{
+                id: null, label: 'Sin ejercicios',
+                codigo: '// Todavía no hay ejercicios de práctica cargados.',
+                enunciado: '', subtemaTitulo: '', lineasEditables: [], pista: '', resuelto: false
+            }],
+            currentIndex: 0, viewIndex: 0
         }];
     }
 
-    ppItems = items;
-    // El límite de avance sale siempre de "resuelto" (lo manda la API según
-    // el usuario autenticado) — nunca de localStorage, así que un F5, un
-    // cambio de pestaña o cerrar sesión y volver a entrar cae en el mismo
-    // ejercicio donde el alumno se quedó.
-    ppCurrentIndex = items.findIndex(it => !it.resuelto);
-    if (ppCurrentIndex === -1) ppCurrentIndex = items.length - 1; // ya resolvió todo el banco
-    ppViewIndex = ppCurrentIndex;
+    ppGroups = grupos;
+    // Arranca en el primer módulo que todavía tenga pendientes; si ya
+    // resolvió todo, se queda en el primero.
+    ppGroupIndex = grupos.findIndex(g => g.items.some(it => !it.resuelto));
+    if (ppGroupIndex === -1) ppGroupIndex = 0;
+    const grupoInicial = ppGrupoActual();
 
-    if (!document.getElementById('pp-stepper') && items.length > 1) {
+    if (!document.getElementById('pp-stepper')) {
         const stepper = document.createElement('div');
         stepper.id = 'pp-stepper';
         stepper.className = 'pp-stepper';
@@ -628,18 +698,19 @@ async function initPonteApruebaSimulator(nombreTema) {
         bar.innerHTML = '<i id="pp-stepper-fill"></i>';
         editorBody.parentNode.insertBefore(bar, editorBody);
 
-        document.getElementById('pp-step-prev').onclick = () => { ppStopPlay(_ppBtns()); ppIrA(ppViewIndex - 1); };
-        document.getElementById('pp-step-next').onclick = () => { ppStopPlay(_ppBtns()); ppIrA(ppViewIndex + 1); };
+        document.getElementById('pp-step-prev').onclick = () => { ppStopPlay(_ppBtns()); ppIrA(ppGrupoActual().viewIndex - 1); };
+        document.getElementById('pp-step-next').onclick = () => { ppStopPlay(_ppBtns()); ppIrA(ppGrupoActual().viewIndex + 1); };
     }
 
-    ppAplicarItem(items[ppViewIndex]);
+    ppRenderGrupos();
+    ppAplicarItem(grupoInicial.items[grupoInicial.viewIndex]);
     ppRenderStepper();
 
     function crearEditor() {
         require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
         require(['vs/editor/editor.main'], function () {
             ppMonacoEditor = monaco.editor.create(editorBody, {
-                value: items[ppViewIndex].codigo,
+                value: grupoInicial.items[grupoInicial.viewIndex].codigo,
                 language: 'csharp',
                 theme: 'vs-dark',
                 automaticLayout: true,
@@ -650,8 +721,8 @@ async function initPonteApruebaSimulator(nombreTema) {
             });
             ppMonacoEditor.onDidChangeModelContent(ppOnEditorChange);
             ppConectarBotones();
-            ppResaltarLineasEditables(items[ppViewIndex].lineasEditables);
-            ppEjecutar(items[ppViewIndex].codigo);
+            ppResaltarLineasEditables(grupoInicial.items[grupoInicial.viewIndex].lineasEditables);
+            ppEjecutar(grupoInicial.items[grupoInicial.viewIndex].codigo);
         });
     }
 

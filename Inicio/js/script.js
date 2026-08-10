@@ -719,7 +719,13 @@ if (modalElemento) {
 document.addEventListener('DOMContentLoaded', () => {
     const btnCerrar = document.getElementById('btn-cerrar-sesion');
     if (!btnCerrar) return;
-    btnCerrar.addEventListener('click', () => {
+    btnCerrar.addEventListener('click', async () => {
+        const ok = await confirmarAccion({
+            titulo: 'Cerrar sesión',
+            mensaje: '¿Seguro que quieres cerrar sesión?',
+            textoConfirmar: 'Cerrar sesión',
+        });
+        if (!ok) return;
         if (window.ApiClient && window.ApiClient.cerrarSesion) {
             window.ApiClient.cerrarSesion();
         }
