@@ -130,7 +130,7 @@
       const multi2 = ["==", "!=", "<=", ">=", "&&", "||", "++", "--", "+=", "-=", "*=", "/=", "%="];
       if (multi2.includes(two)) { push("OP", two, startLine, startCol); i += 2; col += 2; continue; }
 
-      const singles = "+-*/%=<>!(){}[],;.&|:";
+      const singles = "+-*/%=<>!(){}[],;.&|:?";
       if (singles.includes(c)) {
         const punct = "(){}[],;.:";
         push(punct.includes(c) ? "PUNCT" : "OP", c, startLine, startCol);
@@ -360,7 +360,7 @@
     function parseExpression() { return parseAssignment(); }
 
     function parseAssignment() {
-      const left = parseLogicalOr();
+      const left = parseTernary();
       if (peek().type === "OP" && ASSIGN_OPS.has(peek().value)) {
         const opTok = next();
         const right = parseAssignment();
@@ -369,6 +369,22 @@
         return { type: "Assignment", operator: opTok.value, target: left, value: right, line: opTok.line };
       }
       return left;
+    }
+
+    // Operador ternario condicion ? valorSiVerdadero : valorSiFalso — se
+    // ubica entre la asignación y el || lógico (misma precedencia que en
+    // C#), y es recursivo a la derecha para permitir encadenar varios
+    // ternarios: a ? b : c ? d : e  se lee como  a ? b : (c ? d : e).
+    function parseTernary() {
+      const test = parseLogicalOr();
+      if (peek().type === "OP" && peek().value === "?") {
+        const qTok = next();
+        const consequent = parseTernary();
+        expect("PUNCT", ":", "Se esperaba ':' en el operador ternario");
+        const alternate = parseTernary();
+        return { type: "Conditional", test, consequent, alternate, line: qTok.line };
+      }
+      return test;
     }
 
     function binaryLevel(sub, ops) {
@@ -890,6 +906,10 @@
       }
       case "Call": return this.evalCall(node, env, changed);
       case "FunctionCall": return this.evalFunctionCall(node, env, changed);
+      case "Conditional":
+        return truthy(this.evalExpr(node.test, env, changed))
+          ? this.evalExpr(node.consequent, env, changed)
+          : this.evalExpr(node.alternate, env, changed);
       default: throw new RuntimeError("Expresión no soportada: " + node.type, node.line);
     }
   };
@@ -1203,6 +1223,7 @@
       case "Member": return this.src(n.object) + "." + n.name;
       case "Call": return this.src(n.object) + "." + n.name + "(" + n.arguments.map(a => this.src(a)).join(", ") + ")";
       case "FunctionCall": return n.name + "(" + n.arguments.map(a => this.src(a)).join(", ") + ")";
+      case "Conditional": return this.src(n.test) + " ? " + this.src(n.consequent) + " : " + this.src(n.alternate);
       default: return "";
     }
   };

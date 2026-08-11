@@ -15,8 +15,8 @@
     const style = document.createElement('style');
     style.id = 'pp-styles';
     style.textContent = `
-        .pp-line-editable { background: rgba(4,170,109,0.15); }
-        .pp-line-editable-gutter { border-left: 3px solid #04aa6d; }
+        .pp-line-editable { background: rgba(224,82,99,0.15); }
+        .pp-line-editable-gutter { border-left: 3px solid #e05263; }
         .pp-ejercicio-meta { font-size: 0.85em; opacity: .75; margin-bottom: 4px; }
         .pp-resultado {
             margin: 8px 14px; padding: 10px 14px; border-radius: 8px;
@@ -413,6 +413,9 @@ function ppMostrarVeredicto(v) {
 
 function ppMostrarPista() {
     const caja = ppResultadoBox();
+    // Las líneas editables (en rojo) se quedan ocultas hasta que el alumno
+    // pide la pista — así no delatan de entrada dónde está el bug.
+    ppResaltarLineasEditables(ppLineasEditablesActual);
     if (!ppItemActual || !ppItemActual.pista) {
         caja.textContent = 'Este ejercicio no tiene pista disponible.';
         caja.className = 'pp-resultado pp-resultado-info';
@@ -600,7 +603,9 @@ function ppIrA(idx) {
     const it = grupo.items[idx];
     ppAplicarItem(it);
     if (ppMonacoEditor) ppMonacoEditor.setValue(it.codigo);
-    ppResaltarLineasEditables(it.lineasEditables);
+    // El resaltado en rojo de las líneas editables no se muestra de entrada
+    // en cada ejercicio — se revela solo al pedir la pista (ppMostrarPista).
+    ppResaltarLineasEditables([]);
     ppEjecutar(it.codigo);
     ppRenderStepper();
 }
@@ -771,7 +776,6 @@ async function initPonteApruebaSimulator(nombreTema) {
             });
             ppMonacoEditor.onDidChangeModelContent(ppOnEditorChange);
             ppConectarBotones();
-            ppResaltarLineasEditables(grupoInicial.items[grupoInicial.viewIndex].lineasEditables);
             ppEjecutar(grupoInicial.items[grupoInicial.viewIndex].codigo);
         });
     }
