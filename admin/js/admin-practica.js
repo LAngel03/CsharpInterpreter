@@ -12,7 +12,7 @@
 
 let practicaGrupos = [];
 let practicaCategoriaActiva = 0;
-let practicaCategoriasDisponibles = []; // [{ id, nombre, subtemas: [{id, slug, titulo, dificultad_id}] }]
+let practicaCategoriasDisponibles = []; // [{ id, nombre, subtemas: [{id, slug, titulo}] }]
 let practicaEditandoId = null;          // null = creando uno nuevo
 
 function _escaparHtmlPractica(s) {
@@ -178,11 +178,6 @@ async function guardarEjercicioPractica() {
         if (practicaEditandoId) {
             await ApiClient.actualizarEjercicio(practicaEditandoId, datos);
         } else {
-            // dificultad_id: el backend lo exige al crear; se hereda del
-            // subtema elegido para no pedirle al admin un dato más.
-            const cat = practicaCategoriasDisponibles.find(c => (c.subtemas || []).some(s => s.id === subtema_id));
-            const sub = cat && cat.subtemas.find(s => s.id === subtema_id);
-            datos.dificultad_id = (sub && sub.dificultad_id) || 1;
             await ApiClient.crearEjercicio(datos);
         }
         cerrarFormularioPractica();

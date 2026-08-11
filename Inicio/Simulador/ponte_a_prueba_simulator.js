@@ -370,7 +370,7 @@ async function ppValidarConBackend(codigo) {
         const veredicto = await window.ApiClient.validarEjercicio(ppItemActual.id, resultado.output || []);
         if (veredicto.correcto) {
             return {
-                texto: '¡Correcto! +' + veredicto.puntos + ' puntos',
+                texto: '¡Correcto!',
                 clase: 'pp-resultado-ok',
                 correcto: true,
                 // primeraVez lo manda el backend — evita que un reintento sobre

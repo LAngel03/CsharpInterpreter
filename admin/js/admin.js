@@ -21,8 +21,6 @@ let dirtySecciones = { concepto: false, ejemplos: false };
 let suprimirDirtyEditor = false;
 let estudiantesCache = [];
 
-// Criterio del ranking: 'ejercicios' (más completados primero) | 'puntos' (mejor puntaje primero)
-let ordenUsuarios = 'ejercicios';
 // Tamaño total del banco de "Ponte a prueba", para mostrar "X de Y ejercicios".
 // null mientras no se sabe (el "de Y" simplemente se omite, no se inventa un número).
 let totalPracticas = null;
@@ -45,21 +43,10 @@ function fechaRegistro(iso) {
     if (isNaN(d)) return '—';
     return d.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
-/* Compara dos estudiantes activos según ordenUsuarios (el ranking es solo
-   entre activos — los pendientes viven aparte, ver renderPendientes) */
+/* Compara dos estudiantes activos por ejercicios resueltos (el ranking es
+   solo entre activos — los pendientes viven aparte, ver renderPendientes) */
 function compararUsuarios(a, b) {
-    if (ordenUsuarios === 'puntos') return (b.puntos_totales ?? 0) - (a.puntos_totales ?? 0);
     return (b.ejercicios_resueltos ?? 0) - (a.ejercicios_resueltos ?? 0);
-}
-
-/* Cambia el criterio del ranking (botones "Más ejercicios" / "Más puntos") */
-function cambiarOrdenUsuarios(criterio) {
-    if (ordenUsuarios === criterio) return;
-    ordenUsuarios = criterio;
-    renderRanking();
-    document.querySelectorAll('.sort-toggle__btn[data-orden]').forEach(btn => {
-        btn.classList.toggle('activo', btn.dataset.orden === ordenUsuarios);
-    });
 }
 
 /* Pide los estudiantes (y el total de prácticas, para el "X de Y") a la API.
@@ -183,7 +170,7 @@ function renderRanking() {
                 <td class="num"><span class="rank${rc}">${pos}</span></td>
                 <td><div class="u-cell"></div><div class="u-name"><b>${nombreCompleto}</b><small>${grupoTxt}</small></div></div></td>
                 <td><span class="matricula">${e.matricula}</span></td>
-                <td><div class="prog"><span class="prog__num">${e.ejercicios_resueltos ?? 0}${totalPracticas != null ? ' de ' + totalPracticas : ''} ejercicios · ${e.puntos_totales ?? 0} pts</span></div></td>
+                <td><div class="prog"><span class="prog__num">${e.ejercicios_resueltos ?? 0}${totalPracticas != null ? ' de ' + totalPracticas : ''} ejercicios</span></div></td>
                 <td class="num"><span class="badge">${fechaRegistro(e.creado_en)}</span></td>
                 <td><div class="estado-cell">
                     <span class="badge">Activo</span>
