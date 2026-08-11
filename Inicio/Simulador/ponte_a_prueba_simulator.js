@@ -52,13 +52,13 @@
         }
         .pp-grupo-tab {
             background: transparent; border: 1px solid var(--console-border); color: var(--white);
-            border-radius: 999px; padding: 6px 14px; font-size: 0.82rem; cursor: pointer;
+            border-radius: 999px; padding: 6px 14px; font-size: 0.9rem; cursor: pointer;
             display: flex; align-items: center; gap: 6px;
         }
         .pp-grupo-tab:hover { border-color: #04aa6d; }
         .pp-grupo-tab.activo { background: #04aa6d; border-color: #04aa6d; color: #08131a; font-weight: 700; }
         .pp-grupo-tab .n {
-            background: rgba(0,0,0,0.2); border-radius: 10px; padding: 0 7px; font-size: 0.78em;
+            background: rgba(0,0,0,0.2); border-radius: 10px; padding: 0 7px; font-size: 0.85em;
         }
         .pp-grupo-tab.activo .n { background: rgba(0,0,0,0.15); }
         .pp-grupo-tab.completo:not(.activo) { border-color: #04aa6d; color: #04aa6d; }
@@ -209,6 +209,12 @@ function ppResultadoBox() {
 function ppOcultarResultado() {
     const box = document.getElementById('pp-resultado');
     if (box) { box.style.display = 'none'; box.textContent = ''; }
+    // Cancela cualquier "Comprobar" en curso (pausado o no) — evita que un
+    // veredicto viejo aparezca al volver a este ejercicio, o que un "resume"
+    // se confunda con el de otro ejercicio/tema.
+    ppComprobarEnCurso = false;
+    ppOnDoneComprobar = null;
+    ppComprobarCodigoActivo = null;
 }
 
 // ── Estado global del módulo ──────────────────────────────────
@@ -223,6 +229,18 @@ let ppCurrentCode  = '';
 let ppItemActual   = null;
 let ppLineasEditablesActual = [];
 let ppUltimoCodigoValido = '';
+// "Comprobar" ahora se puede pausar/reanudar: mientras haya una corrida en
+// curso (en_curso=true) el clic reanuda la animación en vez de reiniciar
+// desde el paso 0 y volver a pedirle al backend que valide.
+let ppComprobarEnCurso = false;
+let ppOnDoneComprobar = null;
+let ppComprobarCodigoActivo = null;
+
+// Mismo ícono play/pausa que el resto de los simuladores, pero el texto del
+// tooltip se queda en "Comprobar" — este botón no solo reproduce, también
+// valida la solución contra el backend.
+const _PP_ICON_PLAY  = '<img src="../img/iconos/play.png" alt="Comprobar"><span class="tooltip-text">Comprobar</span>';
+const _PP_ICON_PAUSE = '<img src="../img/iconos/pause.png" alt="Comprobar"><span class="tooltip-text">Comprobar</span>';
 
 // ── Progresión lineal del banco de ejercicios, por módulo ──────
 // ppGroups: un grupo por categoría (Ciclos, Arreglos, Recursividad...),
@@ -286,30 +304,50 @@ function ppEjecutar(codigo) {
 // ── Comprobar: reproduce la ejecución paso a paso y, hasta que esa
 // reproducción termina (llega al último paso que se pudo ejecutar),
 // pinta el veredicto del backend — no antes, aunque la red responda
-// más rápido que la animación. Este botón sustituye al viejo
-// "Reproducir" (ver ppConectarBotones).
-
+// más rápido que la animación. El mismo botón funciona como play/pausa
+// (ver ppConectarBotones): un clic mientras anima pausa sin perder el
+// progreso ni volver a pedirle al backend que valide; un clic estando
+// pausado reanuda desde donde se quedó.
 function ppComprobarSolucion() {
     if (!ppItemActual || !ppItemActual.id || !ppMonacoEditor) return;
     const btns = _ppBtns();
-    ppStopPlay(btns);
+
+    if (ppPlaying) { ppStopPlay(btns); return; }
+
     const codigo = ppMonacoEditor.getValue();
 
-    ppOcultarResultado();
-    ppEjecutar(codigo);
+    if (!ppComprobarEnCurso || codigo !== ppComprobarCodigoActivo) {
+        // Arranque en frío (primer clic, o el código cambió desde la última
+        // corrida): reinicia desde el paso 0 y dispara la validación.
+        ppOcultarResultado();
+        ppEjecutar(codigo);
 
-    // La llamada al backend se lanza ya (por la latencia de red), pero
-    // el resultado se guarda y no se muestra hasta ppMostrarVeredicto().
-    const veredictoPromise = ppValidarConBackend(codigo);
-    const mostrarAlTerminar = () => { veredictoPromise.then(ppMostrarVeredicto); };
+        // La llamada al backend se lanza ya (por la latencia de red), pero
+        // el resultado se guarda y no se muestra hasta ppMostrarVeredicto().
+        const veredictoPromise = ppValidarConBackend(codigo);
+        ppComprobarEnCurso = true;
+        ppComprobarCodigoActivo = codigo;
+        ppOnDoneComprobar = () => veredictoPromise.then(v => {
+            ppComprobarEnCurso = false;
+            ppMostrarVeredicto(v);
+        });
+    }
+
+    const dispararSiTermino = () => {
+        if (!ppOnDoneComprobar) return;
+        const cb = ppOnDoneComprobar;
+        ppOnDoneComprobar = null;
+        cb();
+    };
 
     if (ppSim.info().total > 1) {
         ppPlaying = true;
-        ppPlayTimer = setTimeout(() => ppAutoPlay(btns, mostrarAlTerminar), ppGetDelay());
+        if (btns[3]) btns[3].innerHTML = _PP_ICON_PAUSE;
+        ppPlayTimer = setTimeout(() => ppAutoPlay(btns, dispararSiTermino), ppGetDelay());
     } else {
         // Nada que animar (p. ej. error de compilación en el paso 0):
         // el veredicto se muestra en cuanto la validación responda.
-        mostrarAlTerminar();
+        dispararSiTermino();
     }
 }
 
@@ -576,17 +614,32 @@ function ppIrAGrupo(grupoIdx) {
     ppIrA(grupo.viewIndex);
 }
 
-// Número a mostrar para el ejercicio en idx dentro de su grupo — NO es su
-// posición en el arreglo (esa cambia cada vez que el banco crece y se
-// vuelve a mezclar), sino su lugar real entre los resueltos DE ESE MÓDULO:
-// si ya está resuelto, cuántos resueltos hay hasta su posición inclusive;
-// si es el actual (sin resolver), el conteo total de resueltos + 1. Así
-// siempre coincide con lo que cuenta el backend, sin importar cómo se haya
-// reordenado el banco para este alumno.
-function ppNumeroMostrado(grupo, idx) {
-    const it = grupo.items[idx];
-    if (it.resuelto) return grupo.items.slice(0, idx + 1).filter(x => x.resuelto).length;
-    return grupo.items.filter(x => x.resuelto).length + 1;
+// Progreso GLOBAL (todos los módulos/temas combinados) para el contador
+// "Ejercicio N de M" de arriba: el alumno pidió que ese número no dependa
+// de en qué tema esté parado, a diferencia de las pestañas "Ciclos 1/12",
+// etc., que sí siguen siendo por tema.
+function ppProgresoGlobal() {
+    const grupo = ppGrupoActual();
+    const total = ppGroups.reduce((sum, g) => sum + g.items.length, 0);
+    const resueltos = ppGroups.reduce((sum, g) => sum + g.items.filter(x => x.resuelto).length, 0);
+    if (!grupo) return { n: 0, total, resueltos };
+
+    const it = grupo.items[grupo.viewIndex];
+    let n;
+    if (it.resuelto) {
+        // Resueltos de los módulos anteriores + resueltos de este módulo hasta el actual (inclusive)
+        n = 0;
+        for (const g of ppGroups) {
+            if (g === grupo) {
+                n += g.items.slice(0, grupo.viewIndex + 1).filter(x => x.resuelto).length;
+                break;
+            }
+            n += g.items.filter(x => x.resuelto).length;
+        }
+    } else {
+        n = resueltos + 1;
+    }
+    return { n, total, resueltos };
 }
 
 function ppRenderStepper() {
@@ -596,12 +649,12 @@ function ppRenderStepper() {
     const nextBtn = document.getElementById('pp-step-next');
     const fill = document.getElementById('pp-stepper-fill');
     if (!grupo) return;
-    if (label) label.textContent = 'Ejercicio ' + ppNumeroMostrado(grupo, grupo.viewIndex) + ' de ' + grupo.items.length;
+    const { n, total, resueltos } = ppProgresoGlobal();
+    if (label) label.textContent = 'Ejercicio ' + n + ' de ' + total;
     if (prevBtn) prevBtn.disabled = (grupo.viewIndex <= 0);
     if (nextBtn) nextBtn.disabled = (grupo.viewIndex >= grupo.currentIndex);
     if (fill) {
-        const resueltos = grupo.items.filter(it => it.resuelto).length;
-        const pct = grupo.items.length ? Math.round((resueltos / grupo.items.length) * 100) : 0;
+        const pct = total ? Math.round((resueltos / total) * 100) : 0;
         fill.style.width = pct + '%';
     }
 }
@@ -746,13 +799,12 @@ function ppGetDelay() {
     return Math.round(2000 - (val / 100) * 1800);
 }
 
-function ppStopPlay() {
+function ppStopPlay(btns) {
     clearTimeout(ppPlayTimer);
     ppPlayTimer = null;
     ppPlaying   = false;
-    // A diferencia de los otros simuladores, aquí btns[3] ya no es un
-    // botón play/pausa — es "Comprobar" de forma permanente (ver
-    // ppConectarBotones), así que no se le toca el innerHTML al detener.
+    const list = btns || _ppBtns();
+    if (list[3]) list[3].innerHTML = _PP_ICON_PLAY;
 }
 
 // onDone (opcional) se dispara una sola vez, justo al llegar al último
@@ -800,13 +852,11 @@ function ppConectarBotones() {
     };
 
     // btns[3] era el botón "Reproducir" del skeleton compartido
-    // (consolas.js). En esta página no hay reproducción suelta: el mismo
-    // botón reproduce la ejecución paso a paso Y valida contra el backend
-    // a la vez (ver ppComprobarSolucion). El resto de los simuladores
-    // siguen usando el botón original sin tocar — esto es solo un
-    // relabel del elemento dentro de esta página.
+    // (consolas.js). Aquí conserva el ícono play/pausa, pero el tooltip se
+    // queda en "Comprobar": el mismo botón reproduce la ejecución paso a
+    // paso Y valida contra el backend a la vez (ver ppComprobarSolucion).
     if (btns[3]) {
-        btns[3].innerHTML = 'Comprobar';
+        btns[3].innerHTML = _PP_ICON_PLAY;
         btns[3].onclick = ppComprobarSolucion;
     }
 

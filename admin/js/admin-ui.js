@@ -53,7 +53,8 @@ function confirmarAccion(opciones) {
 
         const icono = document.getElementById('confirmIcono');
         icono.className = 'confirm-modal__icon' + (opciones.peligroso ? ' peligroso' : ' normal');
-        icono.textContent = opciones.peligroso ? '!' : '?';
+        const iconoSrc = opciones.peligroso ? '../img/iconos/alerta.svg' : '../img/iconos/pregunta.svg';
+        icono.innerHTML = '<img src="' + iconoSrc + '" alt="">';
 
         const btnOk = document.getElementById('confirmBtnOk');
         const btnCancel = document.getElementById('confirmBtnCancel');

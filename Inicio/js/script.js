@@ -179,6 +179,10 @@ function limpiarPantalla() {
     if (workspace) workspace.innerHTML = '';
     if (gridModulos) gridModulos.innerHTML = '';
     mostrarDescripcion('', '');
+    // El aviso de "Comprobar"/Pista de Ponte a prueba (#pp-resultado) vive
+    // como hermano de #tema-descripcion, no adentro — limpiar ese innerHTML
+    // no lo toca, así que quedaba pegado en pantalla al cambiar de tema.
+    if (typeof ppOcultarResultado === 'function') ppOcultarResultado();
 }
 
 function cargarTema(nombreTema) {

@@ -157,7 +157,7 @@ function renderPendientes() {
                 <td class="num"><span class="badge">${fechaRegistro(e.creado_en)}</span></td>
                 <td><div class="row-actions">
                     <button class="btn-estado btn-estado--on" onclick="cambiarEstadoUsuario(${e.id}, true)" title="Permitir que este estudiante inicie sesión">Activar</button>
-                    <button class="icon-btn danger" title="Eliminar" onclick="eliminarUsuario(${e.id})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+                    <button class="icon-btn danger" title="Eliminar" onclick="eliminarUsuario(${e.id})"><img src="../img/iconos/eliminar.svg" alt=""></button>
                 </div></td></tr>`;
     }).join('');
 }
@@ -191,7 +191,7 @@ function renderRanking() {
                 <td><div class="row-actions">
                                     <button class="btn-estado btn-estado--off" onclick="cambiarEstadoUsuario(${e.id}, false)" title="Desactivar a este estudiante">Desactivar</button>
 
-                    <button class="icon-btn danger" title="Eliminar" onclick="eliminarUsuario(${e.id})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+                    <button class="icon-btn danger" title="Eliminar" onclick="eliminarUsuario(${e.id})"><img src="../img/iconos/eliminar.svg" alt=""></button>
                 </div></td></tr>`;
     }).join("");
 }
@@ -402,8 +402,8 @@ function renderGlosarioAcordeon() {
                             <span>${defCorta}</span>
                         </div>
                         <div class="row-actions">
-                            <button class="icon-btn" title="Editar" onclick="editarTerminoGlosario(${t.id})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
-                            <button class="icon-btn danger" title="Eliminar" onclick="eliminarTerminoGlosario(${t.id})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+                            <button class="icon-btn" title="Editar" onclick="editarTerminoGlosario(${t.id})"><img src="../img/iconos/edit.svg" alt=""></button>
+                            <button class="icon-btn danger" title="Eliminar" onclick="eliminarTerminoGlosario(${t.id})"><img src="../img/iconos/eliminar.svg" alt=""></button>
                         </div>
                     </div>`;
         }).join('')}
@@ -557,7 +557,7 @@ function renderEditorTabs() {
         const esUltimoEjemplo = item.tipo === 'ejemplo' && itemsActuales.filter(x => x.tipo === 'ejemplo').length === 1;
         const claseTipo = item.tipo === 'ejercicio' ? ' ejercicio' : '';
         const claseActivo = i === tabActivo ? ' activo' : '';
-        const quitar = esUltimoEjemplo ? '' : `<span class="tab-remove" data-tab-remove="${i}" title="Quitar">&times;</span>`;
+        const quitar = esUltimoEjemplo ? '' : `<span class="tab-remove" data-tab-remove="${i}" title="Quitar"><img src="../img/iconos/cancel.svg" alt=""></span>`;
         return `<span class="sim-tab${claseTipo}${claseActivo}" data-tab="${i}">${etiquetas[i]}${quitar}</span>`;
     }).join('');
 
@@ -736,6 +736,7 @@ async function guardarCambios() {
         .map(it => ({ titulo: (it.titulo || '').trim(), descripcion: (it.descripcion || '').trim(), codigo_csharp: it.codigo || '' }));
 
     if (!ejemplos.length) { mostrarToast('Debe haber al menos un ejemplo.', 'advertencia'); return; }
+    if (ejemplos.some(ej => !ej.enunciado)) { mostrarToast('Cada ejemplo necesita un enunciado.', 'advertencia'); return; }
     if (ejercicios.some(ej => !ej.titulo)) { mostrarToast('Cada ejercicio necesita un título.', 'advertencia'); return; }
     if (ejercicios.some(ej => !ej.descripcion)) { mostrarToast('Cada ejercicio necesita un enunciado.', 'advertencia'); return; }
 
