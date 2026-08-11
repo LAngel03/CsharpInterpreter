@@ -645,8 +645,8 @@ function ppProgresoGlobal() {
 function ppRenderStepper() {
     const grupo = ppGrupoActual();
     const label = document.getElementById('pp-step-label');
-    const prevBtn = document.getElementById('pp-step-prev');
-    const nextBtn = document.getElementById('pp-step-next');
+    const prevBtn = document.getElementById('pp-ejercicio-prev');
+    const nextBtn = document.getElementById('pp-ejercicio-next');
     const fill = document.getElementById('pp-stepper-fill');
     if (!grupo) return;
     const { n, total, resueltos } = ppProgresoGlobal();
@@ -737,22 +737,19 @@ async function initPonteApruebaSimulator(nombreTema) {
     const grupoInicial = ppGrupoActual();
 
     if (!document.getElementById('pp-stepper')) {
+        // Ya no lleva flechas — solo el contador. La navegación entre
+        // ejercicios se hizo con botones propios en la barra de abajo
+        // (ver "Ejercicio anterior"/"Siguiente ejercicio" en ppConectarBotones).
         const stepper = document.createElement('div');
         stepper.id = 'pp-stepper';
         stepper.className = 'pp-stepper';
-        stepper.innerHTML =
-            '<button class="pp-stepper__arrow" id="pp-step-prev">◀</button>' +
-            '<span class="pp-stepper__label" id="pp-step-label"></span>' +
-            '<button class="pp-stepper__arrow" id="pp-step-next">▶</button>';
+        stepper.innerHTML = '<span class="pp-stepper__label" id="pp-step-label"></span>';
         editorBody.parentNode.insertBefore(stepper, editorBody);
 
         const bar = document.createElement('div');
         bar.className = 'pp-stepper__bar';
         bar.innerHTML = '<i id="pp-stepper-fill"></i>';
         editorBody.parentNode.insertBefore(bar, editorBody);
-
-        document.getElementById('pp-step-prev').onclick = () => { ppStopPlay(_ppBtns()); ppIrA(ppGrupoActual().viewIndex - 1); };
-        document.getElementById('pp-step-next').onclick = () => { ppStopPlay(_ppBtns()); ppIrA(ppGrupoActual().viewIndex + 1); };
     }
 
     ppRenderGrupos();
@@ -833,6 +830,28 @@ function ppConectarBotones() {
         const codigoActual = ppMonacoEditor ? ppMonacoEditor.getValue() : ppCurrentCode;
         ppEjecutar(codigoActual);
     };
+
+    // Reemplazan a las flechas que antes vivían junto al contador de arriba
+    // (ver el bloque de "pp-stepper" más abajo) — misma función, nueva
+    // ubicación, para no repetir la navegación de ejercicios dos veces.
+    const controlsEl = document.querySelector('.editor-controls');
+    if (controlsEl && btns[1] && !document.getElementById('pp-ejercicio-prev')) {
+        const prevEj = document.createElement('button');
+        prevEj.className = 'ctrl-btn';
+        prevEj.id = 'pp-ejercicio-prev';
+        prevEj.textContent = 'Ejercicio anterior';
+        prevEj.onclick = () => { ppStopPlay(_ppBtns()); ppIrA(ppGrupoActual().viewIndex - 1); };
+        controlsEl.insertBefore(prevEj, btns[1]);
+
+        const nextEj = document.createElement('button');
+        nextEj.className = 'ctrl-btn';
+        nextEj.id = 'pp-ejercicio-next';
+        nextEj.textContent = 'Siguiente ejercicio';
+        nextEj.onclick = () => { ppStopPlay(_ppBtns()); ppIrA(ppGrupoActual().viewIndex + 1); };
+        controlsEl.insertBefore(nextEj, btns[1]);
+
+        ppRenderStepper();
+    }
 
     if (btns[1]) {
         btns[1].disabled = true;

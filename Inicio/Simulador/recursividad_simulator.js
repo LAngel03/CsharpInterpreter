@@ -399,10 +399,21 @@ function recConectarBotones() {
         recPlayTimer = setTimeout(tick, recGetDelay());
     };
 
+    const controls = document.querySelector('.editor-controls');
+    if (controls && !document.getElementById('sim-speed-slider')) {
+        const row = document.createElement('div');
+        row.className = 'sim-speed-row';
+        row.innerHTML =
+            '<label>Velocidad</label>' +
+            '<input type="range" id="sim-speed-slider" min="1" max="100" value="40">' +
+            '<span class="sim-speed-val" id="sim-speed-val">1×</span>';
+        controls.appendChild(row);
+    }
+
     const slider = document.getElementById('sim-speed-slider');
     const speedVal = document.querySelector('.sim-speed-val');
     if (slider && speedVal) {
-        slider.oninput = () => { speedVal.textContent = slider.value + '%'; };
+        slider.oninput = () => { speedVal.textContent = (parseFloat(slider.value) / 40).toFixed(1) + '×'; };
     }
 }
 
