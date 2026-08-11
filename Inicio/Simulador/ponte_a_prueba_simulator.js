@@ -370,7 +370,7 @@ async function ppValidarConBackend(codigo) {
         const veredicto = await window.ApiClient.validarEjercicio(ppItemActual.id, resultado.output || []);
         if (veredicto.correcto) {
             return {
-                texto: '¡Correcto!',
+                texto: '¡Correcto, redirigiendo a la siguiente lección!',
                 clase: 'pp-resultado-ok',
                 correcto: true,
                 // primeraVez lo manda el backend — evita que un reintento sobre
@@ -409,6 +409,18 @@ function ppMostrarVeredicto(v) {
         ppRenderStepper();
         if (typeof window.actualizarProgresoUsuario === 'function') window.actualizarProgresoUsuario();
     }
+
+    // Al resolver correctamente, pasa solo al siguiente ejercicio DE ESTE
+    // MISMO módulo tras un segundo — si ya era el último de la categoría,
+    // se queda aquí (cambiar de módulo lo sigue haciendo el alumno a mano).
+    setTimeout(() => {
+        const grupo = ppGrupoActual();
+        if (!grupo || ppItemActual !== grupo.items[grupo.viewIndex]) return;
+        if (grupo.viewIndex + 1 < grupo.items.length) {
+            ppStopPlay(_ppBtns());
+            ppIrA(grupo.viewIndex + 1);
+        }
+    }, 2000);
 }
 
 function ppMostrarPista() {
@@ -829,11 +841,17 @@ function ppAutoPlay(btns, onDone) {
 function ppConectarBotones() {
     const btns = _ppBtns();
 
-    if (btns[0]) btns[0].onclick = () => {
-        ppStopPlay(btns);
-        const codigoActual = ppMonacoEditor ? ppMonacoEditor.getValue() : ppCurrentCode;
-        ppEjecutar(codigoActual);
-    };
+    // "Volver al inicio" (texto del skeleton compartido) confunde aquí: no
+    // navega a ningún lado, solo vuelve a ejecutar el código actual desde
+    // el paso 1. Se renombra a algo que describa lo que realmente hace.
+    if (btns[0]) {
+        btns[0].textContent = 'Reiniciar ejercicio';
+        btns[0].onclick = () => {
+            ppStopPlay(btns);
+            const codigoActual = ppMonacoEditor ? ppMonacoEditor.getValue() : ppCurrentCode;
+            ppEjecutar(codigoActual);
+        };
+    }
 
     // Reemplazan a las flechas que antes vivían junto al contador de arriba
     // (ver el bloque de "pp-stepper" más abajo) — misma función, nueva
