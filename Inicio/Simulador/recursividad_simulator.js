@@ -256,14 +256,24 @@ function recCargarYEjecutar(codigo) {
 
 // ── Render de la pila de llamadas ─────────────────────────────
 
-function recBuildCallStackHtml(callStack) {
+// Orden "de manual": la llamada más externa (la primera, ej. Factorial(5))
+// arriba de todo y sin sangría; cada llamada más profunda se dibuja debajo
+// Y más indentada, como si se fueran apilando. La última — la llamada
+// actual, la más profunda — queda hasta abajo, con la mayor sangría.
+//
+// resaltarActual: cuando el paso actual es el desglose de una suma/multipli-
+// cación (ver REC_BINOP_LINE_RE más abajo), se ilumina esa llamada actual
+// (la de hasta abajo) — es la que está usando ese resultado, para que sea
+// más claro de dónde viene.
+function recBuildCallStackHtml(callStack, resaltarActual) {
     if (!callStack || !callStack.length) return '';
     let html = '<div class="rec-stack-panel"><div class="rec-stack-header">Pila de llamadas<span class="n">' + callStack.length + '</span></div>';
-    for (let i = callStack.length - 1; i >= 0; i--) {
+    for (let i = 0; i < callStack.length; i++) {
         const frame = callStack[i];
         const argsStr = Object.entries(frame.args).map(([k, v]) => k + ' = ' + recEscape(String(v))).join(', ');
-        const depth = callStack.length - 1 - i;
-        html += '<div class="rec-frame" style="margin-left:' + (depth * 12) + 'px">' +
+        const depth = i;
+        const esActual = i === callStack.length - 1 && resaltarActual;
+        html += '<div class="rec-frame' + (esActual ? ' rec-frame-activo' : '') + '" style="margin-left:' + (depth * 12) + 'px">' +
             '<span class="rec-frame-name">' + recEscape(frame.name) + '</span>' +
             '<span class="rec-frame-args">(' + recEscape(argsStr) + ')</span>' +
             '</div>';
@@ -274,17 +284,37 @@ function recBuildCallStackHtml(callStack) {
 
 // ── Render principal ──────────────────────────────────────────
 
+// Línea fuente del paso actual, para detectar si una variable que acaba de
+// cambiar viene de una suma o multiplicación de dos operandos (variable o
+// literal) — ej. Factorial: "resultado = n * anterior", Suma: "total = n +
+// resto" — y así mostrar "n × anterior = 120" en vez de solo "120".
+const REC_BINOP_LINE_RE = /^(?:int|double|float|string|bool|char)?\s*([A-Za-z_]\w*)\s*=\s*(\w+)\s*([+*])\s*(\w+)\s*;?$/;
+
+function recDesglosarBinop(match, val) {
+    if (!match) return null;
+    const simbolo = match[3] === '*' ? '×' : match[3];
+    return recEscape(match[2]) + ' ' + simbolo + ' ' + recEscape(match[4]) + ' = ' + recEscape(val);
+}
+
 function recBuildMemoriaHtml(state) {
     const ch = new Set(state.changed || []);
-    let html = recBuildCallStackHtml(state.callStack);
+
+    const lineaActual = (recMonacoEditor && state.currentLine)
+        ? recMonacoEditor.getModel().getLineContent(state.currentLine).trim()
+        : '';
+    const binopMatch = lineaActual.match(REC_BINOP_LINE_RE);
+    const seMuestraDesglose = !!(binopMatch && ch.has(binopMatch[1]));
+
+    let html = recBuildCallStackHtml(state.callStack, seMuestraDesglose);
 
     if (state.variables && state.variables.length) {
         html += '<div class="cs-mem-block"><div class="cs-mem-head">Variables<span class="n">' + state.variables.length + '</span></div>';
         state.variables.forEach(v => {
             const val = recFmtVal(v.value, v.type);
             const changed = ch.has(v.name);
+            const desglose = (changed && binopMatch && binopMatch[1] === v.name) ? recDesglosarBinop(binopMatch, val) : null;
             html += '<div class="cs-var-row' + (changed ? ' cs-flash' : '') + '">' +
-                recEscape(v.type) + ' <b>' + recEscape(v.name) + '</b> = ' + recEscape(val) + '</div>';
+                recEscape(v.type) + ' <b>' + recEscape(v.name) + '</b> = ' + (desglose || recEscape(val)) + '</div>';
         });
         html += '</div>';
     }
