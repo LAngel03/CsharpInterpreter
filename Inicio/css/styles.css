@@ -734,6 +734,38 @@ main {
     white-space: nowrap;
 }
 
+/* width:100% obliga a que esta fila SIEMPRE caiga en su propia línea dentro
+   de .editor-controls (que es flex-wrap) — sin esto, el slider competía por
+   espacio con los botones (Reiniciar/Ejercicio anterior/Siguiente/Pista/
+   Comprobar) en la misma línea y terminaba encimado con ellos. */
+.sim-speed-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.sim-speed-row label {
+    font-size: 0.78em;
+    color: #8a9ab5;
+    white-space: nowrap;
+}
+
+.sim-speed-row input[type=range] {
+    flex: 1;
+    accent-color: #04AA6D;
+    cursor: pointer;
+    height: 4px;
+}
+
+.sim-speed-val {
+    font-size: 0.78em;
+    color: #04AA6D;
+    min-width: 30px;
+    text-align: right;
+}
+
 .pbar {
     width: 100px;
     height: 4px;
@@ -1745,6 +1777,71 @@ pre {
     font-weight: 700;
     border-color: transparent !important;
     background: transparent !important;
+}
+
+/* ── Pila de llamadas (Recursividad) ── */
+.rec-stack-panel {
+    background: #1a1d2a;
+    border: 1px solid #3d4160;
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+}
+
+.rec-stack-header {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #7c85c2;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rec-stack-header .n {
+    background: #2d3050;
+    color: #a0a8d4;
+    border-radius: 10px;
+    padding: 0 6px;
+    font-size: 0.75em;
+}
+
+.rec-frame {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    padding: 3px 6px;
+    border-left: 2px solid #04AA6D;
+    margin-bottom: 3px;
+    background: #0f1018;
+    border-radius: 0 4px 4px 0;
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.rec-frame-name {
+    color: #04AA6D;
+    font-weight: 700;
+    font-family: 'Consolas', monospace;
+}
+
+.rec-frame-args {
+    color: #c5cae9;
+    font-family: 'Consolas', monospace;
+}
+
+/* Marco iluminado: la llamada que está usando el resultado en el desglose
+   de suma/multiplicación que se muestra en Variables (ver
+   recursividad_simulator.js::recBuildMemoriaHtml) */
+.rec-frame.rec-frame-activo {
+    border-left-color: var(--warn);
+    background: rgba(255, 159, 67, 0.14);
+    box-shadow: 0 0 0 1px rgba(255, 159, 67, 0.4);
+}
+
+.rec-frame-activo .rec-frame-name {
+    color: var(--warn);
 }
 
 /* Celda que se leyó en este paso (destello naranja) */

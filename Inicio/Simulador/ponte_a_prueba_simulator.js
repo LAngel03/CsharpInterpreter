@@ -61,7 +61,13 @@
             background: rgba(0,0,0,0.2); border-radius: 10px; padding: 0 7px; font-size: 0.85em;
         }
         .pp-grupo-tab.activo .n { background: rgba(0,0,0,0.15); }
-        .pp-grupo-tab.completo:not(.activo) { border-color: #04aa6d; color: #04aa6d; }
+        /* Categoría 100% resuelta: naranja SIEMPRE, incluso si es la que
+           tienes abierta ahora mismo — antes ":not(.activo)" la ocultaba
+           justo cuando terminabas el último ejercicio de esa categoría. */
+        .pp-grupo-tab.completo { border-color: #ff9f43; color: #ff9f43; }
+        .pp-grupo-tab.completo.activo { background: #ff9f43; border-color: #ff9f43; color: #08131a; }
+        .pp-grupo-tab.completo .n { background: rgba(0,0,0,0.2); }
+        .pp-grupo-tab.completo.activo .n { background: rgba(0,0,0,0.15); }
     `;
     document.head.appendChild(style);
 })();
@@ -472,18 +478,37 @@ function ppBuildForBoxHtml(forCtx) {
     '</div>';
 }
 
+// Línea fuente del paso actual, para detectar si una variable que acaba de
+// cambiar viene de una suma o multiplicación de dos operandos (variable o
+// literal) — ej. "total = a + resto" o "resultado = anterior * 2" en los
+// ejercicios de recursividad — y así mostrar "a + resto = 8" en vez de
+// solo "8". Mismo criterio que recursividad_simulator.js.
+const PP_BINOP_LINE_RE = /^(?:int|double|float|string|bool|char)?\s*([A-Za-z_]\w*)\s*=\s*(\w+)\s*([+*])\s*(\w+)\s*;?$/;
+
+function ppDesglosarBinop(match, val) {
+    if (!match) return null;
+    const simbolo = match[3] === '*' ? '×' : match[3];
+    return ppEscape(match[2]) + ' ' + simbolo + ' ' + ppEscape(match[4]) + ' = ' + ppEscape(val);
+}
+
 function ppBuildMemoriaHtml(state) {
     const ch = new Set(state.changed || []);
     const rd = new Set(state.read || []);
     let html = ppBuildForBoxHtml(state.forCtx);
+
+    const lineaActual = (ppMonacoEditor && state.currentLine)
+        ? ppMonacoEditor.getModel().getLineContent(state.currentLine).trim()
+        : '';
+    const binopMatch = lineaActual.match(PP_BINOP_LINE_RE);
 
     if (state.variables && state.variables.length) {
         html += '<div class="cs-mem-block"><div class="cs-mem-head">Variables<span class="n">' + state.variables.length + '</span></div>';
         state.variables.forEach(v => {
             const f = ppFmtVal(v.value, v.type);
             const changed = ch.has(v.name);
+            const desglose = (changed && binopMatch && binopMatch[1] === v.name) ? ppDesglosarBinop(binopMatch, f.text) : null;
             html += '<div class="cs-var-row' + (changed ? ' cs-flash' : '') + '">' +
-                ppEscape(v.type) + ' <b>' + ppEscape(v.name) + '</b> = ' + ppEscape(f.text) + '</div>';
+                ppEscape(v.type) + ' <b>' + ppEscape(v.name) + '</b> = ' + (desglose || ppEscape(f.text)) + '</div>';
         });
         html += '</div>';
     }

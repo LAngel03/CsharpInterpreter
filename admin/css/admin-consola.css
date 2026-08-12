@@ -739,6 +739,18 @@
     font-family: 'Consolas', monospace;
 }
 
+/* Marco iluminado: la llamada que está usando el resultado en el desglose
+   de suma/multiplicación que se muestra en Variables. */
+.rec-frame.rec-frame-activo {
+    border-left-color: var(--warn);
+    background: rgba(255, 159, 67, 0.14);
+    box-shadow: 0 0 0 1px rgba(255, 159, 67, 0.4);
+}
+
+.rec-frame-activo .rec-frame-name {
+    color: var(--warn);
+}
+
 /* ── Sistema de archivos virtual (Archivos) ── */
 .arc-fs-panel {
     background: #1a1d2a;
