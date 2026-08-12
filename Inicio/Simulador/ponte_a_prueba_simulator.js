@@ -17,7 +17,7 @@
     style.textContent = `
         .pp-line-editable { background: rgba(224,82,99,0.15); }
         .pp-line-editable-gutter { border-left: 3px solid #e05263; }
-        .pp-ejercicio-meta { font-size: 0.85em; opacity: .75; margin-bottom: 4px; }
+        .pp-ejercicio-meta { font-size: 0.95em; opacity: .75; margin-bottom: 4px; }
         .pp-resultado {
             margin: 8px 14px; padding: 10px 14px; border-radius: 8px;
             font-family: monospace; white-space: pre-wrap; display: none;
@@ -597,6 +597,7 @@ function ppAplicarItem(it) {
     ppCurrentCode = it.codigo;
     ppUltimoCodigoValido = it.codigo;
     ppSetDescripcion(
+        (it.titulo ? '<div class="pp-ejercicio-meta">Titulo: <b>' + ppEscape(it.titulo) + '</b></div>' : '') +
         (it.subtemaTitulo ? '<div class="pp-ejercicio-meta">Tema: <b>' + ppEscape(it.subtemaTitulo) + '</b></div>' : '') +
         (it.enunciado || ''),
         true
@@ -716,6 +717,7 @@ async function initPonteApruebaSimulator(nombreTema) {
                 const items = g.ejercicios.map((ej, i) => ({
                     id: ej.id,
                     label: 'Ejercicio ' + (i + 1),
+                    titulo: ej.titulo || 'Ejercicio ' + (i + 1),
                     codigo: ej.codigo_con_errores || '',
                     enunciado: ej.descripcion || '',
                     subtemaTitulo: (ej.subtemas && ej.subtemas.titulo) || '',

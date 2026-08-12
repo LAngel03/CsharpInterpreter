@@ -1679,7 +1679,7 @@ tbody tr:last-child td {
 .btn-cerrar-header img {
     width: 18px;
     height: 18px;
-    filter: brightness(0) invert(1);   /* pone el ícono en blanco */
+    filter: brightness(0) invert(1); 
     opacity: 0.85;
 }
 
@@ -1874,4 +1874,58 @@ tbody td.num {
 .tab-add-btn--ejercicio:hover {
     background: rgba(123, 44, 191, 0.28);
     border-color: #7B2CBF;
+}
+
+/* ── Buscador de ejercicios (Ponte a prueba) ────────────────────── */
+.practica-buscador-wrap {
+    position: relative;
+    flex-shrink: 0;
+    width: 260px;
+}
+
+.practica-buscador {
+    width: 100%;
+    background: var(--console-bg);
+    border: 1px solid var(--console-border);
+    color: var(--text);
+    border-radius: 9px;
+    padding: 9px 14px 9px 38px;
+    font-family: inherit;
+    font-size: .86rem;
+    outline: none;
+    transition: border-color .15s;
+}
+
+.practica-buscador::placeholder {
+    color: var(--text-mut);
+}
+
+.practica-buscador:focus {
+    border-color: var(--green-main);
+}
+
+.practica-buscador-wrap::before {
+    content: "";
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 15px;
+    height: 15px;
+    background-color: var(--text-dim);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat center;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat center;
+    pointer-events: none;
+    transition: background-color .15s;
+}
+
+.practica-buscador-wrap:focus-within::before {
+    background-color: var(--green-main);
+}
+
+/* En móvil ocupa todo el ancho disponible, no un ancho fijo */
+@media (max-width: 680px) {
+    .practica-buscador-wrap {
+        width: 100%;
+    }
 }

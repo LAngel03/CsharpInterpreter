@@ -260,9 +260,9 @@
                         </div>
                     </div>
                     <div class="block__body">
-                        <div class="field"><label>Título <span class="req">*</span></label><input class="input"
+                        <div class="field"><label>Título</label><input class="input"
                                 id="f-titulo" type="text" oninput="markDirty('concepto')"></div>
-                        <div class="field"><label>Definición <span class="req">*</span></label><textarea
+                        <div class="field"><label>Definición</label><textarea
                                 class="textarea" id="f-definicion" oninput="markDirty('concepto')"></textarea>
                             <div class="hint">Puedes usar etiquetas HTML simples como &lt;strong&gt; o &lt;ul&gt; para
                                 dar formato.</div>
@@ -306,15 +306,15 @@
                                 id="f-titulo-ejemplo" oninput="markDirty('ejemplos')">
                         </div>
                         <div class="field" id="enunciadoEjemploWrap" style="display:none"><label>Enunciado del ejemplo
-                                <span class="req">*</span></label><textarea class="textarea"
-                                id="f-enunciado-ejemplo" oninput="markDirty('ejemplos')"></textarea>
+                                </label><textarea class="textarea" id="f-enunciado-ejemplo"
+                                oninput="markDirty('ejemplos')"></textarea>
                         </div>
                         <div class="field" id="tituloEjercicioWrap" style="display:none"><label>Título del ejercicio
-                                <span class="req">*</span></label><input type="text" class="input"
+                                </label><input type="text" class="input"
                                 id="f-titulo-ejercicio" oninput="markDirty('ejemplos')">
                         </div>
                         <div class="field" id="enunciadoWrap" style="display:none"><label>Enunciado del ejercicio
-                                <span class="req">*</span></label><textarea class="textarea" id="f-enunciado"
+                                </label><textarea class="textarea" id="f-enunciado"
                                 oninput="markDirty('ejemplos')"></textarea>
                         </div>
                         <!-- Consola de vista previa: MISMO diseño que ve el estudiante
@@ -424,9 +424,8 @@
                  formulario, no a la pantalla desde donde se creó. -->
             <section class="view" id="view-practica">
                 <div class="page-head">
-                    <div class="title">
-                        <h2>Ponte a prueba</h2>
-                        <p>Banco de ejercicios de práctica, organizado por sección</p>
+                    <div class="practica-buscador-wrap">
+                        <input type="text" id="practicaBuscador" placeholder="Buscar por título..." class="practica-buscador">
                     </div>
                     <div class="grow"></div>
                     <button class="btn-add" onclick="nuevoEjercicioPractica()">
@@ -483,8 +482,7 @@
                         <img src="../img/iconos/cancel.svg" class="btn-icon-img" alt="">
                         Cancelar
                     </button>
-                    <button class="btn btn--save btn--sm" id="btnGuardarGlosario"
-                        onclick="guardarTerminoGlosario()">
+                    <button class="btn btn--save btn--sm" id="btnGuardarGlosario" onclick="guardarTerminoGlosario()">
                         <img src="../img/iconos/guardar.svg" class="btn-icon-img" alt="">
                         Guardar término
                     </button>
@@ -538,8 +536,7 @@
                         <img src="../img/iconos/cancel.svg" class="btn-icon-img" alt="">
                         Cancelar
                     </button>
-                    <button class="btn btn--save btn--sm" id="btnGuardarPractica"
-                        onclick="guardarEjercicioPractica()">
+                    <button class="btn btn--save btn--sm" id="btnGuardarPractica" onclick="guardarEjercicioPractica()">
                         <img src="../img/iconos/guardar.svg" class="btn-icon-img" alt="">
                         Guardar ejercicio
                     </button>

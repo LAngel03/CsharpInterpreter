@@ -14,6 +14,7 @@ let practicaGrupos = [];
 let practicaCategoriaActiva = 0;
 let practicaCategoriasDisponibles = []; // [{ id, nombre, subtemas: [{id, slug, titulo}] }]
 let practicaEditandoId = null;          // null = creando uno nuevo
+let practicaTextoBusqueda = '';
 
 function _escaparHtmlPractica(s) {
     return String(s == null ? '' : s)
@@ -63,7 +64,7 @@ function renderPracticaTabs() {
     });
 }
 
-function renderPracticaLista() {
+/* function renderPracticaLista() {
     const listaEl = document.getElementById('practicaLista');
     const tituloEl = document.getElementById('practicaCategoriaTitulo');
     const contadorEl = document.getElementById('practicaContador');
@@ -95,6 +96,73 @@ function renderPracticaLista() {
             </div>
         </div>
     `).join('');
+} */
+
+function renderPracticaLista() {
+    const listaEl = document.getElementById('practicaLista');
+    const tituloEl = document.getElementById('practicaCategoriaTitulo');
+    const contadorEl = document.getElementById('practicaContador');
+    if (!listaEl) return;
+
+    const grupo = practicaGrupos[practicaCategoriaActiva];
+    if (!grupo || !grupo.ejercicios.length) {
+        if (tituloEl) tituloEl.textContent = 'Sin ejercicios todavía';
+        if (contadorEl) contadorEl.textContent = '—';
+        listaEl.innerHTML = '<p class="practica-vacio">Todavía no hay ejercicios de práctica. Usa "+ Nuevo ejercicio" para agregar el primero.</p>';
+        return;
+    }
+
+    const texto = practicaTextoBusqueda.trim().toLowerCase();
+    const ejerciciosFiltrados = texto
+        ? grupo.ejercicios.filter(ej => (ej.titulo || '').toLowerCase().includes(texto))
+        : grupo.ejercicios;
+
+    if (tituloEl) tituloEl.textContent = grupo.categoria;
+    if (contadorEl) {
+        contadorEl.textContent = texto
+            ? ejerciciosFiltrados.length + ' de ' + grupo.ejercicios.length + ' ejercicios'
+            : grupo.ejercicios.length + (grupo.ejercicios.length === 1 ? ' ejercicio' : ' ejercicios');
+    }
+
+    if (!ejerciciosFiltrados.length) {
+        listaEl.innerHTML = '<p class="practica-vacio">No se encontraron ejercicios con ese título.</p>';
+        return;
+    }
+
+    listaEl.innerHTML = ejerciciosFiltrados.map(ej => `
+        <div class="fila-practica">
+            <div>
+                <b>${_escaparHtmlPractica(ej.titulo)}</b>
+                <div class="sub">${_escaparHtmlPractica((ej.subtemas && ej.subtemas.titulo) || '')}</div>
+            </div>
+            <div class="row-actions">
+                <button class="icon-btn" title="Editar" onclick="editarEjercicioPractica(${ej.id})">
+                    <img src="../img/iconos/edit.svg" alt="">
+                </button>
+                <button class="icon-btn danger" title="Eliminar" onclick="eliminarEjercicioPractica(${ej.id})">
+                    <img src="../img/iconos/eliminar.svg" alt="">
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function conectarBuscadorPractica() {
+    const input = document.getElementById('practicaBuscador');
+    if (!input || input.dataset.conectado) return; // evita conectar el listener dos veces
+    input.dataset.conectado = 'true';
+    input.addEventListener('input', () => {
+        practicaTextoBusqueda = input.value;
+        renderPracticaLista();
+    });
+}
+
+function mostrarVistaPractica() {
+    _ocultarTodasLasVistas();
+    const view = document.getElementById('view-practica');
+    if (view) view.classList.add('show');
+    conectarBuscadorPractica(); // 👈 nuevo
+    cargarPractica();
 }
 
 // ── Selector "Sección / tema" (subtema_id), agrupado por categoría ────
