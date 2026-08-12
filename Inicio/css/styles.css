@@ -1547,9 +1547,10 @@ pre {
 }
 
 .sim-ejemplo-badge {
+    
     display: inline-block;
     color: var(--green-main);
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     font-weight: 700;
     padding: 2px -1px;
     border-radius: 20px;
