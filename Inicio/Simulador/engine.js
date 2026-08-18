@@ -741,11 +741,30 @@
     const changed = new Set();
     let rows = 0, cols = 0, values = [];
     if (stmt.init) {
-      if (stmt.init.type !== "MatrixCreation")
+      if (stmt.init.type === "MatrixCreation") {
+        rows = Math.trunc(this.evalExpr(stmt.init.rows, env, changed));
+        cols = Math.trunc(this.evalExpr(stmt.init.cols, env, changed));
+        for (let r = 0; r < rows; r++) values.push(new Array(cols).fill(null));
+      } else if (stmt.init.type === "ArrayInitializer") {
+        // Literal directo, sin "new": int[,] temps = { {25,28,22}, {30,31,29}, {18,20,17} };
+        // Cada elemento de la lista externa debe ser a su vez una lista { ... }
+        // (una fila), y todas las filas deben traer la misma cantidad de columnas.
+        const filas = stmt.init.elements;
+        rows = filas.length;
+        cols = null;
+        values = filas.map(fila => {
+          if (fila.type !== "ArrayInitializer")
+            throw new RuntimeError("Cada fila de la matriz debe ser una lista entre llaves { }", stmt.line);
+          const vals = fila.elements.map(e => coerce(stmt.dataType, this.evalExpr(e, env, changed)));
+          if (cols === null) cols = vals.length;
+          else if (vals.length !== cols)
+            throw new RuntimeError("Todas las filas deben tener la misma cantidad de columnas", stmt.line);
+          return vals;
+        });
+        if (cols === null) cols = 0;
+      } else {
         throw new RuntimeError("Inicializador de matriz no válido", stmt.line);
-      rows = Math.trunc(this.evalExpr(stmt.init.rows, env, changed));
-      cols = Math.trunc(this.evalExpr(stmt.init.cols, env, changed));
-      for (let r = 0; r < rows; r++) values.push(new Array(cols).fill(null));
+      }
     }
     env.define(stmt.name, { kind: "matrix", type: stmt.dataType, rows, cols, values });
     changed.add(stmt.name);
