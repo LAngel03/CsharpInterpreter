@@ -1063,7 +1063,7 @@ function simGetItems(tema) {
         enunciado: null
     }));
     const ej = (typeof EJERCICIOS !== 'undefined') ? EJERCICIOS[tema] : null;
-    if (ej) items.push({ label: 'Ejercicio', codigo: ej.codigo, enunciado: ej.enunciado, esEjercicio: true });
+    if (ej) items.push({ label: 'Caso ' + (items.length + 1), codigo: ej.codigo, enunciado: ej.enunciado, esEjercicio: true });
     return items;
 }
 
@@ -1075,7 +1075,7 @@ function simSetDescripcion(html, tipo, titulo) {
     if (!elDesc) return;
     if (html && tipo) {
         let prefijo = '';
-        if (tipo === 'ejercicio') prefijo = '<span class="sim-ejercicio-badge">Ejercicio: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
+        if (tipo === 'Caso') prefijo = '<span class="sim-ejercicio-badge">Caso: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
         else if (tipo === 'ejemplo') prefijo = '<span class="sim-ejemplo-badge">Ejemplo: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
         elDesc.innerHTML = prefijo + html;
         elDesc.style.display = 'block';
@@ -1157,7 +1157,7 @@ function simGetItemsDesdeSubtema(subtema, slugFallback) {
     const ejercicios = Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [];
     ejercicios.forEach((ej, i) => {
         items.push({
-            label: ejercicios.length > 1 ? 'Ejercicio ' + (i + 1) : 'Ejercicio',
+            label: ejercicios.length > 1 ? 'Caso ' + (i + 1) : 'Caso',
             codigo: ej.codigo_csharp,
             enunciado: ej.descripcion,
             titulo: ej.titulo || null,
