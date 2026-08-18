@@ -119,7 +119,7 @@ function arcGetItemsDesdeSubtema(subtema) {
     const ejercicios = Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [];
     ejercicios.forEach((ej, i) => {
         items.push({
-            label: ejercicios.length > 1 ? 'Ejercicio ' + (i + 1) : 'Ejercicio',
+            label: ejercicios.length > 1 ? 'Caso ' + (i + 1) : 'Caso',
             codigo: ej.codigo_csharp,
             enunciado: ej.descripcion,
             titulo: ej.titulo || null,
@@ -141,7 +141,7 @@ function arcSetDescripcion(html, tipo, titulo) {
     if (!el) return;
     if (html && tipo) {
         let prefijo = '';
-        if (tipo === 'ejercicio') prefijo = '<span class="sim-ejercicio-badge">Ejercicio: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
+        if (tipo === 'Caso') prefijo = '<span class="sim-ejercicio-badge">Caso: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
         else if (tipo === 'ejemplo') prefijo = '<span class="sim-ejemplo-badge">Ejemplo: </span>' + (titulo ? '<strong>' + titulo + '</strong><br>' : '');
         el.innerHTML = prefijo + html;
         el.style.display = 'block';
@@ -571,7 +571,7 @@ async function initArchivosSimulador(tema) {
     if (tabsEl) {
         tabsEl.innerHTML = items.map((it, i) =>
             '<button class="sim-tab' + (i === 0 ? ' activo' : '') +
-            (it.esEjercicio ? ' ejercicio' : '') +
+            (it.esEjercicio ? ' Caso' : '') +
             '" data-idx="' + i + '">' + it.label + '</button>'
         ).join('');
         tabsEl.querySelectorAll('.sim-tab').forEach(btn => {
