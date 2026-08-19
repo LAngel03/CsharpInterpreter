@@ -671,7 +671,7 @@ async function initArraySimulator(nombreTema) {
     // se toca aquí — sigue visible siempre.
     function mostrarDescripcionItem(it) {
         if (it.esEjercicio && it.enunciado) {
-            arrSetDescripcion(it.enunciado, 'ejercicio', it.titulo);
+            arrSetDescripcion(it.enunciado, 'Caso', it.titulo);
         } else if (it.enunciado) {
             arrSetDescripcion(it.enunciado, 'ejemplo', it.titulo);
         } else {

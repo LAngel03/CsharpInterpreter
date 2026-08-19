@@ -1153,7 +1153,7 @@ function simGetItemsDesdeSubtema(subtema, slugFallback) {
 
     // Los ejercicios vienen APARTE, en subtema.ejercicios (lista de la BD).
     // Campos reales: titulo, descripcion (enunciado) y codigo_csharp (solución).
-    // La pestaña siempre dice "Ejercicio N"; el título se muestra arriba del enunciado.
+    // La pestaña siempre dice "Caso N"; el título se muestra arriba del enunciado.
     const ejercicios = Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [];
     ejercicios.forEach((ej, i) => {
         items.push({
@@ -1223,7 +1223,7 @@ async function initSimulador(tema) {
     // el concepto general del tema vive aparte, en #tema-descripcion, y no
     // se toca aquí — sigue visible siempre.
     function mostrarDescripcionItem(it) {
-        if (it.esEjercicio && it.enunciado) simSetDescripcion(it.enunciado, 'ejercicio', it.titulo);
+        if (it.esEjercicio && it.enunciado) simSetDescripcion(it.enunciado, 'Caso', it.titulo);
         else if (it.enunciado) simSetDescripcion(it.enunciado, 'ejemplo', it.titulo);
         else simSetDescripcion(null, null);
     }
