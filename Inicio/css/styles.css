@@ -1035,6 +1035,7 @@ pre {
 
 /* Hero */
 .hero {
+    
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 60px;
@@ -1042,31 +1043,32 @@ pre {
     padding: 70px 60px 60px 60px;
     border-bottom: 1px solid #2a2d3a;
     position: relative;
+    min-height: 450px;
     /* necesario para el ::before */
     overflow: hidden;
     /* recorta la imagen al área del hero */
 }
-
-/* Imagen de fondo difuminada que abarca todo el hero */
+/* Imagen de fondo del hero, SIN difuminado */
 .hero::before {
     content: "";
     position: absolute;
     inset: 0;
-    /* cubre top/right/bottom/left = 0 */
-    background-image: url("../../img/Diagrama_De_Flujo.png");
+    height: 450px;
+    
+
+    background-image: url("../../img/Gerarquia_De_Operadores.png");
     background-size: cover;
-    /* la imagen se adapta a todo el hero */
     background-position: center;
     background-repeat: no-repeat;
-    filter: blur(10px) brightness(0.4);
-    /* difuminado + oscurecido para leer el texto */
-    transform: scale(1.1);
-    /* evita bordes transparentes del blur */
+
+    /* Solo oscurece ligeramente la imagen */
+    filter: brightness(0.4);
+
     z-index: 0;
 }
 
 /* El contenido del hero queda POR ENCIMA de la imagen */
-.hero>* {
+.hero > * {
     position: relative;
     z-index: 1;
 }
@@ -2257,4 +2259,14 @@ pre {
 
 .confirm-btn--danger:hover {
     background: #c8455a;
+}
+
+/* Contenedor de la imagen — separación con el hero y el glosario */
+.inicio-gerarquiaDeOperadores {
+    display: flex;
+    justify-content: center;
+    padding: 30px 24px;
+    background-color: #1a1b22;
+    border-top: 1px solid #2a2d3a;
+    border-bottom: 1px solid #2a2d3a;
 }
