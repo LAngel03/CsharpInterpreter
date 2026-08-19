@@ -563,7 +563,7 @@ async function initArchivosSimulador(tema) {
     // el concepto general del tema vive aparte, en #tema-descripcion, y no
     // se toca aquí — sigue visible siempre.
     function mostrarDescripcionItem(it) {
-        if (it.esEjercicio && it.enunciado) arcSetDescripcion(it.enunciado, 'ejercicio', it.titulo);
+        if (it.esEjercicio && it.enunciado) arcSetDescripcion(it.enunciado, 'Caso', it.titulo);
         else if (it.enunciado) arcSetDescripcion(it.enunciado, 'ejemplo', it.titulo);
         else arcSetDescripcion(null, null);
     }
@@ -571,7 +571,7 @@ async function initArchivosSimulador(tema) {
     if (tabsEl) {
         tabsEl.innerHTML = items.map((it, i) =>
             '<button class="sim-tab' + (i === 0 ? ' activo' : '') +
-            (it.esEjercicio ? ' Caso' : '') +
+            (it.esEjercicio ? ' ejercicio' : '') +
             '" data-idx="' + i + '">' + it.label + '</button>'
         ).join('');
         tabsEl.querySelectorAll('.sim-tab').forEach(btn => {

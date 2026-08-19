@@ -579,7 +579,7 @@ async function initRecursividadSimulador(tema) {
     // el concepto general del tema vive aparte, en #tema-descripcion, y no
     // se toca aquí — sigue visible siempre.
     function mostrarDescripcionItem(it) {
-        if (it.esEjercicio && it.enunciado) recSetDescripcion(it.enunciado, 'ejercicio', it.titulo);
+        if (it.esEjercicio && it.enunciado) recSetDescripcion(it.enunciado, 'Caso', it.titulo);
         else if (it.enunciado) recSetDescripcion(it.enunciado, 'ejemplo', it.titulo);
         else recSetDescripcion(null, null);
     }

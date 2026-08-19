@@ -526,11 +526,11 @@ async function eliminarTerminoGlosario(id) {
 let itemsActuales = [];
 let tabActivo = 0;
 
-// Etiquetas "Ejemplo N" / "Ejercicio N" según la posición dentro de su propio tipo
+// Etiquetas "Ejemplo N" / "Caso N" según la posición dentro de su propio tipo
 function etiquetasItems() {
     let iEj = 0, iEjer = 0;
     return itemsActuales.map(it => {
-        if (it.tipo === 'ejercicio') { iEjer++; return 'Ejercicio ' + iEjer; }
+        if (it.tipo === 'ejercicio') { iEjer++; return 'Caso ' + iEjer; }
         iEj++; return 'Ejemplo ' + iEj;
     });
 }
@@ -724,8 +724,8 @@ async function guardarCambios() {
 
     if (!ejemplos.length) { mostrarToast('Debe haber al menos un ejemplo.', 'advertencia'); return; }
     if (ejemplos.some(ej => !ej.enunciado)) { mostrarToast('Cada ejemplo necesita un enunciado.', 'advertencia'); return; }
-    if (ejercicios.some(ej => !ej.titulo)) { mostrarToast('Cada ejercicio necesita un título.', 'advertencia'); return; }
-    if (ejercicios.some(ej => !ej.descripcion)) { mostrarToast('Cada ejercicio necesita un enunciado.', 'advertencia'); return; }
+    if (ejercicios.some(ej => !ej.titulo)) { mostrarToast('Cada caso necesita un título.', 'advertencia'); return; }
+    if (ejercicios.some(ej => !ej.descripcion)) { mostrarToast('Cada caso necesita un enunciado.', 'advertencia'); return; }
 
     const datos = { titulo, definicion, ejemplos, ejercicios };
 
@@ -749,7 +749,7 @@ async function guardarCambios() {
         if (ejerciciosConfirmados) {
             flashStatus('Cambios guardados ✓', true, seccionesAGuardar);
         } else {
-            flashStatus('Guardado, pero el backend no devolvió los ejercicios — revisar backend', false, seccionesAGuardar);
+            flashStatus('Guardado, pero el backend no devolvió los casos — revisar backend', false, seccionesAGuardar);
         }
     } catch (err) {
         console.error(err);
