@@ -1154,7 +1154,11 @@ function simGetItemsDesdeSubtema(subtema, slugFallback) {
     // Los ejercicios vienen APARTE, en subtema.ejercicios (lista de la BD).
     // Campos reales: titulo, descripcion (enunciado) y codigo_csharp (solución).
     // La pestaña siempre dice "Caso N"; el título se muestra arriba del enunciado.
-    const ejercicios = Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [];
+    // Solo modo='demostracion': subtema.ejercicios también trae los de "Ponte
+    // a prueba" (modo='practica'), y esos no deben mostrarse aquí como Caso
+    // — su codigo_csharp es la solución que el alumno debe encontrar solo.
+    const ejercicios = (Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [])
+        .filter(ej => (ej.modo || 'demostracion') === 'demostracion');
     ejercicios.forEach((ej, i) => {
         items.push({
             label: ejercicios.length > 1 ? 'Caso ' + (i + 1) : 'Caso',

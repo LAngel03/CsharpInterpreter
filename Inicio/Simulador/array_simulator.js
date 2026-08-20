@@ -270,7 +270,11 @@ function arrGetItemsDesdeSubtema(subtema, slug) {
         esEjercicio: false
     }));
 
-    const ejercicios = Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [];
+    // Solo modo='demostracion': subtema.ejercicios también trae los de "Ponte
+    // a prueba" (modo='practica'), cuyo codigo_csharp es la solución que el
+    // alumno debe encontrar solo — no deben mostrarse aquí como Caso.
+    const ejercicios = (Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [])
+        .filter(ej => (ej.modo || 'demostracion') === 'demostracion');
     ejercicios.forEach((ej, i) => {
         items.push({
             label: ejercicios.length > 1 ? 'Caso ' + (i + 1) : 'Caso',

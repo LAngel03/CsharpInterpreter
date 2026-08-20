@@ -121,7 +121,10 @@ function recGetItemsDesdeSubtema(subtema) {
 
     // Los ejercicios vienen APARTE, en subtema.ejercicios (lista de la BD).
     // Campos reales: titulo, descripcion (enunciado) y codigo_csharp (solución).
-    const ejercicios = Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [];
+    // Solo modo='demostracion': los de "Ponte a prueba" (modo='practica') no
+    // deben mostrarse aquí — su codigo_csharp es la solución del ejercicio.
+    const ejercicios = (Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [])
+        .filter(ej => (ej.modo || 'demostracion') === 'demostracion');
     ejercicios.forEach((ej, i) => {
         items.push({
             label: ejercicios.length > 1 ? 'Caso ' + (i + 1) : 'Caso',

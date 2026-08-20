@@ -676,9 +676,15 @@ async function cargarTema(slug) {
     itemsActuales = (Array.isArray(t.ejemplos) ? t.ejemplos : []).map(ej => ({
         tipo: 'ejemplo', codigo: ej.codigo || '', enunciado: ej.enunciado || '', titulo: ej.titulo || ''
     }));
-    (Array.isArray(t.ejercicios) ? t.ejercicios : []).forEach(ej => {
-        itemsActuales.push({ tipo: 'ejercicio', codigo: ej.codigo_csharp || '', descripcion: ej.descripcion || '', titulo: ej.titulo || '' });
-    });
+    // Solo modo='demostracion': t.ejercicios también trae los de "Ponte a
+    // prueba" (modo='practica'), que se administran aparte en su propio
+    // módulo — mostrarlos aquí como "Caso" permitía editarlos o borrarlos
+    // por accidente desde esta pantalla.
+    (Array.isArray(t.ejercicios) ? t.ejercicios : [])
+        .filter(ej => (ej.modo || 'demostracion') === 'demostracion')
+        .forEach(ej => {
+            itemsActuales.push({ tipo: 'ejercicio', codigo: ej.codigo_csharp || '', descripcion: ej.descripcion || '', titulo: ej.titulo || '' });
+        });
     if (!itemsActuales.length) itemsActuales.push({ tipo: 'ejemplo', codigo: '', enunciado: '', titulo: '' });
 
     temaActual = slug;
