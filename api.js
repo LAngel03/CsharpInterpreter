@@ -1,215 +1,204 @@
-// js/api.js
+// Capa delgada sobre la API REST del backend, expuesta globalmente como window.ApiClient.
 
 const API_BASE_URL = 'https://api-csharp-interpreter.onrender.com/api';
+// Lee el token de sesión actual desde el almacenamiento local.
 function getToken() {
-  return localStorage.getItem('token'); 
+    return localStorage.getItem('token'); 
 }
 
+// Envía una petición JSON autenticada al backend y maneja sesión vencida/errores de respuesta.
 async function apiFetch(path, options = {}) {
-  // skipAuthRedirect: para /auth/login y /auth/register, que también
-  // responden 401 por credenciales incorrectas (no por sesión vencida) —
-  // ahí el 401 se debe mostrar como error de formulario, no mandar al login.
-  const { skipAuthRedirect, ...fetchOptions } = options;
+    // skipAuthRedirect deja que login/registro manejen su propio 401 (credenciales incorrectas) como error de formulario.
+    const { skipAuthRedirect, ...fetchOptions } = options;
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...fetchOptions,
-    // GET sin esto puede servirse cacheado por el navegador (perfil,
-    // progreso) y mostrar datos viejos hasta un refresh manual.
-    cache: 'no-store',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getToken()}`,
-      ...(fetchOptions.headers || {})
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+        ...fetchOptions,
+        // Desactiva el caché del navegador para que las peticiones GET siempre traigan datos frescos.
+        cache: 'no-store',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken()}`,
+            ...(fetchOptions.headers || {})
+        }
+    });
+
+    // Token ausente o vencido: limpia la sesión local y manda al usuario de vuelta al login.
+    if (res.status === 401 && !skipAuthRedirect) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('usuario');
+        if (!/(^|\/)index\.html$/.test(location.pathname) && location.pathname !== '/') {
+            window.location.replace('../index.html');
+        }
+        throw new Error('Tu sesión expiró. Inicia sesión de nuevo.');
     }
-  });
 
-  // Token ausente/inválido/vencido: seguir usando la página solo genera más
-  // errores en cadena (como los que viste: 401 tras 401 en cada petición).
-  // Se cierra la sesión local y se manda directo al login.
-  if (res.status === 401 && !skipAuthRedirect) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('usuario');
-    if (!/(^|\/)index\.html$/.test(location.pathname) && location.pathname !== '/') {
-      window.location.replace('../index.html');
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Error ${res.status} al consultar ${path}`);
     }
-    throw new Error('Tu sesión expiró. Inicia sesión de nuevo.');
-  }
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `Error ${res.status} al consultar ${path}`);
-  }
-  return res.json();
+    return res.json();
 }
 
-// ── Autenticación ─────────────────────────────────────────
-// Ambas rutas son públicas en el backend (sin authMiddleware), así que
-// el header Authorization: Bearer null que manda apiFetch por defecto
-// simplemente se ignora ahí. skipAuthRedirect porque login SÍ responde 401
-// para "matrícula o contraseña incorrectos" — eso es un error de formulario,
-// no una sesión vencida, así que no debe redirigir a ningún lado.
-
+// Autenticación: ambos endpoints son públicos en el backend, así que el header por defecto (sin sesión) se ignora.
 function login(matricula, password) {
-  return apiFetch('/auth/login', {
-    method: 'POST',
-    skipAuthRedirect: true,
-    body: JSON.stringify({ matricula, password })
-  });
+    return apiFetch('/auth/login', {
+        method: 'POST',
+        skipAuthRedirect: true,
+        body: JSON.stringify({ matricula, password })
+    });
 }
 
 function register({ matricula, nombre, apellido_paterno, apellido_materno, password, grupo_id }) {
-  return apiFetch('/auth/register', {
-    method: 'POST',
-    skipAuthRedirect: true,
-    body: JSON.stringify({ matricula, nombre, apellido_paterno, apellido_materno, password, grupo_id })
-  });
+    return apiFetch('/auth/register', {
+        method: 'POST',
+        skipAuthRedirect: true,
+        body: JSON.stringify({ matricula, nombre, apellido_paterno, apellido_materno, password, grupo_id })
+    });
 }
 
 function obtenerPerfil() {
-  return apiFetch('/auth/perfil');
+    return apiFetch('/auth/perfil');
 }
 
-// ── Usuarios / grupos ─────────────────────────────────────
+// Usuarios / grupos.
 function obtenerGrupos() {
-  return apiFetch('/usuarios/grupos'); // pública en el backend
+    return apiFetch('/usuarios/grupos');
 }
 
 function listarEstudiantes() {
-  return apiFetch('/usuarios');
+    return apiFetch('/usuarios');
 }
 
 function eliminarEstudiante(id) {
-  return apiFetch(`/usuarios/${id}`, { method: 'DELETE' });
+    return apiFetch(`/usuarios/${id}`, { method: 'DELETE' });
 }
 
-// ── Subtemas ──────────────────────────────
+// Subtemas.
 function obtenerSubtemaPorSlug(slug) {
-  return apiFetch(`/subtemas/slug/${slug}`);
+    return apiFetch(`/subtemas/slug/${slug}`);
 }
 
 function listarSubtemasPorCategoria(categoriaId) {
-  return apiFetch(`/subtemas/categoria/${categoriaId}`);
+    return apiFetch(`/subtemas/categoria/${categoriaId}`);
 }
 
-// Categorías con sus subtemas anidados — usado por el panel de admin para
-// el selector "Sección / tema" al crear o mover un ejercicio de práctica.
+// Obtiene las categorías con sus subtemas anidados, para el selector "sección / tema" del admin.
 function listarCategorias() {
-  return apiFetch('/categorias');
+    return apiFetch('/categorias');
 }
 
 
 function actualizarSubtemaPorSlug(slug, datos) {
-  return apiFetch(`/subtemas/slug/${slug}`, {
-    method: 'PUT',
-    body: JSON.stringify(datos)
-  });
+    return apiFetch(`/subtemas/slug/${slug}`, {
+        method: 'PUT',
+        body: JSON.stringify(datos)
+    });
 }
 
-// ── Ejercicios de práctica ("Ponte a prueba") ─────────────
+// Ejercicios de práctica ("Ponte a prueba").
 function listarEjerciciosPractica() {
-  return apiFetch('/ejercicios/practica');
+    return apiFetch('/ejercicios/practica');
 }
 
 function validarEjercicio(id, output) {
-  return apiFetch(`/ejercicios/${id}/validar`, {
-    method: 'POST',
-    body: JSON.stringify({ output })
-  });
+    return apiFetch(`/ejercicios/${id}/validar`, {
+        method: 'POST',
+        body: JSON.stringify({ output })
+    });
 }
 
-// CRUD directo de un ejercicio (admin) — usado por el panel "Ponte a
-// prueba" para crear/editar/borrar un ejercicio de práctica sin pasar por
-// el PUT por subtema (ese sigue siendo solo para ejemplos/demostraciones).
+// CRUD directo de ejercicios para el panel de admin, separado del PUT de subtemas usado para los ejemplos demostrativos.
 function crearEjercicio(datos) {
-  return apiFetch('/ejercicios', { method: 'POST', body: JSON.stringify(datos) });
+    return apiFetch('/ejercicios', { method: 'POST', body: JSON.stringify(datos) });
 }
 
 function actualizarEjercicio(id, datos) {
-  return apiFetch(`/ejercicios/${id}`, { method: 'PATCH', body: JSON.stringify(datos) });
+    return apiFetch(`/ejercicios/${id}`, { method: 'PATCH', body: JSON.stringify(datos) });
 }
 
 function eliminarEjercicio(id) {
-  return apiFetch(`/ejercicios/${id}`, { method: 'DELETE' });
+    return apiFetch(`/ejercicios/${id}`, { method: 'DELETE' });
 }
 
-// ── Glosario ──────────────────────────────
+// Glosario.
 function listarGlosario({ q, unidad } = {}) {
-  const params = new URLSearchParams();
-  if (q) params.set('q', q);
-  if (unidad) params.set('unidad', unidad);
-  const qs = params.toString();
-  return apiFetch(`/glosario${qs ? '?' + qs : ''}`);
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (unidad) params.set('unidad', unidad);
+    const qs = params.toString();
+    return apiFetch(`/glosario${qs ? '?' + qs : ''}`);
 }
 
-// Administración del glosario (requiere rol admin — verificado en el backend)
+// Administración del glosario (rol admin verificado por el backend).
 function crearTerminoGlosario({ unidad, termino, definicion, ejemplo, caso, conclusion }) {
-  return apiFetch('/glosario', {
-    method: 'POST',
-    body: JSON.stringify({ unidad, termino, definicion, ejemplo, caso, conclusion })
-  });
+    return apiFetch('/glosario', {
+        method: 'POST',
+        body: JSON.stringify({ unidad, termino, definicion, ejemplo, caso, conclusion })
+    });
 }
 
 function actualizarTerminoGlosario(id, datos) {
-  return apiFetch(`/glosario/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(datos)
-  });
+    return apiFetch(`/glosario/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(datos)
+    });
 }
 
 function eliminarTerminoGlosario(id) {
-  return apiFetch(`/glosario/${id}`, { method: 'DELETE' });
+    return apiFetch(`/glosario/${id}`, { method: 'DELETE' });
 }
 
-// ── Sesión (helpers para el frontend) ─────────────────────
+// Funciones de apoyo de sesión para el frontend.
 function guardarSesion({ token, usuario }) {
-  localStorage.setItem('token', token);
-  localStorage.setItem('usuario', JSON.stringify(usuario));
+    localStorage.setItem('token', token);
+    localStorage.setItem('usuario', JSON.stringify(usuario));
 }
 
 function cerrarSesion() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('usuario');
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
 }
 
 function obtenerUsuarioLocal() {
-  const raw = localStorage.getItem('usuario');
-  return raw ? JSON.parse(raw) : null;
+    const raw = localStorage.getItem('usuario');
+    return raw ? JSON.parse(raw) : null;
 }
 
 function haySesion() {
-  return Boolean(getToken());
+    return Boolean(getToken());
 }
-// Activar / desactivar un estudiante (solo admin)
+
+// Activa o desactiva la cuenta de un estudiante (solo admin).
 function cambiarActivoEstudiante(id, activo) {
-  return apiFetch(`/usuarios/${id}/activo`, {
-    method: 'PATCH',
-    body: JSON.stringify({ activo })
-  });
+    return apiFetch(`/usuarios/${id}/activo`, {
+        method: 'PATCH',
+        body: JSON.stringify({ activo })
+    });
 }
 
 window.ApiClient = {
-  login,
-  register,
-  obtenerPerfil,
-  obtenerGrupos,
-  listarEstudiantes,
-  eliminarEstudiante,
-  obtenerSubtemaPorSlug,
-  listarSubtemasPorCategoria,
-  listarCategorias,
-  actualizarSubtemaPorSlug,
-  listarEjerciciosPractica,
-  validarEjercicio,
-  crearEjercicio,
-  actualizarEjercicio,
-  eliminarEjercicio,
-  listarGlosario,
-  crearTerminoGlosario,
-  actualizarTerminoGlosario,
-  eliminarTerminoGlosario,
-  guardarSesion,
-  cerrarSesion,
-  obtenerUsuarioLocal,
-  haySesion,
-  cambiarActivoEstudiante,
+    login,
+    register,
+    obtenerPerfil,
+    obtenerGrupos,
+    listarEstudiantes,
+    eliminarEstudiante,
+    obtenerSubtemaPorSlug,
+    listarSubtemasPorCategoria,
+    listarCategorias,
+    actualizarSubtemaPorSlug,
+    listarEjerciciosPractica,
+    validarEjercicio,
+    crearEjercicio,
+    actualizarEjercicio,
+    eliminarEjercicio,
+    listarGlosario,
+    crearTerminoGlosario,
+    actualizarTerminoGlosario,
+    eliminarTerminoGlosario,
+    guardarSesion,
+    cerrarSesion,
+    obtenerUsuarioLocal,
+    haySesion,
+    cambiarActivoEstudiante,
 };

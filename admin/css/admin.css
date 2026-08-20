@@ -1,5 +1,4 @@
-/* Admin.css */
-
+/* Variables globales de tema */
 :root {
     --dark: #282A35;
     --green-main: #04AA6D;
@@ -24,6 +23,7 @@
     --footer-h: 45px;
 }
 
+/* Reset básico */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -35,7 +35,7 @@ body {
     height: 100%
 }
 
-/* ================= BODY — columna flex igual que la app ================= */
+/* Body: columna flex, sin scroll propio */
 body {
     font-family: Calibri, 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
     background: var(--bg);
@@ -43,14 +43,13 @@ body {
     -webkit-font-smoothing: antialiased;
     height: 100vh;
     overflow: hidden;
-    /* el body NO scrollea */
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
 }
 
-/* ================= HEADER — ahora es item flex, NO fixed ================= */
+/* Header del panel admin */
 .app-header {
     background-color: var(--dark);
     display: flex;
@@ -59,7 +58,6 @@ body {
     padding: 6px 18px;
     color: var(--white);
     flex-shrink: 0;
-    /* nunca se encoge */
     z-index: 100;
     border-bottom: 1px solid var(--console-border);
 }
@@ -113,16 +111,15 @@ body {
     font-size: .7rem
 }
 
-/* ================= LAYOUT — flex igual que la app ================= */
+/* Layout general (sidebar + main) */
 .layout {
     flex: 1;
-    /* ocupa todo el espacio bajo el header */
     display: flex;
     overflow: hidden;
     min-height: 0;
 }
 
-/* ================= MAIN — el único que scrollea ================= */
+/* Main: única zona con scroll */
 .main {
     flex: 1;
     min-width: 0;
@@ -130,9 +127,7 @@ body {
     padding: 26px 30px 60px;
 }
 
-/* ============================================================
-   SIDEBAR — copiado de styles.css (idéntico a la app)
-   ============================================================ */
+/* Sidebar del panel admin */
 .app-sidebar {
     background-color: var(--dark);
     border-right: 1px solid rgba(255, 255, 255, 0.05);
@@ -151,7 +146,6 @@ body {
     display: none;
 }
 
-/* Título MENÚ */
 .app-sidebar h4 {
     color: #bfc6d1;
     font-size: 0.72rem;
@@ -165,7 +159,6 @@ body {
     padding-left: 6px;
 }
 
-/* Indicador verde */
 .app-sidebar::after {
     content: '';
     position: absolute;
@@ -180,9 +173,7 @@ body {
     transition: opacity var(--sidebar-transition), height var(--sidebar-transition);
 }
 
-/* ============================================================
-   EXPANSIÓN POR HOVER — SOLO ESCRITORIO CON MOUSE REAL
-   ============================================================ */
+/* Expansión del sidebar al hacer hover (solo escritorio) */
 @media (hover: hover) and (pointer: fine) {
     .app-sidebar:hover {
         width: var(--sidebar-expanded);
@@ -256,7 +247,7 @@ body {
     }
 }
 
-/* ================= BOTONES NAV ================= */
+/* Botones de navegación */
 .nav-btn {
     width: 100%;
     padding: 11px 10px;
@@ -297,7 +288,6 @@ body {
     opacity: 0;
 }
 
-/* Estado persistente .open (controlado por JS) */
 .nav-group.open .nav-arrow {
     transform: rotate(180deg);
     color: var(--green-main);
@@ -307,7 +297,7 @@ body {
     background-color: rgba(4, 170, 109, 0.18);
 }
 
-/* ================= ÍCONOS ================= */
+/* Íconos de navegación */
 .nav-icon {
     width: 20px;
     height: 20px;
@@ -334,7 +324,7 @@ body {
     flex: 1;
 }
 
-/* ================= SUBMENÚ ================= */
+/* Submenú de navegación */
 .nav-group {
     margin-bottom: 4px;
 }
@@ -369,8 +359,7 @@ body {
     transform: scale(0.98);
 }
 
-/* ================= SUB-SUBMENÚ (3er nivel) =================
-   simples / anidadas / compuestas → If · Switch · Ternario */
+/* Sub-submenú (3er nivel): simples / anidadas / compuestas */
 .nav-subgroup {
     margin: 2px 0;
 }
@@ -432,7 +421,7 @@ body {
     color: var(--green-main);
 }
 
-/* ================= RESPONSIVE MÓVIL — botón flotante + overlay ================= */
+/* Responsive móvil: botón flotante + overlay del sidebar */
 .sidebar-toggle {
     position: fixed;
     bottom: 70px;
@@ -470,7 +459,6 @@ body {
     display: block;
 }
 
-/* En escritorio NO se muestran (reemplaza al d-md-none de Bootstrap) */
 @media (min-width: 768px) {
     .sidebar-toggle,
     .sidebar-overlay {
@@ -539,7 +527,6 @@ body {
         font-size: 1.2rem;
     }
 
-    /* Mostrar título y labels cuando el sidebar está abierto */
     .app-sidebar.open h4 {
         opacity: 1 !important;
         padding-top: 0 !important;
@@ -579,9 +566,7 @@ body {
     }
 }
 
-/* ============================================================
-   ====== DE AQUÍ EN ADELANTE: ESTILOS PROPIOS DEL ADMIN ======
-   ============================================================ */
+/* Estilos propios del admin (no compartidos con la app) */
 
 .page-head {
     display: flex;
@@ -620,7 +605,7 @@ body {
     font-weight: 600
 }
 
-/* ── Bloques de edición ── */
+/* Bloques de edición */
 .block {
     background: var(--panel);
     border: 1px solid var(--console-border);
@@ -729,7 +714,7 @@ body {
     margin-top: 6px
 }
 
-/* ── Editor de código ── */
+/* Editor de código */
 .code-shell {
     border: 1px solid var(--console-border);
     border-radius: 10px;
@@ -791,7 +776,7 @@ body {
     outline: none
 }
 
-/* ── Barra de acciones ── */
+/* Barra de acciones */
 .action-bar {
     position: sticky;
     bottom: 0;
@@ -887,7 +872,7 @@ body {
     box-sizing: content-box;
 }
 
-/* ── Inicio: usuarios ── */
+/* Inicio: usuarios */
 .stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -945,8 +930,7 @@ body {
     margin-top: 20px;
 }
 
-/* Tarjeta de pendientes: chica y compacta — un rectángulo para un vistazo
-   rápido, no una tabla que se estire todo el ancho de la pantalla. */
+/* Tarjeta de pendientes */
 #cardPendientes {
     max-width: 620px;
 }
@@ -970,10 +954,6 @@ body {
     padding: 9px 14px;
 }
 
-/* La columna de nombre se queda con el espacio que sobra (y ya recorta con
-   ellipsis); fecha y acciones llevan un ancho fijo en px — con porcentajes
-   se apretaban tanto en pantallas angostas que "Activar" y el ícono de
-   borrar se encimaban con la fecha. */
 #cardPendientes th:nth-child(1), #cardPendientes td:nth-child(1) { width: auto; }
 #cardPendientes th:nth-child(2), #cardPendientes td:nth-child(2) { width: 88px; }
 #cardPendientes th:nth-child(3), #cardPendientes td:nth-child(3) { width: 118px; }
@@ -1047,9 +1027,7 @@ body {
     color: #fff;
 }
 
-/* ============================================================
-   GLOSARIO — acordeón por unidad + modal de edición
-   ============================================================ */
+/* Glosario: acordeón por unidad */
 .glosario-unidad {
     border-bottom: 1px solid var(--console-border);
 }
@@ -1144,10 +1122,8 @@ body {
     white-space: nowrap;
 }
 
+/* Modal de edición de término del glosario */
 .glosario-modal {
-    /* Centrado explícito con position+transform: el auto-centrado por
-       margin:auto que hacen los navegadores en <dialog> no sirve aquí
-       porque el reset "* { margin: 0 }" de este archivo lo pisa. */
     position: fixed;
     top: 50%;
     left: 50%;
@@ -1218,7 +1194,7 @@ body {
     color: var(--white, #fff);
 }
 
-/* ── Notificaciones (toasts) — reemplazan alert() ───────────────── */
+/* Notificaciones (toasts) */
 #toastContainer {
     position: fixed;
     top: 20px;
@@ -1306,7 +1282,7 @@ body {
 .toast--info { border-left-color: var(--text-dim); }
 .toast--info .toast__icon { background: rgba(138, 154, 181, .15); color: var(--text-dim); }
 
-/* ── Confirmación (reemplaza confirm()) ─────────────────────────── */
+/* Modal de confirmación */
 .confirm-modal {
     width: min(420px, 92vw);
 }
@@ -1533,7 +1509,7 @@ tbody tr:last-child td {
     box-sizing: content-box;
 }
 
-/* Ponte a prueba — lista de ejercicios por categoría */
+/* Ponte a prueba: lista de ejercicios por categoría */
 .practica-vacio {
     padding: 24px 16px;
     color: var(--text-dim);
@@ -1564,7 +1540,7 @@ tbody tr:last-child td {
     margin-top: 2px
 }
 
-/* ── Vistas ── */
+/* Vistas (paneles que se muestran/ocultan) */
 .view {
     display: none
 }
@@ -1606,7 +1582,6 @@ tbody tr:last-child td {
         gap: 12px
     }
 
-    /* Header: ya no cabe todo en una fila angosta — se recorta lo secundario */
     .app-header {
         padding: 6px 12px;
         gap: 8px
@@ -1629,7 +1604,6 @@ tbody tr:last-child td {
         gap: 0
     }
 
-    /* Recuadros de edición: título arriba, acciones (estado + botones) debajo a lo ancho */
     .block__head .head-actions {
         width: 100%;
         justify-content: space-between
@@ -1642,7 +1616,6 @@ tbody tr:last-child td {
 }
 
 @media(max-width:420px) {
-    /* Deja solo el avatar (iniciales); el nombre ya no cabe */
     .admin-mini > div:not(.av) {
         display: none
     }
@@ -1653,9 +1626,9 @@ tbody tr:last-child td {
 }
 
 
-/* Botón "Cerrar sesión" en la esquina superior derecha del header */
+/* Botón de cerrar sesión */
 .btn-cerrar-header {
-    margin-left: auto;          /* lo empuja hasta la derecha */
+    margin-left: auto;
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -1686,17 +1659,12 @@ tbody tr:last-child td {
 .btn-cerrar-header:hover img {
     opacity: 1;
 }
-/* ============================================================
-   ESTADO DE ACTIVACIÓN — pegar al final de Admin.css
-   ============================================================ */
-
-/* Etiqueta "Pendiente" (naranja, para distinguirla del badge verde) */
+/* Estado de activación de usuarios */
 .badge--pend {
     background: rgba(255, 159, 67, 0.12);
     color: var(--warn);
 }
 
-/* Celda de estado: etiqueta arriba, botón abajo */
 .estado-cell {
     display: flex;
     flex-direction: column;
@@ -1725,7 +1693,6 @@ tbody tr:last-child td {
     cursor: not-allowed;
 }
 
-/* Activar → verde */
 .btn-estado--on {
     border-color: var(--green-main);
     color: var(--green-main);
@@ -1736,13 +1703,11 @@ tbody tr:last-child td {
     color: #fff;
 }
 
-/* Desactivar → rojo */
 .btn-estado--off:hover:not(:disabled) {
     border-color: var(--danger);
     color: var(--danger);
 }
 
-/* Resalta discretamente las filas pendientes */
 .fila-pendiente {
     background: rgba(255, 159, 67, 0.04);
 }
@@ -1754,9 +1719,7 @@ tbody td.num {
     text-align: center;
 }
 
-/* ============================================================
-   EDITOR DE TEMA — pestañas de Ejemplo N / Ejercicio N
-   ============================================================ */
+/* Editor de tema: pestañas Ejemplo N / Ejercicio N */
 .editor-tabs {
     display: flex;
     gap: 6px;
@@ -1851,9 +1814,6 @@ tbody td.num {
     box-sizing: content-box;
 }
 
-/* Colores fijos (no solo al pasar el mouse) para distinguir de un vistazo
-   cuál botón agrega un ejemplo y cuál un ejercicio — mismo código de color
-   que ya usan las pestañas y los badges del enunciado. */
 .tab-add-btn--ejemplo {
     background: rgba(4, 170, 109, 0.14);
     color: var(--green-main);
@@ -1876,7 +1836,7 @@ tbody td.num {
     border-color: #7B2CBF;
 }
 
-/* ── Buscador de ejercicios (Ponte a prueba) ────────────────────── */
+/* Buscador de ejercicios */
 .practica-buscador-wrap {
     position: relative;
     flex-shrink: 0;
@@ -1923,7 +1883,6 @@ tbody td.num {
     background-color: var(--green-main);
 }
 
-/* En móvil ocupa todo el ancho disponible, no un ancho fijo */
 @media (max-width: 680px) {
     .practica-buscador-wrap {
         width: 100%;

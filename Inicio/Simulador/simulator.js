@@ -1,4 +1,4 @@
-/* Simulator.js */
+// Educational C# mini-interpreter: tokenizes, parses and step-executes simple code for the console simulators
 
 function simFmt(v) {
     if (typeof v === 'string') return '"' + v + '"';
@@ -252,7 +252,7 @@ class SimParser {
         const tok = this.expect('keyword', 'for');
         this.expect('punct', '(');
 
-        // init: "int i = 0"  o  "i = 0"
+        // parses the loop's init clause, either a declaration ("int i = 0") or a plain assignment ("i = 0")
         let init = null;
         if (SIM_TYPES.includes(this.peek().value) && this.peek().type === 'keyword') {
             const line = this.peek().line;
@@ -273,11 +273,10 @@ class SimParser {
             this.expect('punct', ';');
         }
 
-        // condición
         const cond = this.parseExpr();
         this.expect('punct', ';');
 
-        // update: "i = i + 1"
+        // parses the loop's update clause ("i = i + 1")
         const updLine = this.peek().line;
         const updName = this.expect('ident').value;
         this.expect('op', '=');
@@ -349,8 +348,7 @@ class SimParser {
         if (t.type === 'op' && (t.value === '-' || t.value === '!')) {
             this.next();
             const operando = this.parseUnary();
-            // -x  →  0 - x     (negación aritmética)
-            // !x  →  x == false (negación lógica: invierte el booleano)
+            // rewrites unary minus/not as an equivalent binary expression, since the interpreter has no unary op
             if (t.value === '!') {
                 return { type: 'Binary', op: '==', left: operando, right: { type: 'Literal', value: false } };
             }
@@ -375,11 +373,11 @@ class SimParser {
     }
 }
 
-// Traduce un nodo de condición a lenguaje natural en español
+// Translates a condition AST node into a Spanish sentence for the step description
 function simCondToSpanish(node) {
     if (!node) return '';
 
-    // Comparación binaria simple: "edad >= 18" → "edad es mayor o igual a 18"
+    // maps a simple binary comparison (e.g. "edad >= 18") to its Spanish phrasing
     if (node.type === 'Binary') {
         const left = simExprStr(node.left);
         const right = simExprStr(node.right);
@@ -397,7 +395,7 @@ function simCondToSpanish(node) {
         if (verbo) return left + ' ' + verbo + ' ' + right;
     }
 
-    // Fallback: muestra la expresión tal cual
+    // fallback: any other expression is shown as-is
     return simExprStr(node);
 }
 
@@ -406,17 +404,17 @@ class SimInterp {
     run(prog) { this.execBlock(prog.body); }
     execBlock(stmts) { for (const s of stmts) { if (this.switchBroken) break; this.execNode(s); } }
 
-    // Ejecuta un ternario en 3 pasos didácticos y devuelve el valor final.
+    // Evaluates a ternary expression as two separate teaching steps and returns its final value
     execTernarioDidactico(ternNode, line) {
         const condVal = this.eval(ternNode.cond);
 
-        // Paso 1: condición en lenguaje natural
+        // step 1: shows the condition in natural language
         this.capture(line,
             '¿Se cumple que ' + simCondToSpanish(ternNode.cond) + '? ' + (condVal ? ': SÍ' : ': NO'),
             condVal ? 'true' : 'false'
         );
 
-        // Paso 2: rama elegida
+        // step 2: shows the branch that was chosen
         const elegida = condVal ? ternNode.whenTrue : ternNode.whenFalse;
         const elegidaVal = this.eval(elegida);
         this.capture(line,
@@ -473,7 +471,7 @@ class SimInterp {
         for (let i = 0; i < node.clauses.length; i++) {
             const cl = node.clauses[i];
 
-            // Cláusula else (sin condición)
+            // an else clause has no condition and always runs
             if (cl.cond === null) {
                 this.capture(cl.line,
                     'Como ninguna condición anterior se cumplió, se ejecuta el bloque "else"',
@@ -483,7 +481,7 @@ class SimInterp {
             }
 
             const res = this.eval(cl.cond);
-            // "if" para la primera cláusula, "else if" para las siguientes
+            // labels the first clause "if" and any later one "else if"
             const etiqueta = i === 0 ? 'if' : 'else if';
             this.capture(cl.line,
                 '¿Se cumple que ' + simCondToSpanish(cl.cond) + '? ' + (res ? ': SÍ' : ': NO'),
@@ -503,7 +501,7 @@ class SimInterp {
         const switchValue = this.eval(node.expr);
         const txt = simExprStr(node.expr);
 
-        // Paso inicial: qué valor estamos evaluando
+        // shows which value the switch is evaluating, before checking any case
         this.capture(node.line,
             'Se evalúa el valor de "' + txt + '", que es ' + simFmt(switchValue) + '. Se busca el case que coincida.',
             null);
@@ -538,10 +536,9 @@ class SimInterp {
         this.switchBroken = false;
     }
 
-    // ── FOR didáctico: muestra inicialización, condición, cuerpo e incremento ──
-    // ── FOR didáctico: muestra inicialización, condición, cuerpo e incremento ──
+    // Executes a for-loop step by step, showing its initializer, condition, body and update at each iteration
     execFor(node) {
-        // 1) Inicialización
+        // initializer
         if (node.init) {
             const v = this.eval(node.init.expr);
             if (node.init.type === 'VarDecl') this.scope.declare(node.init.name, v);
@@ -551,7 +548,7 @@ class SimInterp {
                 null);
         }
 
-        // Activa el panel visual del ciclo for (se restaura al salir, soporta anidados)
+        // activates the visual loop panel; saved/restored to support nested loops
         const savedLoop = this.activeLoop;
         const varName = node.init ? node.init.name : null;
         this.activeLoop = varName ? {
@@ -564,25 +561,24 @@ class SimInterp {
         let iterations = 0;
         const LIMITE = 1000;
 
-        // 2) Primera evaluación de la condición
+        // first check of the condition, before entering the loop
         let cond = this.eval(node.cond);
         this.capture(node.line,
             '¿Se cumple que ' + simCondToSpanish(node.cond) + '? ' + (cond ? ': SÍ, entra al ciclo' : ': NO, no entra'),
             cond ? 'true' : 'false');
 
         while (cond && iterations < LIMITE) {
-            // 3) Cuerpo del ciclo
             this.execBlock(node.body);
             iterations++;
 
-            // 4) Incremento (update)
+            // applies the loop's update expression after each iteration
             const nuevoVal = this.eval(node.update.expr);
             this.scope.set(node.update.name, nuevoVal);
             this.capture(node.update.line,
                 'Se incrementa: ' + node.update.name + ' ahora vale ' + simFmt(nuevoVal),
                 null);
 
-            // 5) Vuelve a evaluar la condición
+            // re-checks the condition to decide whether to keep looping
             cond = this.eval(node.cond);
             this.capture(node.line,
                 '¿Se cumple que ' + simCondToSpanish(node.cond) + '? ' + (cond ? ': SÍ, repite' : ': NO, termina el ciclo'),
@@ -600,13 +596,12 @@ class SimInterp {
         this.activeLoop = savedLoop;
     }
 
-    // ── WHILE y DO-WHILE didácticos ──
-    // ── WHILE y DO-WHILE didácticos ──
+    // Executes a while or do-while loop step by step, showing the condition check at each iteration
     execWhile(node) {
         let iterations = 0;
         const LIMITE = 1000;
 
-        // Activa el panel visual del ciclo (se restaura al salir, soporta anidados)
+        // activates the visual loop panel; saved/restored to support nested loops
         const savedLoop = this.activeLoop;
         this.activeLoop = {
             kind: node.isDoWhile ? 'dowhile' : 'while',
@@ -616,7 +611,7 @@ class SimInterp {
         };
 
         if (node.isDoWhile) {
-            // do-while: el cuerpo se ejecuta SIEMPRE al menos una vez
+            // do-while always runs the body at least once, before the first condition check
             this.capture(node.line,
                 'do-while: el cuerpo se ejecuta al menos una vez, antes de revisar la condición',
                 null);
@@ -637,7 +632,7 @@ class SimInterp {
                     cond ? 'true' : 'false');
             }
         } else {
-            // while normal: revisa la condición ANTES de cada repetición
+            // regular while checks the condition before each iteration
             let cond = this.eval(node.cond);
             this.capture(node.line,
                 '¿Se cumple que ' + simCondToSpanish(node.cond) + '? ' + (cond ? ': SÍ, entra al ciclo' : ': NO, no entra'),
@@ -747,7 +742,7 @@ let simPlayTimer = null;
 let simPlaying = false;
 let simTemaActual = null;
 
-// ── Helpers internos para obtener los botones por ID ──────────
+// Internal helpers to look up the control buttons by their DOM id
 
 function _btnReiniciar() { return document.getElementById('btn-reiniciar'); }
 function _btnAnterior() { return document.getElementById('btn-paso-anterior'); }
@@ -967,7 +962,7 @@ function simBuildLoopBoxHtml(loopCtx) {
         '</div>';
     }
 
-    // while / do-while: solo panel de condición
+    // while/do-while only need a condition panel, unlike for which also shows init and update
     const label = loopCtx.kind === 'dowhile' ? 'do-while' : 'while';
     return '<div class="sim-for-panel">' +
         '<div class="sim-for-header">⟳ ciclo <b>' + label + '</b></div>' +
@@ -999,7 +994,7 @@ function simRender(state, info) {
     const panelVars = document.getElementById('panel-vars');
     if (panelVars) {
         const entries = Object.entries(state.variables || {})
-            .filter(([k, v]) => typeof v !== 'string'); // oculta strings
+            .filter(([k, v]) => typeof v !== 'string'); // string variables are hidden from this panel
         const varsHtml = entries.length
             ? entries.map(([k, v]) => '<div class="var">' + simEscape(k) + ' = ' + simEscape(simFmt(v)) + '</div>').join('')
             : '<span style="color:#8a9ab5;font-size:0.85em;">Sin variables</span>';
@@ -1041,12 +1036,7 @@ function simClearPanels() {
     if (fill) fill.style.width = '0%';
 }
 
-// Devuelve la lista de ejemplos (siempre como arreglo)
-// FIX: ya no asume que EXAMPLES existe en el ámbito global. Si el proyecto
-// migró todo a la API y ya no define EXAMPLES/EJERCICIOS localmente, antes
-// esto lanzaba "ReferenceError: EXAMPLES is not defined" y rompía
-// initSimulador() a la mitad (por eso el editor y los paneles quedaban
-// vacíos sin ningún mensaje visible).
+// Returns a topic's list of examples as an array, falling back to an empty result if EXAMPLES isn't defined
 function simGetEjemplos(tema) {
     if (typeof EXAMPLES === 'undefined') return [''];
     const ex = EXAMPLES[tema];
@@ -1055,7 +1045,7 @@ function simGetEjemplos(tema) {
     return [''];
 }
 
-// Junta ejemplos + ejercicio en una sola lista de "items"
+// Combines a topic's examples and exercise into a single list of tab items
 function simGetItems(tema) {
     const items = simGetEjemplos(tema).map((code, i) => ({
         label: 'Ejemplo ' + (i + 1),
@@ -1067,9 +1057,7 @@ function simGetItems(tema) {
     return items;
 }
 
-// Recuadro del enunciado propio del ejemplo/ejercicio activo — va debajo del
-// concepto general del tema (#tema-descripcion, que no se toca aquí).
-// tipo: 'ejercicio' | 'ejemplo' | null (oculta el recuadro, no hay enunciado)
+// Shows or hides the statement box for the active example/exercise item, separate from the topic's general description
 function simSetDescripcion(html, tipo, titulo) {
     const elDesc = document.getElementById('tema-enunciado');
     if (!elDesc) return;
@@ -1088,9 +1076,7 @@ function simSetDescripcion(html, tipo, titulo) {
     }
 }
 
-// Muestra (o limpia) un mensaje de error visible arriba del editor.
-// FIX: antes, cualquier fallo de la API o de datos faltantes quedaba
-// silencioso (solo un console.warn) y el usuario solo veía paneles vacíos.
+// Shows or clears a visible error banner above the editor when the API or data fails to load
 function simMostrarErrorApi(mensaje) {
     const editorBody = document.getElementById('editor-body');
     if (!editorBody) return;
@@ -1108,7 +1094,7 @@ function simMostrarErrorApi(mensaje) {
     box.textContent = mensaje;
 }
 
-// ── Conexión con la API (reemplaza EXAMPLES/EJERCICIOS locales) ──
+// API connection, replacing the local EXAMPLES/EJERCICIOS fallback data
 const simCacheSubtemas = {};
 
 async function simObtenerDatosTema(slug) {
@@ -1125,7 +1111,7 @@ async function simObtenerDatosTema(slug) {
         console.warn(`Subtema "${slug}" no encontrado en la API, usando datos locales de respaldo`, e);
         return {
             definicion: '',
-            codigo_ejemplo: null, // null => se usa EXAMPLES/EJERCICIOS local como respaldo
+            codigo_ejemplo: null, // null signals the caller to fall back to local EXAMPLES/EJERCICIOS data
             _apiError: e.message
         };
     }
@@ -1141,8 +1127,7 @@ function simGetItemsDesdeSubtema(subtema, slugFallback) {
         return items;
     }
 
-    // Los ejemplos ahora vienen de su propia tabla (subtema.ejemplos), ya
-    // ordenados por "orden" desde el backend.
+    // examples come from their own table (subtema.ejemplos), already ordered by the backend
     const ejemplosDb = Array.isArray(subtema.ejemplos) ? subtema.ejemplos : [];
     const items = ejemplosDb.map((ej, i) => ({
         label: ejemplosDb.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
@@ -1151,12 +1136,7 @@ function simGetItemsDesdeSubtema(subtema, slugFallback) {
         titulo: ej.titulo || null
     }));
 
-    // Los ejercicios vienen APARTE, en subtema.ejercicios (lista de la BD).
-    // Campos reales: titulo, descripcion (enunciado) y codigo_csharp (solución).
-    // La pestaña siempre dice "Caso N"; el título se muestra arriba del enunciado.
-    // Solo modo='demostracion': subtema.ejercicios también trae los de "Ponte
-    // a prueba" (modo='practica'), y esos no deben mostrarse aquí como Caso
-    // — su codigo_csharp es la solución que el alumno debe encontrar solo.
+    // exercises come separately from subtema.ejercicios; only modo='demostracion' ones are shown as "Caso" tabs here, since 'practica' ones belong to "Ponte a prueba"
     const ejercicios = (Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [])
         .filter(ej => (ej.modo || 'demostracion') === 'demostracion');
     ejercicios.forEach((ej, i) => {
@@ -1182,30 +1162,27 @@ async function initSimulador(tema) {
 
     let subtema, items, codigo;
     try {
-        subtema = await simObtenerDatosTema(tema); // "tema" == slug
+        subtema = await simObtenerDatosTema(tema);
         items = simGetItemsDesdeSubtema(subtema, tema);
         codigo = items[0].codigo;
 
-        // Título y definición del tema vienen de la BD (vía admin); se
-        // pintan aquí porque cargarTema() ya no trae texto local.
+        // topic title and definition come from the admin-managed database
         mostrarDescripcion(subtema.titulo || '', subtema.definicion || '');
 
-        // FIX: si hubo fallback por error de API, mostramos un aviso visible
-        // en vez de dejarlo solo en la consola.
+        // shows a visible warning if the API failed and fallback data was used instead
         if (subtema._apiError) {
             simMostrarErrorApi('No se pudo conectar con la API de ejemplos (' + subtema._apiError + '). Mostrando datos de respaldo.');
         } else {
             simMostrarErrorApi(null);
         }
     } catch (e) {
-        // FIX: cualquier error inesperado aquí antes rompía initSimulador a
-        // la mitad sin dejar rastro visible; ahora se muestra en pantalla.
+        // any unexpected error is shown on screen instead of leaving the simulator half-loaded silently
         console.error('Error inicializando el simulador para "' + tema + '":', e);
         simMostrarErrorApi('Error cargando el simulador: ' + e.message);
         return;
     }
 
-    // Pestañas (solo si hay más de un item)
+    // adds the example/exercise tabs, only when there's more than one item
     if (!document.getElementById('sim-ejemplos-tabs') && items.length > 1) {
         const tabs = document.createElement('div');
         tabs.id = 'sim-ejemplos-tabs';
@@ -1223,9 +1200,7 @@ async function initSimulador(tema) {
         editorBody.parentNode.insertBefore(varsHost, editorBody);
     }
 
-    // Muestra (o esconde) el recuadro de enunciado propio del item activo;
-    // el concepto general del tema vive aparte, en #tema-descripcion, y no
-    // se toca aquí — sigue visible siempre.
+    // shows or hides the statement box for the active item; the topic's general description stays untouched
     function mostrarDescripcionItem(it) {
         if (it.esEjercicio && it.enunciado) simSetDescripcion(it.enunciado, 'Caso', it.titulo);
         else if (it.enunciado) simSetDescripcion(it.enunciado, 'ejemplo', it.titulo);
@@ -1305,12 +1280,9 @@ function simAutoPlay(btns) {
 function conectarBotones() {
     const btns = _getBtns();
 
-    // [0] Volver al inicio → regresa al PRIMER PASO conservando los valores
-    //     que el alumno haya puesto en los inputs (NO restaura el ejemplo original).
+    // "restart" returns to step 1 while keeping the student's current input values, not the original example
     if (btns[0]) btns[0].onclick = () => {
         simStopPlay(btns);
-        // Reejecuta el código ACTUAL del editor (con los valores actuales) desde el paso 1.
-        // No tocamos los inputs ni restauramos EXAMPLES, así no se pierden los cambios.
         const codigoActual = simEditor ? simEditor.getValue() : simGetEjemplos(simTemaActual)[0];
         simEjecutarSinTocarInputs(codigoActual);
     };
@@ -1379,7 +1351,7 @@ function conectarBotones() {
         if (typeof _cargarTema === 'function') _cargarTema(nombreTema);
 
         if (TEMAS_SOPORTADOS.includes(nombreTema)) {
-            initSimulador(nombreTema); // ya es async, no necesita setTimeout
+            initSimulador(nombreTema);
         }
     };
 })();

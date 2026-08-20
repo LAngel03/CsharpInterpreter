@@ -1,33 +1,18 @@
-// admin/js/admin-practica.js
-// Gestión del banco de "Ponte a prueba" — módulo propio del panel admin,
-// independiente del editor por tema (ese solo sigue tocando ejemplos y
-// ejercicios de demostración de SU subtema, vía PUT /subtemas/slug/:slug).
-//
-// Aquí cada ejercicio de práctica se crea/edita/borra UNO A LA VEZ con los
-// endpoints directos /ejercicios (POST, PATCH :id, DELETE :id), eligiendo
-// en el formulario a qué sección pertenece (subtema_id) — no a la pantalla
-// desde donde se abrió. GET /ejercicios/practica ya viene agrupado por
-// categoría desde el backend; como admin, además trae codigo_csharp (la
-// solución) y sin mezclar el orden, cosas que a un alumno nunca se le mandan.
+// Panel admin: banco de ejercicios de "Ponte a prueba", vía los endpoints directos /ejercicios.
 
 let practicaGrupos = [];
 let practicaCategoriaActiva = 0;
-let practicaCategoriasDisponibles = []; // [{ id, nombre, subtemas: [{id, slug, titulo}] }]
-let practicaEditandoId = null;          // null = creando uno nuevo
+let practicaCategoriasDisponibles = [];
+let practicaEditandoId = null;
 let practicaTextoBusqueda = '';
 
+// Escapa &, < y > para insertar texto de forma segura dentro de HTML.
 function _escaparHtmlPractica(s) {
     return String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function mostrarVistaPractica() {
-    _ocultarTodasLasVistas();
-    const view = document.getElementById('view-practica');
-    if (view) view.classList.add('show');
-    cargarPractica();
-}
-
+// Trae los ejercicios de práctica y las categorías disponibles, y repinta pestañas y lista.
 async function cargarPractica() {
     const listaEl = document.getElementById('practicaLista');
     if (listaEl) listaEl.innerHTML = '<p class="practica-vacio">Cargando…</p>';
@@ -47,6 +32,7 @@ async function cargarPractica() {
     }
 }
 
+// Dibuja una pestaña por categoría, con el número de ejercicios de cada una.
 function renderPracticaTabs() {
     const tabsEl = document.getElementById('practicaTabs');
     if (!tabsEl) return;
@@ -64,40 +50,7 @@ function renderPracticaTabs() {
     });
 }
 
-/* function renderPracticaLista() {
-    const listaEl = document.getElementById('practicaLista');
-    const tituloEl = document.getElementById('practicaCategoriaTitulo');
-    const contadorEl = document.getElementById('practicaContador');
-    if (!listaEl) return;
-
-    const grupo = practicaGrupos[practicaCategoriaActiva];
-    if (!grupo || !grupo.ejercicios.length) {
-        if (tituloEl) tituloEl.textContent = 'Sin ejercicios todavía';
-        if (contadorEl) contadorEl.textContent = '—';
-        listaEl.innerHTML = '<p class="practica-vacio">Todavía no hay ejercicios de práctica. Usa "+ Nuevo ejercicio" para agregar el primero.</p>';
-        return;
-    }
-    if (tituloEl) tituloEl.textContent = grupo.categoria;
-    if (contadorEl) contadorEl.textContent = grupo.ejercicios.length + (grupo.ejercicios.length === 1 ? ' ejercicio' : ' ejercicios');
-
-    listaEl.innerHTML = grupo.ejercicios.map(ej => `
-        <div class="fila-practica">
-            <div>
-                <b>${_escaparHtmlPractica(ej.titulo)}</b>
-                <div class="sub">${_escaparHtmlPractica((ej.subtemas && ej.subtemas.titulo) || '')}</div>
-            </div>
-            <div class="row-actions">
-                <button class="icon-btn" title="Editar" onclick="editarEjercicioPractica(${ej.id})">
-                    <img src="../img/iconos/edit.svg" alt="">
-                </button>
-                <button class="icon-btn danger" title="Eliminar" onclick="eliminarEjercicioPractica(${ej.id})">
-                    <img src="../img/iconos/eliminar.svg" alt="">
-                </button>
-            </div>
-        </div>
-    `).join('');
-} */
-
+// Dibuja la lista de ejercicios de la categoría activa, filtrada por el texto de búsqueda.
 function renderPracticaLista() {
     const listaEl = document.getElementById('practicaLista');
     const tituloEl = document.getElementById('practicaCategoriaTitulo');
@@ -147,9 +100,10 @@ function renderPracticaLista() {
     `).join('');
 }
 
+// Conecta el input de búsqueda una sola vez, para no duplicar el listener en repintados.
 function conectarBuscadorPractica() {
     const input = document.getElementById('practicaBuscador');
-    if (!input || input.dataset.conectado) return; // evita conectar el listener dos veces
+    if (!input || input.dataset.conectado) return;
     input.dataset.conectado = 'true';
     input.addEventListener('input', () => {
         practicaTextoBusqueda = input.value;
@@ -161,11 +115,11 @@ function mostrarVistaPractica() {
     _ocultarTodasLasVistas();
     const view = document.getElementById('view-practica');
     if (view) view.classList.add('show');
-    conectarBuscadorPractica(); // 👈 nuevo
+    conectarBuscadorPractica();
     cargarPractica();
 }
 
-// ── Selector "Sección / tema" (subtema_id), agrupado por categoría ────
+// Arma las <option> del selector de sección/tema, agrupadas por categoría.
 function _opcionesSubtemasPractica(seleccionadoId) {
     let html = '<option value="" disabled' + (seleccionadoId ? '' : ' selected') + '>Selecciona una sección…</option>';
     for (const cat of practicaCategoriasDisponibles) {
@@ -179,7 +133,7 @@ function _opcionesSubtemasPractica(seleccionadoId) {
     return html;
 }
 
-// ── Modal crear / editar ────────────────────────────────────────
+// Abre el modal en blanco para crear un ejercicio de práctica nuevo.
 function nuevoEjercicioPractica() {
     practicaEditandoId = null;
     document.getElementById('practicaFormTitulo').textContent = 'Nuevo ejercicio de práctica';
@@ -194,6 +148,7 @@ function nuevoEjercicioPractica() {
     document.getElementById('practicaModal').showModal();
 }
 
+// Abre el modal con los datos de un ejercicio existente cargados para editar.
 function editarEjercicioPractica(id) {
     const ej = practicaGrupos.flatMap(g => g.ejercicios).find(e => e.id === id);
     if (!ej) return;
@@ -215,6 +170,7 @@ function cerrarFormularioPractica() {
     document.getElementById('practicaModal').close();
 }
 
+// Valida el formulario, arma el payload y crea o actualiza el ejercicio según corresponda.
 async function guardarEjercicioPractica() {
     const subtema_id = parseInt(document.getElementById('p-subtema').value, 10);
     const titulo = document.getElementById('p-titulo').value.trim();
@@ -258,6 +214,7 @@ async function guardarEjercicioPractica() {
     }
 }
 
+// Pide confirmación y elimina el ejercicio de práctica.
 async function eliminarEjercicioPractica(id) {
     const ok = await confirmarAccion({
         titulo: 'Eliminar ejercicio',

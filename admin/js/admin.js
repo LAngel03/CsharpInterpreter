@@ -1,4 +1,4 @@
-/* ════ Guardia de acceso: solo admins con sesión llegan aquí ════ */
+// Bloquea el acceso al panel si no hay sesión de admin válida, y redirige al login.
 const RUTA_LOGIN = '../index.html';
 
 (function protegerPanelAdmin() {
@@ -13,64 +13,46 @@ const RUTA_LOGIN = '../index.html';
     }
 })();
 
-/* ════════ Estado global ════════ */
+// Estado global de la pantalla de edición de tema.
 let temaActual = null, originalSnapshot = null, monacoEditor = null;
 let dirtySecciones = { concepto: false, ejemplos: false };
-// Se pone en true mientras el código carga el editor por su cuenta (cambio de
-// pestaña, cancelar, etc.) para que Monaco no dispare markDirty por eso.
+// Evita que cargas de código hechas por el propio panel disparen markDirty.
 let suprimirDirtyEditor = false;
 let estudiantesCache = [];
 
-// Tamaño total del banco de "Ponte a prueba", para mostrar "X de Y ejercicios".
-// null mientras no se sabe (el "de Y" simplemente se omite, no se inventa un número).
+// Tamaño total del banco de "Ponte a prueba"; null mientras no se conoce todavía.
 let totalPracticas = null;
-// true mientras hay una petición en curso que va a repintar la tabla (carga
-// inicial, activar/desactivar/eliminar, o el refresco automático) — evita que
-// dos de estas se pisen entre sí (p. ej. el refresco de fondo borrando el
-// "…" de un botón que el admin acaba de presionar).
+// Evita que dos cargas/repintados de la tabla de estudiantes se pisen entre sí.
 let usuariosOcupado = false;
 
-/* ════ Inicio: usuarios (conectado a GET /api/usuarios) ════ */
-
-// La vista v_estudiantes ahora devuelve la columna "activo".
-// Se normaliza porque un registro viejo podría llegar como null/undefined:
-// en ese caso lo tratamos como ACTIVO (para no bloquear a nadie por accidente).
+// Un estudiante sin el campo "activo" se trata como activo, por compatibilidad con registros viejos.
 function estaActivo(e) { return e.activo !== false; }
-// Formatea la fecha de registro: 13/07/2026
+// Formatea una fecha ISO de registro como dd/mm/aaaa.
 function fechaRegistro(iso) {
     if (!iso) return '—';
     const d = new Date(iso);
     if (isNaN(d)) return '—';
     return d.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
-/* Compara dos estudiantes activos por ejercicios resueltos (el ranking es
-   solo entre activos — los pendientes viven aparte, ver renderPendientes) */
+// Ordena estudiantes activos por cantidad de ejercicios resueltos, de mayor a menor.
 function compararUsuarios(a, b) {
     return (b.ejercicios_resueltos ?? 0) - (a.ejercicios_resueltos ?? 0);
 }
 
-/* Pide los estudiantes (y el total de prácticas, para el "X de Y") a la API.
-   No toca el DOM más que el contador de arriba — lo reusan la carga inicial
-   y el refresco silencioso de fondo. */
+// Pide a la API los estudiantes y el total de ejercicios de práctica, y actualiza el contador de arriba.
 async function obtenerEstudiantesYTotal() {
     const [data, practicas] = await Promise.all([
         ApiClient.listarEstudiantes(),
         ApiClient.listarEjerciciosPractica().catch(() => null),
     ]);
-    // El total del banco es solo informativo para el "X de Y" de cada fila;
-    // si falla, se conserva el último valor conocido en vez de borrarlo.
-    // /ejercicios/practica ahora agrupa por categoría: [{ categoria, ejercicios: [...] }, ...]
     totalPracticas = Array.isArray(practicas)
         ? practicas.reduce((suma, grupo) => suma + (grupo.ejercicios ? grupo.ejercicios.length : 0), 0)
         : totalPracticas;
     estudiantesCache = [...data];
-    // Solo cuenta activos — los pendientes todavía no son "estudiantes" con
-    // acceso real, viven aparte en su propia tarjeta (ver renderPendientes).
     document.getElementById('statEstudiantes').textContent = estudiantesCache.filter(estaActivo).length;
 }
 
-/* Pide los estudiantes a la API y los pinta (carga inicial: muestra
-   "Cargando…" y, si falla, el mensaje de error en la tabla). */
+// Carga inicial de estudiantes: muestra "Cargando…" y, si falla, un mensaje de error en la tabla.
 async function pintarUsuarios() {
     const tbody = document.getElementById("userRows");
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px">Cargando estudiantes…</td></tr>`;
@@ -87,11 +69,7 @@ async function pintarUsuarios() {
     }
 }
 
-/* Refresco automático en segundo plano (cada 20s) para que el ranking del
-   admin no se quede desactualizado mientras un alumno resuelve ejercicios.
-   Silencioso: sin "Cargando…" ni mensajes de error visibles — si falla, se
-   reintenta solo en la siguiente vuelta. Solo corre si la vista de Inicio
-   está en pantalla y no hay otra petición de estudiantes en curso. */
+// Refresca la lista de estudiantes cada 20s, sin indicadores visibles, solo si la vista de Inicio está activa.
 async function refrescarUsuariosEnSegundoPlano() {
     if (usuariosOcupado) return;
     const viewInicioEl = document.getElementById('view-inicio');
@@ -109,17 +87,13 @@ async function refrescarUsuariosEnSegundoPlano() {
 }
 setInterval(refrescarUsuariosEnSegundoPlano, 20000);
 
-/* Dibuja las dos tablas a partir del caché: pendientes (aparte, sin ranking)
-   y el ranking de activos. */
+// Repinta las tablas de estudiantes pendientes y del ranking, a partir del caché en memoria.
 function renderTablaUsuarios() {
     renderPendientes();
     renderRanking();
 }
 
-/* Estudiantes que no pueden iniciar sesión todavía. Nunca "compiten" en el
-   ranking (siempre llevan 0 ejercicios porque no han podido entrar), así que
-   viven en su propia tarjeta — ordenados por antigüedad, el que lleva más
-   tiempo esperando primero. La tarjeta se oculta sola si no hay ninguno. */
+// Dibuja la tarjeta de estudiantes pendientes de activación, ordenados por antigüedad de registro.
 function renderPendientes() {
     const card = document.getElementById('cardPendientes');
     const tbody = document.getElementById('userRowsPendientes');
@@ -149,7 +123,7 @@ function renderPendientes() {
     }).join('');
 }
 
-/* Ranking: solo estudiantes activos, ordenados por compararUsuarios. */
+// Dibuja la tabla de ranking, solo con estudiantes activos ordenados por compararUsuarios.
 function renderRanking() {
     const tbody = document.getElementById("userRows");
     if (!tbody) return;
@@ -183,7 +157,7 @@ function renderRanking() {
     }).join("");
 }
 
-/* Activa o desactiva a un estudiante (PATCH /api/usuarios/:id/activo) */
+// Activa o desactiva a un estudiante, pidiendo confirmación primero si se va a desactivar.
 async function cambiarEstadoUsuario(id, activar) {
     if (!activar) {
         const ok = await confirmarAccion({
@@ -194,16 +168,13 @@ async function cambiarEstadoUsuario(id, activar) {
         if (!ok) return;
     }
 
-    // Deshabilita el botón mientras se procesa, para evitar doble clic — puede
-    // estar en .estado-cell (tabla de ranking) o en .row-actions (pendientes).
     const botones = document.querySelectorAll(`button[onclick*="(${id},"]`);
     botones.forEach(b => { b.disabled = true; b.textContent = '…'; });
 
-    usuariosOcupado = true; // que el refresco de fondo no le borre el "…" a este botón
+    usuariosOcupado = true;
     try {
         await ApiClient.cambiarActivoEstudiante(id, activar);
 
-        // Actualiza el caché en memoria y repinta (sin recargar toda la lista)
         const est = estudiantesCache.find(e => e.id === id);
         if (est) est.activo = activar;
 
@@ -211,12 +182,13 @@ async function cambiarEstadoUsuario(id, activar) {
 
     } catch (err) {
         mostrarToast('No se pudo cambiar el estado: ' + err.message, 'error');
-        renderTablaUsuarios();   // restaura los botones
+        renderTablaUsuarios();
     } finally {
         usuariosOcupado = false;
     }
 }
 
+// Pide confirmación y elimina a un estudiante.
 async function eliminarUsuario(id) {
     const ok = await confirmarAccion({
         titulo: 'Eliminar estudiante',
@@ -228,7 +200,7 @@ async function eliminarUsuario(id) {
     usuariosOcupado = true;
     try {
         await ApiClient.eliminarEstudiante(id);
-        usuariosOcupado = false; // pintarUsuarios() vuelve a poner el flag por su cuenta
+        usuariosOcupado = false;
         await pintarUsuarios();
         mostrarToast('Estudiante eliminado.', 'exito');
     } catch (err) {
@@ -242,24 +214,20 @@ pintarUsuarios();
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('sidebarOverlay');
 
-// Abrir/cerrar el sidebar en móvil (click del botón hamburguesa + overlay)
-// lo maneja el <script> inline al final de indexAdministrador.html — aquí
-// solo queda closeSidebar(), que sí se usa más abajo al elegir un tema.
-// (Antes había un segundo listener duplicado aquí mismo: al hacer click
-// se abría y, en el mismo evento, el otro listener lo veía "abierto" y lo
-// volvía a cerrar — por eso el menú nunca se desplegaba.)
+// Cierra el sidebar en móvil (el botón hamburguesa y el overlay se manejan aparte, en el HTML).
 function closeSidebar() {
     sidebar.classList.remove('open');
     overlay.classList.remove('active');
     document.body.classList.remove('sidebar-open');
 }
 
-/* ════ Navegación del sidebar → vista de edición de temas ════ */
+// Navegación del sidebar hacia la vista de edición de temas.
 const viewInicio = document.getElementById('view-inicio');
 const viewTema = document.getElementById('view-tema');
 const viewGlosario = document.getElementById('view-glosario');
 const btnInicio = document.getElementById('btn-inicio');
 
+// Oculta todas las vistas del panel, como paso previo a mostrar una sola.
 function _ocultarTodasLasVistas() {
     if (viewInicio) viewInicio.classList.remove('show');
     if (viewTema) viewTema.classList.remove('show');
@@ -285,9 +253,7 @@ function mostrarVistaGlosarioAdmin() {
     cargarGlosarioAdmin();
 }
 
-// Temas que no vienen de la API (100% locales en el simulador del alumno):
-// editarlos aquí no tendría ningún efecto para los estudiantes.
-// Recursividad y Archivos y Glosario ya se conectaron a la API — se quitaron de esta lista.
+// Temas que aún no están conectados a la API y por lo tanto no se pueden editar desde el panel.
 const TEMAS_NO_EDITABLES = [];
 
 document.querySelectorAll('.nav-sub-btn[data-tema]:not(.has-sub2), .nav-sub2-btn[data-tema], .nav-btn[data-tema]:not(.has-sub)').forEach(btn => {
@@ -301,8 +267,7 @@ document.querySelectorAll('.nav-sub-btn[data-tema]:not(.has-sub2), .nav-sub2-btn
             return;
         }
         if (tema === 'Ponte_a_prueba') {
-            // No es un subtema real: es su propio módulo, con las pestañas
-            // de sección adentro (ver admin-practica.js).
+            // Módulo aparte con sus propias pestañas de sección (ver admin-practica.js).
             if (!await confirmDiscard()) return;
             mostrarVistaPractica();
             if (window.innerWidth < 768) closeSidebar();
@@ -326,14 +291,13 @@ if (btnInicio) {
     });
 }
 
-/* ════ Glosario (conectado a GET/POST/PATCH/DELETE /api/glosario) ════ */
+// Glosario: CRUD conectado a GET/POST/PATCH/DELETE /api/glosario.
 let glosarioCache = [];
-let glosarioEditandoId = null; // null = creando un término nuevo
-// Nombres de unidad actualmente desplegadas — se conserva entre repintados
-// (p. ej. tras guardar o eliminar) para no cerrar de golpe la que el admin
-// estaba viendo.
+let glosarioEditandoId = null;
+// Nombres de unidad actualmente desplegadas en el acordeón, para conservarlas entre repintados.
 const glosarioAbiertas = new Set();
 
+// Carga los términos del glosario desde la API y los pinta en el acordeón.
 async function cargarGlosarioAdmin() {
     const cont = document.getElementById('glosarioAcordeon');
     if (!cont) return;
@@ -350,9 +314,7 @@ async function cargarGlosarioAdmin() {
     }
 }
 
-// Pinta una fila desplegable por unidad; dentro de cada una, sus términos
-// con sus acciones — así en vez de una tabla larga, el admin abre solo la
-// unidad que le interesa.
+// Dibuja el acordeón del glosario: una fila desplegable por unidad, con sus términos y acciones dentro.
 function renderGlosarioAcordeon() {
     const cont = document.getElementById('glosarioAcordeon');
     const contador = document.getElementById('glosarioContador');
@@ -408,21 +370,19 @@ function renderGlosarioAcordeon() {
     });
 }
 
-// Escapa comillas para meter el nombre de unidad en un atributo data-*
+// Escapa comillas dobles para insertar un texto de forma segura en un atributo data-*.
 function ppEscapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
 
 const GLOSARIO_CAMPOS = ['g-unidad', 'g-termino', 'g-definicion', 'g-ejemplo', 'g-caso', 'g-conclusion'];
 
-// Unidades que YA existen entre los términos cargados — el selector del
-// formulario solo ofrece estas, para que el admin no genere unidades
-// nuevas por error de dedo (ej. "Unidad II" vs "unidad 2" como si fueran
-// distintas y las tarjetas de "Conceptos Generales" se fragmenten).
+// Lista, sin duplicados, las unidades que ya existen entre los términos cargados.
 function unidadesGlosarioDisponibles() {
     const vistas = new Set();
     for (const t of glosarioCache) if (t.unidad) vistas.add(t.unidad);
     return Array.from(vistas).sort();
 }
 
+// Llena el <select> de unidad del formulario con las unidades ya existentes.
 function poblarSelectUnidadGlosario(seleccionada) {
     const sel = document.getElementById('g-unidad');
     if (!sel) return;
@@ -432,6 +392,7 @@ function poblarSelectUnidadGlosario(seleccionada) {
     ).join('');
 }
 
+// Abre el formulario en blanco para crear un término de glosario nuevo.
 function nuevoTerminoGlosario() {
     glosarioEditandoId = null;
     document.getElementById('glosarioFormTitulo').textContent = 'Nuevo término';
@@ -441,6 +402,7 @@ function nuevoTerminoGlosario() {
     document.getElementById('g-termino').focus();
 }
 
+// Abre el formulario con los datos de un término existente cargados para editar.
 function editarTerminoGlosario(id) {
     const t = glosarioCache.find(x => x.id === id);
     if (!t) return;
@@ -461,6 +423,7 @@ function cerrarFormularioGlosario() {
     glosarioEditandoId = null;
 }
 
+// Valida el formulario, arma el payload y crea o actualiza el término según corresponda.
 async function guardarTerminoGlosario() {
     const termino = document.getElementById('g-termino').value.trim();
     const definicion = document.getElementById('g-definicion').value.trim();
@@ -493,6 +456,7 @@ async function guardarTerminoGlosario() {
     }
 }
 
+// Pide confirmación y elimina un término del glosario.
 async function eliminarTerminoGlosario(id) {
     const ok = await confirmarAccion({
         titulo: 'Eliminar término',
@@ -510,23 +474,17 @@ async function eliminarTerminoGlosario(id) {
     }
 }
 
-// Clic en el backdrop (fuera del contenido) cierra el modal, como cualquier
-// diálogo — clic dentro del contenido no debe propagarse hasta aquí.
+// Click fuera del contenido del modal de glosario equivale a cerrarlo.
 (function () {
     const modal = document.getElementById('glosarioModal');
     if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) cerrarFormularioGlosario(); });
 })();
 
-/* ════ Ejemplos y ejercicio del tema ════
-   itemsActuales: [{tipo:'ejemplo', codigo, enunciado}] o
-   [{tipo:'ejercicio', codigo, descripcion, titulo}].
-   Los ejemplos viven en su propia tabla del backend (subtema.ejemplos,
-   ya ordenada por "orden"); se sincronizan por posición igual que los
-   ejercicios — el panel no necesita el id individual de cada fila. */
+// Ejemplos y ejercicios de demostración del tema en edición, sincronizados por posición contra el backend.
 let itemsActuales = [];
 let tabActivo = 0;
 
-// Etiquetas "Ejemplo N" / "Caso N" según la posición dentro de su propio tipo
+// Genera las etiquetas de pestaña ("Ejemplo N" / "Caso N") según la posición dentro de su propio tipo.
 function etiquetasItems() {
     let iEj = 0, iEjer = 0;
     return itemsActuales.map(it => {
@@ -535,6 +493,7 @@ function etiquetasItems() {
     });
 }
 
+// Dibuja las pestañas de ejemplos/ejercicios y conecta sus botones de quitar y de selección.
 function renderEditorTabs() {
     const cont = document.getElementById('editorTabs');
     if (!cont) return;
@@ -556,7 +515,7 @@ function renderEditorTabs() {
     });
 }
 
-// Guarda en itemsActuales lo que haya en el editor/enunciado antes de cambiar de pestaña
+// Copia al item actual (itemsActuales[tabActivo]) lo que haya en el editor y el formulario, antes de cambiar de pestaña.
 function volcarTabActivaAEstado() {
     const item = itemsActuales[tabActivo];
     if (!item) return;
@@ -574,6 +533,7 @@ function volcarTabActivaAEstado() {
     }
 }
 
+// Activa la pestaña i: guarda el estado de la anterior, y carga el formulario/editor con el nuevo item.
 function seleccionarTab(i, { volcar = true } = {}) {
     if (volcar) volcarTabActivaAEstado();
     tabActivo = Math.max(0, Math.min(i, itemsActuales.length - 1));
@@ -604,10 +564,7 @@ function seleccionarTab(i, { volcar = true } = {}) {
     }
 
     if (monacoEditor) {
-        // setValue() dispara onDidChangeModelContent aunque el cambio sea
-        // programático (no del usuario) — se silencia para no marcar dirty
-        // solo por cambiar de pestaña. AdmConsola sí vuelve a ejecutar la
-        // simulación con el código de la pestaña nueva (eso siempre debe pasar).
+        // Silencia markDirty durante el setValue() programático; AdmConsola sí vuelve a simular con el código nuevo.
         suprimirDirtyEditor = true;
         AdmConsola.cargarCodigo(item.codigo || '');
         suprimirDirtyEditor = false;
@@ -616,28 +573,29 @@ function seleccionarTab(i, { volcar = true } = {}) {
     }
 }
 
+// Agrega una pestaña de ejemplo vacía y la selecciona, dejando el editor listo para escribir.
 function agregarEjemplo() {
     volcarTabActivaAEstado();
     itemsActuales.push({ tipo: 'ejemplo', codigo: '', enunciado: '', titulo: '' });
     renderEditorTabs();
     seleccionarTab(itemsActuales.length - 1, { volcar: false });
     markDirty('ejemplos');
-    // Deja el cursor listo para escribir el código del ejemplo nuevo.
     if (monacoEditor) monacoEditor.focus();
     else document.getElementById('codeFallback').focus();
 }
 
+// Agrega una pestaña de ejercicio vacía y la selecciona, con el foco en el campo de título.
 function agregarEjercicio() {
     volcarTabActivaAEstado();
     itemsActuales.push({ tipo: 'ejercicio', codigo: '', descripcion: '', titulo: '' });
     renderEditorTabs();
     seleccionarTab(itemsActuales.length - 1, { volcar: false });
     markDirty('ejemplos');
-    // El título es lo primero que se pide, así que el cursor arranca ahí.
     const elTit = document.getElementById('f-titulo-ejercicio');
     if (elTit) elTit.focus();
 }
 
+// Quita la pestaña i, salvo que sea el último ejemplo restante; pide confirmación antes de borrar.
 async function eliminarTab(i) {
     const item = itemsActuales[i];
     if (!item) return;
@@ -656,9 +614,8 @@ async function eliminarTab(i) {
     markDirty('ejemplos');
 }
 
-/* ════ Carga de un tema (conectado a GET /api/subtemas/slug/:slug) ════ */
+// Carga un tema desde la API por su slug y arma itemsActuales con sus ejemplos y ejercicios de demostración.
 async function cargarTema(slug) {
-    // Corta cualquier reproducción en curso del tema anterior antes de cargar uno nuevo.
     if (window.AdmConsola) AdmConsola.limpiar();
 
     let t;
@@ -671,15 +628,10 @@ async function cargarTema(slug) {
     }
     if (!t) return;
 
-    // Los ejemplos viven en su propia tabla (t.ejemplos), ya ordenada por
-    // "orden" desde el backend.
     itemsActuales = (Array.isArray(t.ejemplos) ? t.ejemplos : []).map(ej => ({
         tipo: 'ejemplo', codigo: ej.codigo || '', enunciado: ej.enunciado || '', titulo: ej.titulo || ''
     }));
-    // Solo modo='demostracion': t.ejercicios también trae los de "Ponte a
-    // prueba" (modo='practica'), que se administran aparte en su propio
-    // módulo — mostrarlos aquí como "Caso" permitía editarlos o borrarlos
-    // por accidente desde esta pantalla.
+    // Solo los ejercicios modo='demostracion' se editan aquí; los de modo='practica' viven en su propio módulo.
     (Array.isArray(t.ejercicios) ? t.ejercicios : [])
         .filter(ej => (ej.modo || 'demostracion') === 'demostracion')
         .forEach(ej => {
@@ -699,19 +651,16 @@ async function cargarTema(slug) {
     limpiarDirty();
 }
 
-/* ════ PUNTOS DE CONEXIÓN CON LA API ════ */
+// Puntos de conexión con la API para leer y guardar un subtema por su slug.
 function cargarTemaDesdeAPI(slug) { return ApiClient.obtenerSubtemaPorSlug(slug); }
 
 function guardarTemaEnAPI(slug, datos) { return ApiClient.actualizarSubtemaPorSlug(slug, datos); }
 
-/* ════ Guardar / Cancelar ════ */
 function getCodigoActual() { return monacoEditor ? monacoEditor.getValue() : document.getElementById('codeFallback').value; }
 
+// Valida el formulario, arma el payload y guarda el tema completo (título, definición, ejemplos y ejercicios).
 async function guardarCambios() {
     if (!temaActual) return;
-    // Se guardan los recuadros que tenían cambios pendientes al momento de
-    // presionar "Guardar" (el PUT manda todo junto, pero solo esos recuadros
-    // deben mostrar la notificación — el otro no tenía nada que guardar).
     const seccionesAGuardar = Object.keys(dirtySecciones).filter(s => dirtySecciones[s]);
     volcarTabActivaAEstado();
 
@@ -719,8 +668,6 @@ async function guardarCambios() {
     const definicion = document.getElementById('f-definicion').value.trim();
     if (!titulo) { mostrarToast('El título no puede estar vacío.', 'advertencia'); return; }
 
-    // Formato nuevo: la API sincroniza esto contra su propia tabla "ejemplos"
-    // (crea/actualiza/borra por posición), igual que ya hace con ejercicios.
     const ejemplos = itemsActuales
         .filter(it => it.tipo === 'ejemplo')
         .map(it => ({ titulo: (it.titulo || '').trim(), enunciado: (it.enunciado || '').trim(), codigo: it.codigo || '' }));
@@ -738,15 +685,15 @@ async function guardarCambios() {
     try {
         await guardarTemaEnAPI(temaActual, datos);
 
-        // Verificación: releer el tema y confirmar que el backend sí conservó los ejercicios.
-        // El PUT nunca había mandado "ejercicios" antes de este cambio, así que no hay
-        // garantía de que el backend lo persista sin ajustes ahí también.
+        // Relee el tema tras guardar, para confirmar que el backend sí conservó los ejercicios.
         let ejerciciosConfirmados = false;
         try {
             const releido = await cargarTemaDesdeAPI(temaActual);
             const n = Array.isArray(releido && releido.ejercicios) ? releido.ejercicios.length : 0;
             ejerciciosConfirmados = n === ejercicios.length;
-        } catch (e) { /* si falla la relectura, se avisa igual abajo */ }
+        } catch (e) {
+            // Si la relectura falla, se avisa igual más abajo con ejerciciosConfirmados=false.
+        }
 
         originalSnapshot = JSON.stringify({ titulo, definicion, items: itemsActuales });
         document.getElementById('temaTitulo').textContent = titulo;
@@ -763,6 +710,7 @@ async function guardarCambios() {
     }
 }
 
+// Descarta los cambios pendientes y restaura el formulario/editor al último snapshot guardado.
 function cancelarCambios() {
     if (!temaActual || !originalSnapshot) return;
     const s = JSON.parse(originalSnapshot);
@@ -774,19 +722,10 @@ function cancelarCambios() {
     limpiarDirty();
 }
 
-/* ════ Estado "dirty" (independiente por recuadro: "concepto" o "ejemplos") ════
-   El PUT guarda todo el subtema junto, así que ambos botones "Guardar cambios"
-   disparan el mismo guardarCambios(); solo el indicador visual se independiza
-   para que editar un recuadro no marque el otro como pendiente.
-
-   markDirty() no activa el botón a ciegas por cualquier evento: recalcula si
-   el estado actual REALMENTE difiere del último guardado/cargado
-   (originalSnapshot). Así, escribir algo y volver a dejarlo igual que antes
-   (o borrar una pestaña vacía recién agregada) no deja el botón activo. */
+// Marca como pendiente de guardar la sección dada ("concepto" o "ejemplos"), recalculando si sigue habiendo diferencias.
 function markDirty(seccion) { reevaluarDirty(seccion || 'ejemplos'); }
 
-// Un ejemplo/ejercicio recién agregado y todavía sin contenido no cuenta
-// como cambio real — ni al compararlo ni al decidir si guardar está permitido.
+// Un ejemplo/ejercicio recién agregado y todavía vacío no cuenta como cambio real.
 function itemEstaVacio(it) {
     if (it.tipo === 'ejercicio') {
         return !(it.codigo || '').trim() && !(it.descripcion || '').trim() && !(it.titulo || '').trim();
@@ -798,6 +737,7 @@ function itemsParaComparar(items) {
     return (items || []).filter(it => !itemEstaVacio(it));
 }
 
+// Compara el estado actual del formulario/editor contra el snapshot original, y actualiza el flag dirty de esa sección.
 function reevaluarDirty(seccion) {
     if (!temaActual || !originalSnapshot) return;
     const snap = JSON.parse(originalSnapshot);
@@ -816,6 +756,7 @@ function reevaluarDirty(seccion) {
     setSeccionDirty('ejemplos', actual !== original);
 }
 
+// Actualiza el flag dirty de una sección y refleja el cambio en su botón "Guardar" y su texto de estado.
 function setSeccionDirty(seccion, v) {
     dirtySecciones[seccion] = v;
     const scope = document.querySelector('.head-actions[data-seccion="' + seccion + '"]');
@@ -830,14 +771,13 @@ function setSeccionDirty(seccion, v) {
 
 function hayCambiosPendientes() { return dirtySecciones.concepto || dirtySecciones.ejemplos; }
 
-// Se llama tras cargar/cancelar/guardar: en los tres casos el estado en pantalla
-// vuelve a coincidir con el original (o con lo recién guardado) en AMBOS recuadros.
+// Vuelve ambas secciones a estado "sin cambios" (se llama tras cargar, cancelar o guardar).
 function limpiarDirty() {
     setSeccionDirty('concepto', false);
     setSeccionDirty('ejemplos', false);
 }
 
-// secciones: cuáles recuadros mostrar la notificación (por defecto, ambos).
+// Muestra brevemente un mensaje de éxito/error en las secciones indicadas, y luego restaura su estado real.
 function flashStatus(msg, ok, secciones) {
     const lista = (secciones && secciones.length) ? secciones : ['concepto', 'ejemplos'];
     const scopes = lista
@@ -851,13 +791,12 @@ function flashStatus(msg, ok, secciones) {
         if (txt) txt.textContent = msg;
     });
 
-    // Al terminar el flash, cada recuadro vuelve a SU estado real (dirty si el
-    // guardado falló y seguía pendiente, o "Sin cambios" si sí se guardó).
     setTimeout(() => {
         lista.forEach(seccion => setSeccionDirty(seccion, dirtySecciones[seccion]));
     }, 2200);
 }
 
+// Pide confirmación para descartar cambios pendientes; si no hay ninguno, resuelve true de inmediato.
 async function confirmDiscard() {
     if (!hayCambiosPendientes()) return true;
     return confirmarAccion({
@@ -868,20 +807,18 @@ async function confirmDiscard() {
     });
 }
 
-/* ════ Monaco (vía AdmConsola — misma consola paso a paso que ven los alumnos) ════ */
+// Carga Monaco desde CDN y lo conecta a AdmConsola (misma consola paso a paso que ven los alumnos).
 require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
 
 require(['vs/editor/editor.main'], function () {
     AdmConsola.crearEditor(document.getElementById('monaco-editor'));
     monacoEditor = AdmConsola.editor;
-    // Listener propio del admin: solo decide si hay que marcar "dirty".
-    // AdmConsola ya tiene su propio listener (siempre activo) que vuelve a
-    // correr la simulación; ambos conviven sin pisarse.
+    // Listener propio del admin: solo decide si hay que marcar "dirty" (AdmConsola ya vuelve a simular por su cuenta).
     monacoEditor.onDidChangeModelContent(() => { if (temaActual && !suprimirDirtyEditor) markDirty('ejemplos'); });
     document.getElementById('codeFallback').style.display = 'none';
 });
 
-// ── CERRAR SESIÓN ──────────────────────────────────────────
+// Cierre de sesión: pide confirmación, borra la sesión local y regresa al login.
 document.addEventListener('DOMContentLoaded', () => {
     const btnCerrar = document.getElementById('btn-cerrar-sesion');
     if (!btnCerrar) return;
@@ -893,12 +830,9 @@ document.addEventListener('DOMContentLoaded', () => {
             textoConfirmar: 'Cerrar sesión',
         });
         if (!ok) return;
-        // Borra token y usuario del navegador
         if (window.ApiClient && window.ApiClient.cerrarSesion) {
             window.ApiClient.cerrarSesion();
         }
-        // Regresa al login. '../index.html' porque el login está
-        // un nivel arriba de este simulador (igual que ../api.js).
         window.location.href = '../index.html';
     });
 });

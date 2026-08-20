@@ -1,4 +1,6 @@
-/* inicio.js (de la pagina principal) */
+// Script de la página de inicio: alterna entre las pantallas de login/registro y maneja el envío de los formularios.
+
+// Oculta la vista de inicio y muestra la pantalla de login o registro ('which' es 'login'/'register').
 function showAuth(which) {
     document.getElementById('landing').style.display = 'none';
     document.getElementById('screen-login').classList.remove('show');
@@ -6,6 +8,8 @@ function showAuth(which) {
     document.getElementById('screen-' + which).classList.add('show');
     window.scrollTo(0, 0);
 }
+
+// Oculta las pantallas de login/registro y muestra la vista de inicio.
 function showLanding() {
     document.getElementById('screen-login').classList.remove('show');
     document.getElementById('screen-register').classList.remove('show');
@@ -15,14 +19,14 @@ function showLanding() {
     window.scrollTo(0, 0);
 }
 
+// Muestra u oculta el texto de un campo de contraseña y tiñe su botón para que combine.
 function togglePw(id, btn) {
     const inp = document.getElementById(id);
     inp.type = inp.type === 'password' ? 'text' : 'password';
     btn.style.color = inp.type === 'text' ? 'var(--green)' : '';
 }
 
-// ── Helpers de error/carga (crean el elemento si no existe, así no ──
-// ── obligan a tocar el HTML) ─────────────────────────────────────
+// Funciones de apoyo para mensajes de error/éxito: crean su propio elemento del DOM al primer uso, sin tocar el HTML.
 function mostrarError(formId, mensaje) {
     let el = document.getElementById(formId + '-error');
     if (!el) {
@@ -39,6 +43,7 @@ function mostrarError(formId, mensaje) {
     el.style.display = mensaje ? 'block' : 'none';
 }
 
+// Muestra un mensaje de éxito debajo de un formulario, creando su elemento al primer uso.
 function mostrarExito(formId, mensaje) {
     let el = document.getElementById(formId + '-exito');
     if (!el) {
@@ -53,6 +58,7 @@ function mostrarExito(formId, mensaje) {
     el.style.display = mensaje ? 'block' : 'none';
 }
 
+// Deshabilita el botón de envío y cambia su texto a un estado de carga mientras la petición está en curso.
 function setCargando(formId, cargando) {
     const card = document.querySelector('#screen-' + formId + ' .auth-card');
     const btn = card.querySelector('.btn--primary');
@@ -62,8 +68,7 @@ function setCargando(formId, cargando) {
     btn.textContent = cargando ? 'Un momento…' : btn.dataset.textoOriginal;
 }
 
-// ── Redirección tras login exitoso ─────────────────────
-// Ajusta estas rutas si tus páginas viven en otro archivo/carpeta.
+// Páginas de destino tras un login exitoso.
 const RUTA_SIMULADOR = './Inicio/inicio.html';
 const RUTA_ADMIN = './admin/indexAdministrador.html';
 
@@ -75,14 +80,12 @@ function irAlPanelAdmin() {
     window.location.href = RUTA_ADMIN;
 }
 
-// ── Determina si el usuario que acaba de loguearse es admin ──────
-// Confirmado con auth.service.js: el login devuelve usuario.rol como
-// string ('admin' | 'estudiante'), viene de roles.nombre en la BD.
+// True cuando el rol del usuario logueado (usuario.rol, de la tabla roles de la BD) es 'admin'.
 function esAdmin(usuario) {
     return !!usuario && typeof usuario.rol === 'string' && usuario.rol.toLowerCase() === 'admin';
 }
 
-// ── Manda a cada quien a su pantalla según su rol ─────────────────
+// Manda al usuario al panel de admin o al simulador, según su rol.
 function redirigirSegunRol(usuario) {
     if (esAdmin(usuario)) {
         irAlPanelAdmin();
@@ -91,7 +94,7 @@ function redirigirSegunRol(usuario) {
     }
 }
 
-// ── Si ya hay sesión guardada, no mostrar login/registro de nuevo ──
+// Al cargar: si ya hay sesión, va directo a la pantalla correspondiente; si no, prepara los formularios.
 document.addEventListener('DOMContentLoaded', () => {
     if (window.ApiClient && window.ApiClient.haySesion()) {
         redirigirSegunRol(window.ApiClient.obtenerUsuarioLocal());
@@ -99,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     cargarGrupos();
 
-    // Enter en matrícula o contraseña dispara el login, igual que el botón "Entrar".
+    // Presionar Enter en el campo de matrícula o contraseña envía el formulario de login.
     ['login-mat', 'login-pw'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('keydown', (ev) => {
@@ -108,12 +111,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// Llena el selector de grupo del formulario de registro con datos del backend.
 async function cargarGrupos() {
     const select = document.getElementById('reg-grupo');
     if (!select || !window.ApiClient) return;
     try {
         const grupos = await window.ApiClient.obtenerGrupos();
-        // Limpia todo excepto el placeholder inicial
         select.innerHTML = '<option value="" disabled selected>Selecciona tu grupo</option>';
         grupos.forEach(g => {
             const opt = document.createElement('option');
@@ -123,11 +126,11 @@ async function cargarGrupos() {
         });
     } catch (e) {
         console.warn('No se pudieron cargar los grupos:', e);
-        // Deja el placeholder; el registro sigue funcionando sin grupo (es opcional)
+        // El grupo es opcional, así que el registro sigue funcionando dejando solo el placeholder.
     }
 }
 
-// ── Login ─────────────────────────────────────────────────────
+// Valida y envía el formulario de login, y redirige si tiene éxito.
 async function handleLogin() {
     mostrarError('login', '');
     const matricula = document.getElementById('login-mat').value.trim();
@@ -144,16 +147,14 @@ async function handleLogin() {
         window.ApiClient.guardarSesion(resultado);
         redirigirSegunRol(resultado.usuario);
     } catch (e) {
-        // Si la cuenta aún no está activada, la API responde 403 y su
-        // mensaje ("Tu cuenta aún no ha sido activada…") llega en e.message,
-        // así que se muestra tal cual sin necesidad de código extra.
+        // Una cuenta inactiva responde 403 con su propio mensaje explicativo, que se muestra tal cual.
         mostrarError('login', e.message || 'No se pudo iniciar sesión.');
     } finally {
         setCargando('login', false);
     }
 }
 
-// ── Registro ──────────────────────────────────────────────────
+// Valida y envía el formulario de registro, y vuelve al login si tiene éxito.
 async function handleRegister() {
     mostrarError('register', '');
     mostrarExito('register', '');
@@ -169,7 +170,7 @@ async function handleRegister() {
         mostrarError('register', 'Completa todos los campos obligatorios.');
         return;
     }
-    // Validación de matrícula: exactamente 8 dígitos, solo números
+    // La matrícula debe tener exactamente 8 dígitos.
     if (!/^\d{8}$/.test(matricula)) {
         mostrarError('register', 'La matrícula debe tener exactamente 8 dígitos numéricos (por ejemplo, 20241088).');
         return;
@@ -194,19 +195,18 @@ async function handleRegister() {
             grupo_id: grupoVal ? parseInt(grupoVal) : null
         });
 
-        // Cuenta creada, pero PENDIENTE de activación por el administrador.
-        // No hay auto-login: el alumno no puede entrar hasta que lo activen.
+        // La cuenta se crea pero queda pendiente de activación por el admin; no hay auto-login.
         mostrarExito('register', 'Tu cuenta fue creada. Un administrador debe activarla antes de que puedas ingresar.');
 
         setTimeout(() => {
-            mostrarExito('register', ''); // limpia el mensaje por si se vuelve a registrar
+            mostrarExito('register', '');
             showAuth('login');
-            // Precarga la matrícula en el login para comodidad del usuario
+            // Precarga la matrícula en la pantalla de login por comodidad.
             const loginMat = document.getElementById('login-mat');
             if (loginMat) loginMat.value = matricula;
             const loginPw = document.getElementById('login-pw');
             if (loginPw) loginPw.focus();
-        }, 4500);   // el mensaje es más largo que antes: dale tiempo de leerlo
+        }, 4500);
 
     } catch (e) {
         mostrarError('register', e.message || 'No se pudo crear la cuenta.');

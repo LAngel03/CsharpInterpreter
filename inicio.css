@@ -1,6 +1,4 @@
-/* css actual */
-
-/* --- Variables y Reset --- */
+/* Variables y reset */
 :root {
     --green: #008A49;
     --green-hover: #1B5619;
@@ -12,7 +10,6 @@
     --text-dim: #52606d;
     --text-mut: #9aa5b1;
 
-    /* Tamaños de fuente y espaciado */
     --radius: 12px;
 }
 
@@ -46,7 +43,7 @@ a {
     text-decoration: none;
 }
 
-/* --- Landing (contenedor de hero + footer) --- */
+/* Landing: contenedor de hero y footer */
 #landing {
     display: flex;
     flex-direction: column;
@@ -54,7 +51,7 @@ a {
     width: 100%;
 }
 
-/* --- HERO --- */
+/* Hero */
 .hero {
     position: relative;
     z-index: 2;
@@ -98,6 +95,7 @@ a {
     align-items: center;
 }
 
+/* Botones */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -134,7 +132,7 @@ a {
     color: var(--green);
 }
 
-/* --- Auth (Login/Registro) --- */
+/* Pantalla de autenticación (login/registro) */
 .auth-screen {
     display: none;
     position: relative;
@@ -206,6 +204,7 @@ a {
     margin: 8px 0 26px;
 }
 
+/* Campos del formulario */
 .field {
     margin-bottom: 16px;
 }
@@ -268,6 +267,7 @@ a {
     text-decoration: underline;
 }
 
+/* Mostrar/ocultar contraseña */
 .pw-wrap {
     position: relative;
 }
@@ -286,7 +286,7 @@ a {
     color: var(--text-dim);
 }
 
-/* --- Footer --- */
+/* Footer */
 .foot {
     position: relative;
     z-index: 2;
@@ -298,9 +298,7 @@ a {
     font-size: 0.82rem;
 }
 
-/* ======================================================
-   RESPONSIVE
-   ====================================================== */
+/* Estilos responsivos */
 @media (max-width: 920px) {
     .hero {
         grid-template-columns: 1fr;
@@ -334,23 +332,21 @@ a {
     }
 }
 
-/* Contenedor principal del header */
+/* Header con logo */
 .app-header {
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
-    padding: 1px 0;   /* antes 20px 0 */
+    padding: 1px 0;
     background: #ffffff;
     border-bottom: 1px solid var(--border);
 }
 
-/* Texto blanco para el header (clase ya usada en el <header> del HTML) */
 .text-white {
     color: #fff;
 }
 
-/* Estilo para la imagen del banner */
 .app-header .logo {
     display: block;
     width: 100%;
@@ -366,7 +362,7 @@ a {
     }
 }
 
-/* El botón "Crear cuenta" dentro de auth-alt debe verse y comportarse igual que Entrar (.btn--primary) */
+/* Botón "Crear cuenta" (mismo estilo que Entrar) */
 .auth-alt .btn--primary {
     background: var(--green);
     color: #fff;
@@ -380,7 +376,7 @@ a {
     text-decoration: none;
 }
 
-/* --- Mensaje de éxito (registro) --- */
+/* Mensaje de éxito del formulario */
 .form-exito {
     color: var(--green);
     font-size: 0.85em;

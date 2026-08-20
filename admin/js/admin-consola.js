@@ -1,31 +1,11 @@
-/* ============================================================
-   admin/js/admin-consola.js
-   Consola de vista previa del panel de administrador: MISMA consola
-   paso a paso que ven los estudiantes (Inicio/Simulador/*.js), pero
-   reimplementada aquí para no mezclarse con esos archivos — el admin
-   necesita el editor EDITABLE (no readOnly) y sus propios ids de DOM.
-
-   Motor: usa CSharpEngine (Inicio/Simulador/engine.js), el mismo motor
-   que ya usan los simuladores de Arreglos, Recursividad y Archivos —
-   es el único que cubre TODO lo que un ejemplo/ejercicio puede traer
-   (condicionales, ciclos, arreglos, matrices, funciones/recursividad,
-   archivos simulados), a diferencia del intérprete propio de
-   Inicio/Simulador/simulator.js que solo cubre un subconjunto.
-
-   Expone window.AdmConsola con:
-     crearEditor(container)   → crea el Monaco editable y arranca
-     cargarCodigo(codigo)     → cambia el código (p.ej. al cambiar de
-                                 pestaña) y vuelve a ejecutar
-     obtenerCodigoActual()    → string con el código del editor
-     enfocar()                → foco al editor
-     limpiar()                → resetea el estado (al cambiar de tema)
-   El editor real de Monaco queda accesible en AdmConsola.editor por si
-   admin.js necesita su propio listener adicional (p.ej. markDirty).
-   ============================================================ */
+// Consola de vista previa del panel admin: reimplementa la consola paso a paso de los alumnos con un editor Monaco editable.
+// Usa el mismo motor CSharpEngine (Inicio/Simulador/engine.js) que los simuladores de Arreglos, Recursividad y Archivos.
+// Expone window.AdmConsola con crearEditor, cargarCodigo, obtenerCodigoActual, enfocar y limpiar.
 
 (function () {
     "use strict";
 
+    // Escapa &, < y > para insertar texto de forma segura dentro de HTML.
     function admEscape(str) {
         return String(str)
             .replace(/&/g, '&amp;')
@@ -33,6 +13,7 @@
             .replace(/>/g, '&gt;');
     }
 
+    // Da formato de literal C# a un valor según su tipo (para mostrarlo en el panel de memoria).
     function admFmtVal(v, type) {
         if (v === null || v === undefined) return 'null';
         if (type === 'bool' || typeof v === 'boolean') return v ? 'true' : 'false';
@@ -44,7 +25,7 @@
     const _ADM_ICON_PLAY  = '<img src="../img/iconos/play.png" alt="Reproducir"><span class="tooltip-text">Reproducir</span>';
     const _ADM_ICON_PAUSE = '<img src="../img/iconos/pause.png" alt="Pausar"><span class="tooltip-text">Pausar</span>';
 
-    // ── SnapshotManager (idéntico en espíritu al de los simuladores de alumno) ──
+    // Guarda la lista de snapshots de una ejecución y navega entre ellos paso a paso.
     class AdmSnapMgr {
         constructor() { this.snaps = []; this.idx = -1; }
         reset() { this.snaps = []; this.idx = -1; }
@@ -55,7 +36,7 @@
         total() { return this.snaps.length; }
     }
 
-    // ── Simulador (usa CSharpEngine como motor) ──
+    // Compila y ejecuta código C# con CSharpEngine, y expone sus snapshots vía AdmSnapMgr.
     class AdmSimulator {
         constructor() { this.snap = new AdmSnapMgr(); this.lastAst = null; }
         load(code) {
@@ -95,7 +76,7 @@
         info() { return { index: this.snap.idx, total: this.snap.total() }; }
     }
 
-    // ── Estado del módulo ──
+    // Estado del módulo: instancia del simulador, editor Monaco y controles de reproducción.
     const admSim = new AdmSimulator();
     let admEditor = null;
     let admDecorations = [];
@@ -104,6 +85,7 @@
     let admCurrentCode = '';
     let admControlesConectados = false;
 
+    // Devuelve los cuatro botones de control (reiniciar, anterior, siguiente, reproducir).
     function _admBtns() {
         return [
             document.getElementById('adm-btn-reiniciar'),
@@ -113,7 +95,7 @@
         ];
     }
 
-    // ── Variables escalares editables (mismo truco que en Inicio/Simulador) ──
+    // Extrae del AST las variables escalares con valor literal, para poder editarlas desde inputs.
     function admExtraerVariablesEditables(ast) {
         if (!ast || !ast.body) return [];
         return ast.body
@@ -121,6 +103,7 @@
             .map(n => ({ name: n.name, dataType: n.dataType, raw: n.init.raw, value: n.init.value, line: n.line }));
     }
 
+    // Reescribe en el código fuente el valor literal de cada variable editable con el nuevo valor.
     function admReconstruirCodigo(baseCode, variables, valoresNuevos) {
         const lineas = baseCode.split('\n');
         for (const v of variables) {
@@ -142,6 +125,7 @@
         return lineas.join('\n');
     }
 
+    // Dibuja un input por variable escalar editable; los reconstruye solo si cambió el conjunto de variables.
     function admRenderInputsVariables(variables, codigoBase) {
         const host = document.getElementById('adm-vars-editable');
         if (!host) return;
@@ -158,9 +142,9 @@
             const tipoInput = (v.dataType === 'int' || v.dataType === 'double' || v.dataType === 'float') ? 'number' : 'text';
             const inputHtml = v.dataType === 'bool'
                 ? '<select class="arr-var-input" data-var="' + v.name + '">' +
-                  '<option value="true"' + (v.value === true ? ' selected' : '') + '>true</option>' +
-                  '<option value="false"' + (v.value === false ? ' selected' : '') + '>false</option>' +
-                  '</select>'
+                    '<option value="true"' + (v.value === true ? ' selected' : '') + '>true</option>' +
+                    '<option value="false"' + (v.value === false ? ' selected' : '') + '>false</option>' +
+                    '</select>'
                 : '<input class="arr-var-input" type="' + tipoInput + '" data-var="' + v.name + '" value="' + admEscape(String(v.value)) + '">';
             return '<div class="arr-var-field"><label>' + admEscape(v.dataType) + ' ' + admEscape(v.name) + '</label>' + inputHtml + '</div>';
         }).join('');
@@ -173,14 +157,12 @@
                     vals[inp.dataset.var] = inp.tagName === 'SELECT' ? (inp.value === 'true') : inp.value;
                 });
                 const nuevoCodigo = admReconstruirCodigo(codigoBase, variables, vals);
-                // Edición real (cambia el código que se guarda): SÍ debe pasar
-                // por el listener normal de Monaco, así que no se silencia.
                 if (admEditor) admEditor.setValue(nuevoCodigo);
             });
         });
     }
 
-    // ── Render de memoria: variables, pila de llamadas, arreglos, matrices, archivos ──
+    // Construye el HTML del panel de pila de llamadas (recursividad), con indentación por profundidad.
     function admBuildCallStackHtml(callStack) {
         if (!callStack || !callStack.length) return '';
         let html = '<div class="rec-stack-panel"><div class="rec-stack-header">Pila de llamadas<span class="n">' + callStack.length + '</span></div>';
@@ -197,6 +179,7 @@
         return html;
     }
 
+    // Construye el HTML del panel de sistema de archivos virtual, resaltando los archivos que cambiaron.
     function admBuildFilesHtml(files, prevFiles) {
         if (!files || Object.keys(files).length === 0) return '';
         prevFiles = prevFiles || {};
@@ -215,6 +198,7 @@
         return html;
     }
 
+    // Construye el HTML del panel que muestra el estado actual de un ciclo for (inicializador, condición, avance).
     function admBuildForBoxHtml(forCtx) {
         if (!forCtx) return '';
         const val = forCtx.varValue !== null ? forCtx.varValue : '?';
@@ -240,6 +224,7 @@
             '</div></div>';
     }
 
+    // Construye el HTML combinado de variables, arreglos, matrices y archivos para el panel de memoria.
     function admBuildMemoriaHtml(state, prevState) {
         const ch = new Set(state.changed || []);
         const rd = new Set(state.read || []);
@@ -309,6 +294,7 @@
 
     let _admPrevState = null;
 
+    // Marca la línea actual en el editor (roja si es error) y la centra en pantalla.
     function admHighlight(line, isError) {
         if (!admEditor || !window.monaco) return;
         const cls = isError ? 'cs-line-error' : 'cs-line-active';
@@ -319,6 +305,7 @@
         admEditor.revealLineInCenter(line);
     }
 
+    // Vacía todos los paneles de resultado y quita el resaltado de línea del editor.
     function admClearPanels() {
         if (admEditor) admDecorations = admEditor.deltaDecorations(admDecorations, []);
         const panelPaso = document.getElementById('adm-panel-paso');
@@ -334,6 +321,7 @@
         _admPrevState = null;
     }
 
+    // Pinta un snapshot completo: línea resaltada, panel de paso, memoria, salida y barra de progreso.
     function admRender(state, info) {
         if (!state) { admClearPanels(); return; }
 
@@ -366,7 +354,7 @@
         _admPrevState = state;
     }
 
-    // ── Ejecutar código (recompila y arranca desde el paso 1) ──
+    // Recompila y ejecuta el código dado, y reinicia la simulación desde el primer paso.
     function admEjecutar(codigo) {
         admCurrentCode = codigo;
         const first = admSim.load(codigo);
@@ -378,13 +366,14 @@
         if (btns[3]) { admPlaying = false; btns[3].innerHTML = _ADM_ICON_PLAY; }
     }
 
-    // ── Controles de reproducción ──
+    // Calcula el retraso entre pasos de la reproducción automática a partir del slider de velocidad.
     function admGetDelay() {
         const slider = document.getElementById('adm-speed-slider');
         const val = slider ? parseInt(slider.value) : 40;
         return Math.round(2000 - (val / 100) * 1800);
     }
 
+    // Detiene la reproducción automática en curso y vuelve el botón a su ícono de "play".
     function admStopPlay(btns) {
         clearTimeout(admPlayTimer);
         admPlayTimer = null;
@@ -393,6 +382,7 @@
         if (btnR) btnR.innerHTML = _ADM_ICON_PLAY;
     }
 
+    // Conecta los botones de reiniciar/anterior/siguiente/reproducir y el slider de velocidad, una sola vez.
     function admConectarControles() {
         if (admControlesConectados) return;
         admControlesConectados = true;
@@ -439,7 +429,7 @@
         }
     }
 
-    // ── API pública ──
+    // Crea el editor Monaco editable dentro del contenedor dado y conecta sus controles.
     function crearEditor(container) {
         if (admEditor || !container) return;
         admEditor = monaco.editor.create(container, {
@@ -453,20 +443,15 @@
             readOnly: false
         });
         admConectarControles();
-        // Siempre corre la simulación con el código que haya en pantalla,
-        // sea por escritura real o por un setValue() programático (cambio
-        // de pestaña) — admin.js decide aparte si eso cuenta como "dirty".
         admEditor.onDidChangeModelContent(() => {
             admEjecutar(admEditor.getValue());
         });
     }
 
+    // Reemplaza el código del editor y vuelve a ejecutarlo (aunque el contenido no haya cambiado).
     function cargarCodigo(codigo) {
         if (!admEditor) return;
         admEditor.setValue(codigo || '');
-        // Si el código no cambió respecto al anterior, setValue() no dispara
-        // onDidChangeModelContent — se fuerza la ejecución para que el panel
-        // de la derecha siempre refleje la pestaña activa.
         admEjecutar(admEditor.getValue());
     }
 
@@ -478,6 +463,7 @@
         if (admEditor) admEditor.focus();
     }
 
+    // Detiene la reproducción, limpia la simulación y vacía los paneles (al cambiar de tema).
     function limpiar() {
         admStopPlay(_admBtns());
         admSim.clear();

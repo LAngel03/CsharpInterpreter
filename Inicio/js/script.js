@@ -1,4 +1,4 @@
-//  HELPERS — mostrar / ocultar pantallas
+// Muestra la pantalla de inicio y oculta la pantalla de tema.
 function mostrarPantallaInicio() {
     const inicio = document.getElementById('pantalla-inicio');
     const tema = document.getElementById('seccion-tema');
@@ -6,13 +6,14 @@ function mostrarPantallaInicio() {
     if (tema) tema.style.display = 'none';
 }
 
+// Muestra la pantalla de tema y oculta la pantalla de inicio.
 function mostrarPantallaTema() {
     const inicio = document.getElementById('pantalla-inicio');
     const tema = document.getElementById('seccion-tema');
     if (inicio) inicio.style.display = 'none';
     if (tema) tema.style.display = 'block';
 }
-//  SIDEBAR — abrir / cerrar en móvil
+// Sidebar móvil: referencias a elementos y manejadores para abrir/cerrar.
 const toggleBtn = document.getElementById('sidebarToggle');
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('sidebarOverlay');
@@ -35,10 +36,9 @@ if (toggleBtn) toggleBtn.addEventListener('click', () => {
 
 if (overlay) overlay.addEventListener('click', closeSidebar);
 
-//  UTILIDAD — evitar que click y touchend se dupliquen
-
 let _touchHandled = false;
 
+// Envuelve un handler para que los eventos touch y click no se disparen ambos en un mismo toque.
 function crearHandler(fn) {
     return {
         touch: (e) => {
@@ -54,7 +54,7 @@ function crearHandler(fn) {
         }
     };
 }
-//  SUBMENÚ — acordeón
+// Comportamiento de acordeón para los submenús de primer nivel.
 document.querySelectorAll('.nav-group .has-sub').forEach(btn => {
     const fn = () => {
         const group = btn.closest('.nav-group');
@@ -67,12 +67,12 @@ document.querySelectorAll('.nav-group .has-sub').forEach(btn => {
     btn.addEventListener('click', h.click);
 });
 
-//  SUB-SUBMENÚ (3er nivel) — acordeón de simples / anidadas / compuestas
+// Comportamiento de acordeón para los submenús de tercer nivel (simple/anidado/compuesto).
 document.querySelectorAll('.nav-subgroup .has-sub2').forEach(btn => {
     const fn = () => {
         const sub = btn.closest('.nav-subgroup');
         const isOpen = sub.classList.contains('open');
-        // cierra los subgrupos hermanos para que solo uno quede abierto
+        // Cierra los subgrupos hermanos para que solo uno quede abierto a la vez.
         sub.parentElement.querySelectorAll('.nav-subgroup.open')
             .forEach(s => s.classList.remove('open'));
         if (!isOpen) sub.classList.add('open');
@@ -82,8 +82,7 @@ document.querySelectorAll('.nav-subgroup .has-sub2').forEach(btn => {
     btn.addEventListener('click', h.click);
 });
 
-//  NAVEGACIÓN — sub-botones finales
-
+// Maneja los clics en los botones finales del menú que cargan un tema.
 document.querySelectorAll('.nav-sub-btn:not(.has-sub2), .nav-sub2-btn, .nav-btn[data-tema]:not(.has-sub)').forEach(btn =>  {
     const fn = () => {
         const tema = btn.dataset.tema;
@@ -99,19 +98,18 @@ document.querySelectorAll('.nav-sub-btn:not(.has-sub2), .nav-sub2-btn, .nav-btn[
     btn.addEventListener('click', h.click);
 });
 
-//  HELPERS — actualizar título y definición en pantalla
+// Actualiza el título, la definición y el enunciado del ejercicio del tema.
 function mostrarDescripcion(titulo, definicion) {
     const elTitulo = document.getElementById('tema-titulo');
     const elDesc = document.getElementById('tema-descripcion');
     const elEnun = document.getElementById('tema-enunciado');
     if (elTitulo) elTitulo.innerHTML = titulo ? `<h2 class="tema-titulo-text">${titulo}</h2>` : '';
     if (elDesc) {
-        elDesc.classList.remove('modo-ejercicio');   // ← AÑADE ESTA LÍNEA
+        elDesc.classList.remove('modo-ejercicio');
         if (definicion) { elDesc.innerHTML = definicion; elDesc.style.display = 'block'; }
         else { elDesc.innerHTML = ''; elDesc.style.display = 'none'; }
     }
-    // Se limpia aquí; si el tema tiene ejemplos/ejercicios con enunciado
-    // propio, el simulador lo vuelve a mostrar para la pestaña activa.
+    // Limpia el enunciado del ejercicio; el simulador activo lo vuelve a pintar si lo necesita.
     if (elEnun) {
         elEnun.innerHTML = '';
         elEnun.style.display = 'none';
@@ -119,9 +117,7 @@ function mostrarDescripcion(titulo, definicion) {
     }
 }
 
-// ── Perfil en el header (avatar con inicial + nombre) ──────────────
-// Usa el usuario ya guardado en localStorage al iniciar sesión, así
-// que no depende de ninguna llamada a la API.
+// Pinta el avatar y el nombre del header usando el usuario guardado localmente (sin llamar a la API).
 function pintarPerfilHeader() {
     const widget = document.getElementById('header-perfil');
     if (!widget || !window.ApiClient || !window.ApiClient.obtenerUsuarioLocal) return;
@@ -137,11 +133,7 @@ function pintarPerfilHeader() {
 }
 pintarPerfilHeader();
 
-// ── Progreso del alumno (barra "X / Y ejercicios resueltos") ──────
-// El total sale de /ejercicios/practica (mismo banco que usa "Ponte a
-// prueba"); lo resuelto sale del perfil del alumno. Si el backend
-// todavía no expone `ejercicios_resueltos` en /auth/perfil, el widget
-// simplemente se queda oculto en vez de mostrar un dato falso.
+// Carga y pinta la barra de progreso del alumno; se oculta si el backend no tiene datos.
 async function actualizarProgresoUsuario() {
     const heroWidget = document.getElementById('hero-progreso');
     if (!heroWidget || !window.ApiClient) return;
@@ -179,34 +171,27 @@ function limpiarPantalla() {
     if (workspace) workspace.innerHTML = '';
     if (gridModulos) gridModulos.innerHTML = '';
     mostrarDescripcion('', '');
-    // El aviso de "Comprobar"/Pista de Ponte a prueba (#pp-resultado) vive
-    // como hermano de #tema-descripcion, no adentro — limpiar ese innerHTML
-    // no lo toca, así que quedaba pegado en pantalla al cambiar de tema.
+    // Oculta el aviso de "revisar respuesta", que vive fuera del contenedor de descripción.
     if (typeof ppOcultarResultado === 'function') ppOcultarResultado();
 }
 
 function cargarTema(nombreTema) {
     if (!nombreTema) return;
-    // Título y definición ya no viven aquí: los trae cada simulador desde
-    // la API (subtema.titulo / subtema.definicion) y los pinta al resolver.
+    // El título y la definición los llena cada simulador después de cargar.
     mostrarDescripcion('', '');
     if (typeof insertarConsolas === 'function') insertarConsolas();
     history.replaceState(null, '', '#' + nombreTema);
 }
 
-/* TOOLTIPS — palabras técnicas con explicación al pasar el cursor
-Uso: tip('palabra', 'explicación corta')
-Genera un <span class="glosario-tip"> con data-tip */
-
+// Envuelve una palabra en un span con explicación tipo tooltip al pasar el mouse (atributo data-tip).
 function tip(palabra, explicacion) {
-    // Las comillas dobles dentro del atributo data-tip rompen el HTML
-    // porque cierran el atributo antes de tiempo. Las escapamos a &quot;
+    // Escapa comillas dobles para que no rompan el atributo HTML data-tip.
     const textoSeguro = explicacion.replace(/"/g, '&quot;');
     return `<span class="glosario-tip" data-tip="${textoSeguro}">${palabra}</span>`;
 }
 
 
-// ── API GLOSARIO — caché y helpers ────────────────────────
+// Caché de datos del glosario y funciones auxiliares para obtenerlos.
 let _glosarioCache = null;
 let _glosarioPromesa = null;
 let _glosarioPorId = null;
@@ -242,7 +227,7 @@ function renderTips(texto, tips) {
     });
 }
 
-//  VISTA DE GLOSARIO
+// Estructura de respaldo del glosario (unidad -> lista de términos), usada si la API no está disponible.
 const glosarioUnidades = [
     {
         unidad: 'Unidad II — Estructuras de control',
@@ -277,7 +262,7 @@ async function cargarGlosario() {
 
     gridModulos.className = '';
 
-    // Intentar cargar desde API
+    // Intenta cargar los términos del glosario desde la API.
     let terminos = null;
     try {
         terminos = await obtenerGlosario();
@@ -286,7 +271,7 @@ async function cargarGlosario() {
     }
 
     if (terminos && terminos.length > 0) {
-        // Render desde API
+        // Pinta las tarjetas del glosario agrupadas por unidad, usando datos de la API.
         const ORDEN_UNIDADES = ['Operadores','Unidad II', 'Unidad III', 'Unidad IV'];
         const UNIDADES_OCULTAS = ['General'];
         const porUnidad = {};
@@ -321,7 +306,7 @@ async function cargarGlosario() {
         }
         gridModulos.innerHTML = html;
     } else {
-        // Fallback: datos locales
+        // Pinta las tarjetas del glosario agrupadas por unidad, usando los datos locales de respaldo.
         let html = '';
         for (const grupo of glosarioUnidades) {
             html += `<h3 class="glosario-unidad-titulo">${grupo.unidad}</h3>`;
@@ -345,7 +330,7 @@ async function cargarGlosario() {
     }
 }
 
-//  GESTIÓN DE EVENTOS DOM
+// Conecta los botones del menú, la pantalla/tema inicial y el tooltip del glosario al cargar.
 document.addEventListener('DOMContentLoaded', () => {
     const btnInicio = document.getElementById('btn-inicio');
     const btnGlosario = document.getElementById('btn-glosario');
@@ -377,20 +362,11 @@ document.addEventListener('DOMContentLoaded', () => {
         mostrarPantallaInicio();
     }
 
-    // ── Tooltip del modal ──────────────────────────────────────────────
-    // El <dialog> vive en el "top layer" del navegador. Su ::backdrop
-    // también vive ahí y tapa cualquier elemento con position:fixed
-    // que esté fuera del dialog. La única solución real es insertar
-    // el tooltip DENTRO del <dialog> y usar position:fixed con las
-    // coordenadas absolutas del mouse (clientX/clientY). Al estar
-    // dentro del top-layer, fixed se comporta como se espera y el
-    // backdrop ya no lo puede tapar.
-    // ──────────────────────────────────────────────────────────────────
+    // El elemento del tooltip debe vivir dentro del <dialog> para que se pinte encima de su propio fondo.
     const modalDialog = document.getElementById('modal-concepto');
     const tooltipBox = document.createElement('div');
     tooltipBox.id = 'glosario-tooltip';
-    // Insertarlo como PRIMER hijo del dialog para que quede por encima
-    // del modal-content-wrapper y su backdrop interno.
+    // Se inserta como primer hijo del dialog para que quede encima del contenido del modal.
     if (modalDialog) {
         modalDialog.insertBefore(tooltipBox, modalDialog.firstChild);
     } else {
@@ -403,26 +379,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const texto = el.getAttribute('data-tip');
         if (!texto) return;
 
-        // 1. Poner el texto y hacerlo visible PRIMERO para que el navegador
-        //    calcule el tamaño real antes de leer offsetWidth/offsetHeight.
+        // Asigna el texto y muestra el tooltip antes de medir su tamaño ya renderizado.
         tooltipBox.textContent = texto;
         tooltipBox.classList.add('visible');
 
-        // 2. Leer dimensiones REALES ya renderizadas
+        // Lee las dimensiones reales del tooltip ya renderizado.
         const tw = tooltipBox.offsetWidth;
         const th = tooltipBox.offsetHeight;
         const vw = window.innerWidth;
         const vh = window.innerHeight;
 
-        // Posición anclada al elemento (no al cursor), encima y centrada
+        // Posiciona el tooltip centrado arriba del elemento sobre el que está el mouse.
         const elRect = el.getBoundingClientRect();
         let left = elRect.left + elRect.width / 2 - tw / 2;
         let top = elRect.top - th - 8;
 
-        // Evitar que se salga de la pantalla
+        // Ajusta la posición para que el tooltip no se salga de la pantalla visible.
         if (left < 8) left = 8;
         if (left + tw > vw - 8) left = vw - tw - 8;
-        if (top < 8) top = elRect.bottom + 8;   // aparece abajo si no cabe arriba
+        if (top < 8) top = elRect.bottom + 8;   // si no cabe arriba, se muestra abajo del elemento
         if (top + th > vh - 8) top = vh - th - 8;
 
         tooltipBox.style.left = left + 'px';
@@ -436,8 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-//DICCIONARIO
-
+// Entradas antiguas del glosario indexadas por nombre de tema, usadas como último respaldo.
 const diccionarioTemas = {
     "Selectivas": {
         titulo: "Estructuras Selectivas",
@@ -471,14 +445,10 @@ const diccionarioTemas = {
     }
 };
 
-// ============================================================
-//  GLOSARIO — términos del temario con tooltips en palabras técnicas
-//  "conceptoPlano" es el texto sin HTML, para la vista previa de la tarjeta.
-//  "concepto" es el texto con tooltips, para mostrar en el modal.
-// ============================================================
+// Términos del glosario con tooltips: conceptoPlano es texto plano para la vista previa de la tarjeta, concepto trae el markup de tooltips para el modal.
 const glosarioTerminos = {
 
-    // ── Unidad II ──────────────────────────────────────────
+    // Términos de la Unidad II.
 
     datos_primitivos: {
         titulo: "Datos primitivos",
@@ -608,7 +578,7 @@ const glosarioTerminos = {
         conclusion: `Es como escuchar música en repeat: sigue sonando mientras no la pares. No importa cuántas veces haya repetido, lo que importa es si la condición para continuar sigue siendo verdadera.`
     },
 
-    // ── Unidad III ─────────────────────────────────────────
+    // Términos de la Unidad III.
 
     funciones: {
         titulo: "Funciones",
@@ -642,7 +612,7 @@ const glosarioTerminos = {
         conclusion: `Entender la pila de llamadas te ayuda a saber exactamente qué está haciendo el programa en cada momento. También te explica por qué una recursividad sin caso base es peligrosa: la pila seguiría creciendo hasta que el programa colapse.`
     },
 
-    // ── Unidad IV ──────────────────────────────────────────
+    // Términos de la Unidad IV.
 
     arreglos: {
         titulo: "Arreglos",
@@ -661,18 +631,17 @@ const glosarioTerminos = {
     }
 };
 
-// MODAL — abrir con innerHTML para que los tips funcionen
-
+// Abre el modal del glosario para un término, usando innerHTML para que se rendericen los spans de tooltip.
 async function abrirConceptoModal(idTema) {
     const modal = document.getElementById('modal-concepto');
     if (!modal) return;
 
-    // Precargar caché de API si aún no existe
+    // Precarga la caché del glosario desde la API si aún no se ha cargado.
     if (!_glosarioPorId) {
-        try { await obtenerGlosario(); } catch (e) { /* usa respaldo local */ }
+        try { await obtenerGlosario(); } catch (e) { /* usa datos locales como respaldo */ }
     }
 
-    // Buscar término: primero en caché API, luego en datos locales
+    // Busca el término: primero en la caché de la API, luego en los datos locales como respaldo.
     let datos = null;
     let usandoApi = false;
     if (_glosarioPorId && _glosarioPorId[idTema]) {
@@ -719,7 +688,7 @@ if (modalElemento) {
     });
 }
 
-// ── CERRAR SESIÓN ──────────────────────────────────────────
+// Conecta el botón de cerrar sesión con un diálogo de confirmación.
 document.addEventListener('DOMContentLoaded', () => {
     const btnCerrar = document.getElementById('btn-cerrar-sesion');
     if (!btnCerrar) return;

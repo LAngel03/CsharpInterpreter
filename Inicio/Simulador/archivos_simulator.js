@@ -1,11 +1,6 @@
-// ============================================================
-//  Simulador/archivos_simulator.js
-//  Simulador paso a paso para el subtema "Archivos".
-//  Usa CSharpEngine como motor con filesystem virtual.
-// ============================================================
+// Simulador paso a paso del subtema "Archivos": ejecuta código C# con CSharpEngine sobre un filesystem virtual.
 
-// ── Utilidades ───────────────────────────────────────────────
-
+// Escapa caracteres especiales de HTML para mostrar texto sin romper el marcado.
 function arcEscape(str) {
     return String(str)
         .replace(/&/g, '&amp;')
@@ -14,6 +9,7 @@ function arcEscape(str) {
         .replace(/"/g, '&quot;');
 }
 
+// Formatea un valor tal como se vería escrito en código C# (comillas, true/false).
 function arcFmtVal(v, type) {
     if (v === null || v === undefined) return 'null';
     if (type === 'bool' || typeof v === 'boolean') return v ? 'true' : 'false';
@@ -21,9 +17,11 @@ function arcFmtVal(v, type) {
     return String(v);
 }
 
+// Iconos del botón reproducir/pausar.
 const _ARC_ICON_PLAY  = '<img src="../img/iconos/play.png" alt="Reproducir"><span class="tooltip-text">Reproducir</span>';
 const _ARC_ICON_PAUSE = '<img src="../img/iconos/pause.png" alt="Pausar"><span class="tooltip-text">Pausar</span>';
 
+// Devuelve los cuatro botones de control de pasos por su id.
 function _arcBtns() {
     return [
         document.getElementById('btn-reiniciar'),
@@ -33,8 +31,7 @@ function _arcBtns() {
     ];
 }
 
-// ── SnapshotManager ──────────────────────────────────────────
-
+// Controla el índice actual dentro de la lista de snapshots (pasos) de ejecución.
 class ArcSnapMgr {
     constructor() { this.snaps = []; this.idx = -1; }
     reset()  { this.snaps = []; this.idx = -1; }
@@ -45,10 +42,10 @@ class ArcSnapMgr {
     total()  { return this.snaps.length; }
 }
 
-// ── Simulador (usa CSharpEngine) ─────────────────────────────
-
+// Ejecuta código C# con CSharpEngine y expone la navegación paso a paso.
 class ArchivosSimulator {
     constructor() { this.snap = new ArcSnapMgr(); this.lastAst = null; }
+    // Compila y ejecuta el código, arma la lista de snapshots y devuelve el primer paso.
     load(code) {
         this.snap.reset();
         this.lastAst = null;
@@ -76,12 +73,10 @@ class ArchivosSimulator {
     info()  { return { index: this.snap.idx, total: this.snap.total() }; }
 }
 
-// ════════════════════════════════════════════════════════════
-//  EJEMPLOS Y EJERCICIO — conectados a la API (subtema "Archivos")
-// ════════════════════════════════════════════════════════════
-
+// Caché de subtemas ya obtenidos desde la API, por slug.
 const arcCacheSubtemas = {};
 
+// Obtiene los datos del subtema "Archivos" desde la API, usando caché.
 async function arcObtenerDatosTema(slug) {
     if (arcCacheSubtemas[slug]) return arcCacheSubtemas[slug];
     try {
@@ -94,17 +89,17 @@ async function arcObtenerDatosTema(slug) {
         return subtema;
     } catch (e) {
         console.warn(`Subtema "${slug}" no encontrado en la API`, e);
-        return { codigo_ejemplo: null, _apiError: e.message }; // null => sin datos, se avisa en pantalla
+        return { codigo_ejemplo: null, _apiError: e.message };
     }
 }
 
+// Arma la lista de pestañas de ejemplo/caso a partir de los datos del subtema.
 function arcGetItemsDesdeSubtema(subtema) {
     if (subtema.codigo_ejemplo === null) {
         return [{ label: 'Ejemplo 1', codigo: '// No se pudo cargar el ejemplo desde la API.', enunciado: null, esEjercicio: false }];
     }
 
-    // Los ejemplos vienen de su propia tabla (subtema.ejemplos), ya
-    // ordenados por "orden" desde el backend.
+    // Los ejemplos vienen de su propia tabla, ya ordenados por el backend.
     const ejemplosDb = Array.isArray(subtema.ejemplos) ? subtema.ejemplos : [];
     const items = ejemplosDb.map((ej, i) => ({
         label: ejemplosDb.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
@@ -114,10 +109,8 @@ function arcGetItemsDesdeSubtema(subtema) {
         esEjercicio: false
     }));
 
-    // Los ejercicios vienen APARTE, en subtema.ejercicios (lista de la BD).
-    // Campos reales: titulo, descripcion (enunciado) y codigo_csharp (solución).
-    // Solo modo='demostracion': los de "Ponte a prueba" (modo='practica') no
-    // deben mostrarse aquí — su codigo_csharp es la solución del ejercicio.
+    // Toma solo los ejercicios modo='demostracion'; los de "Ponte a prueba" (modo='practica')
+    // no se muestran aquí porque su codigo_csharp es la solución que el alumno debe encontrar.
     const ejercicios = (Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [])
         .filter(ej => (ej.modo || 'demostracion') === 'demostracion');
     ejercicios.forEach((ej, i) => {
@@ -136,9 +129,7 @@ function arcGetItemsDesdeSubtema(subtema) {
     return items;
 }
 
-// Recuadro del enunciado propio del ejemplo/ejercicio activo — va debajo del
-// concepto general del tema (#tema-descripcion, que no se toca aquí).
-// tipo: 'ejercicio' | 'ejemplo' | null (oculta el recuadro, no hay enunciado)
+// Muestra u oculta el recuadro de enunciado del ejemplo/caso activo, debajo del concepto general del tema.
 function arcSetDescripcion(html, tipo, titulo) {
     const el = document.getElementById('tema-enunciado');
     if (!el) return;
@@ -155,7 +146,7 @@ function arcSetDescripcion(html, tipo, titulo) {
     }
 }
 
-// Muestra (o limpia) un mensaje de error visible arriba del editor.
+// Muestra o limpia un mensaje de error visible arriba del editor.
 function arcMostrarErrorApi(mensaje) {
     const editorBody = document.getElementById('editor-body');
     if (!editorBody) return;
@@ -173,8 +164,7 @@ function arcMostrarErrorApi(mensaje) {
     box.textContent = mensaje;
 }
 
-// ── Estado global ─────────────────────────────────────────────
-
+// Instancia del simulador y estado del editor/reproducción del módulo.
 const arcSim = new ArchivosSimulator();
 let arcMonacoEditor = null;
 let arcDecorations  = [];
@@ -183,8 +173,7 @@ let arcPlaying      = false;
 let arcCurrentCode  = '';
 let arcTemaActual   = '';
 
-// ── Variables escalares editables ────────────────────────────
-
+// Encuentra declaraciones de variables con valor literal en el nivel superior del AST, editables por el usuario.
 function arcExtraerVariablesEditables(ast) {
     if (!ast || !ast.body) return [];
     return ast.body
@@ -192,6 +181,7 @@ function arcExtraerVariablesEditables(ast) {
         .map(n => ({ name: n.name, dataType: n.dataType, raw: n.init.raw, value: n.init.value, line: n.line }));
 }
 
+// Reescribe en el código fuente la línea de cada variable editada con su nuevo valor.
 function arcReconstruirCodigo(baseCode, variables, valoresNuevos) {
     const lineas = baseCode.split('\n');
     for (const v of variables) {
@@ -213,6 +203,7 @@ function arcReconstruirCodigo(baseCode, variables, valoresNuevos) {
     return lineas.join('\n');
 }
 
+// Dibuja un input por cada variable editable y reejecuta el código cuando cambia su valor.
 function arcRenderInputsVariables(variables, codigoBase) {
     const host = document.getElementById('arc-vars-editable');
     if (!host) return;
@@ -225,9 +216,9 @@ function arcRenderInputsVariables(variables, codigoBase) {
         const tipoInput = (v.dataType === 'int' || v.dataType === 'double' || v.dataType === 'float') ? 'number' : 'text';
         const inputHtml = v.dataType === 'bool'
             ? '<select class="arr-var-input" data-var="' + v.name + '">' +
-              '<option value="true"' + (v.value === true ? ' selected' : '') + '>true</option>' +
-              '<option value="false"' + (v.value === false ? ' selected' : '') + '>false</option>' +
-              '</select>'
+                '<option value="true"' + (v.value === true ? ' selected' : '') + '>true</option>' +
+                '<option value="false"' + (v.value === false ? ' selected' : '') + '>false</option>' +
+                '</select>'
             : '<input class="arr-var-input" type="' + tipoInput + '" data-var="' + v.name + '" value="' + arcEscape(String(v.value)) + '">';
         return '<div class="arr-var-field"><label>' + arcEscape(v.dataType) + ' ' + arcEscape(v.name) + '</label>' + inputHtml + '</div>';
     }).join('');
@@ -246,6 +237,7 @@ function arcRenderInputsVariables(variables, codigoBase) {
     });
 }
 
+// Reejecuta el código y renderiza el primer paso, sin reconstruir los inputs de variables.
 function arcEjecutarSinTocarInputs(codigo) {
     const first = arcSim.load(codigo);
     arcRender(first, arcSim.info());
@@ -254,6 +246,7 @@ function arcEjecutarSinTocarInputs(codigo) {
     if (btns[3]) { arcPlaying = false; btns[3].innerHTML = _ARC_ICON_PLAY; }
 }
 
+// Carga el código, reconstruye los inputs de variables editables y renderiza el primer paso.
 function arcCargarYEjecutar(codigo) {
     const first = arcSim.load(codigo);
     const variables = arcExtraerVariablesEditables(arcSim.lastAst);
@@ -264,8 +257,7 @@ function arcCargarYEjecutar(codigo) {
     if (btns[3]) { arcPlaying = false; btns[3].innerHTML = _ARC_ICON_PLAY; }
 }
 
-// ── Panel de archivos virtuales ───────────────────────────────
-
+// Renderiza el panel del sistema de archivos virtual, resaltando los archivos que cambiaron.
 function arcBuildFilesHtml(files, prevFiles) {
     if (!files || Object.keys(files).length === 0) return '';
     prevFiles = prevFiles || {};
@@ -285,8 +277,7 @@ function arcBuildFilesHtml(files, prevFiles) {
     return html;
 }
 
-// ── Render de variables ───────────────────────────────────────
-
+// Renderiza los paneles de variables y archivos para el estado del paso actual.
 function arcBuildMemoriaHtml(state, prevState) {
     const ch = new Set(state.changed || []);
     let html = '';
@@ -307,8 +298,7 @@ function arcBuildMemoriaHtml(state, prevState) {
     return html;
 }
 
-// ── Highlight ─────────────────────────────────────────────────
-
+// Resalta la línea actual en el editor Monaco.
 function arcHighlight(line, isError) {
     if (!arcMonacoEditor) return;
     const cls = isError ? 'lineFalse' : 'lineHighlight';
@@ -319,6 +309,7 @@ function arcHighlight(line, isError) {
     arcMonacoEditor.revealLineInCenter(line);
 }
 
+// Deja todos los paneles del paso en su estado vacío inicial.
 function arcClearPanels() {
     if (arcMonacoEditor) arcDecorations = arcMonacoEditor.deltaDecorations(arcDecorations, []);
     ['panel-paso', 'panel-vars', 'panel-salida'].forEach(id => {
@@ -333,6 +324,7 @@ function arcClearPanels() {
 
 let _arcPrevState = null;
 
+// Renderiza un paso completo: resalta la línea, actualiza paneles y la barra de progreso.
 function arcRender(state, info) {
     if (!state) { arcClearPanels(); return; }
 
@@ -365,13 +357,13 @@ function arcRender(state, info) {
     }
 }
 
-// ── Controles ─────────────────────────────────────────────────
-
+// Calcula el retardo entre pasos de auto-reproducción a partir del slider de velocidad.
 function arcGetDelay() {
     const slider = document.getElementById('sim-speed-slider');
     return Math.round(2000 - ((slider ? parseInt(slider.value) : 40) / 100) * 1800);
 }
 
+// Detiene la auto-reproducción y restaura el ícono del botón reproducir.
 function arcStopPlay(btns) {
     clearTimeout(arcPlayTimer);
     arcPlayTimer = null; arcPlaying = false;
@@ -379,6 +371,7 @@ function arcStopPlay(btns) {
     if (btnR) btnR.innerHTML = _ARC_ICON_PLAY;
 }
 
+// Conecta los botones de control de pasos y crea el slider de velocidad si no existe.
 function arcConectarBotones() {
     const btns = _arcBtns();
     const [btnRei, btnAnt, btnSig, btnRep] = btns;
@@ -428,8 +421,7 @@ function arcConectarBotones() {
     if (slider && speedVal) slider.oninput = () => { speedVal.textContent = (parseFloat(slider.value) / 40).toFixed(1) + '×'; };
 }
 
-// ── CSS ───────────────────────────────────────────────────────
-
+// Inyecta el CSS de este simulador una sola vez.
 (function injectArcStyles() {
     if (document.getElementById('arc-styles')) return;
     const style = document.createElement('style');
@@ -519,8 +511,7 @@ function arcConectarBotones() {
     document.head.appendChild(style);
 })();
 
-// ── Inicialización (conectada a GET /api/subtemas/slug/:slug) ─
-
+// Punto de entrada: carga datos desde la API, arma pestañas/editor e inicia Monaco.
 async function initArchivosSimulador(tema) {
     const editorBody = document.getElementById('editor-body');
     if (!editorBody) return;
@@ -530,8 +521,7 @@ async function initArchivosSimulador(tema) {
         const subtema = await arcObtenerDatosTema(tema);
         items = arcGetItemsDesdeSubtema(subtema);
 
-        // Título y definición del tema vienen de la BD (vía admin); se
-        // pintan aquí porque cargarTema() ya no trae texto local.
+        // Título y definición del tema vienen de la base de datos.
         mostrarDescripcion(subtema.titulo || '', subtema.definicion || '');
 
         if (subtema._apiError) {
@@ -547,7 +537,7 @@ async function initArchivosSimulador(tema) {
 
     arcCurrentCode = items[0].codigo;
 
-    // Pestañas
+    // Contenedor de pestañas de ejemplo/caso.
     let tabsEl = document.getElementById('sim-ejemplos-tabs');
     if (!tabsEl && items.length > 1) {
         tabsEl = document.createElement('div');
@@ -555,16 +545,14 @@ async function initArchivosSimulador(tema) {
         editorBody.parentNode.insertBefore(tabsEl, editorBody);
     }
 
-    // Inputs de variables editables
+    // Contenedor de los inputs de variables editables.
     if (!document.getElementById('arc-vars-editable')) {
         const varsHost = document.createElement('div');
         varsHost.id = 'arc-vars-editable';
         editorBody.parentNode.insertBefore(varsHost, editorBody);
     }
 
-    // Muestra (o esconde) el recuadro de enunciado propio del item activo;
-    // el concepto general del tema vive aparte, en #tema-descripcion, y no
-    // se toca aquí — sigue visible siempre.
+    // Muestra u oculta el enunciado propio del item activo (el concepto general del tema no se toca aquí).
     function mostrarDescripcionItem(it) {
         if (it.esEjercicio && it.enunciado) arcSetDescripcion(it.enunciado, 'Caso', it.titulo);
         else if (it.enunciado) arcSetDescripcion(it.enunciado, 'ejemplo', it.titulo);
@@ -592,6 +580,7 @@ async function initArchivosSimulador(tema) {
         });
     }
 
+    // Crea la instancia del editor Monaco y ejecuta el código inicial.
     function crearEditorArc() {
         require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
         require(['vs/editor/editor.main'], function () {
@@ -621,13 +610,12 @@ async function initArchivosSimulador(tema) {
     }
 }
 
-// ── Hook en cargarTema ────────────────────────────────────────
-
+// Envuelve cargarTema para inicializar/limpiar este simulador cuando corresponde.
 (function wrapCargarTemaArchivos() {
     const _prev = window.cargarTema;
 
     window.cargarTema = function (nombreTema) {
-        // Limpiar estado propio al salir
+        // Limpia el estado propio de este simulador al salir del tema.
         arcStopPlay(_arcBtns());
         if (arcMonacoEditor) {
             arcMonacoEditor.dispose();
@@ -644,6 +632,6 @@ async function initArchivosSimulador(tema) {
         arcTemaActual = nombreTema;
         arcPlaying = false;
 
-        initArchivosSimulador(nombreTema); // ya es async, no necesita setTimeout
+        initArchivosSimulador(nombreTema);
     };
 })();

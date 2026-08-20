@@ -1,4 +1,4 @@
-/* styles.css */
+/* Variables globales */
 
 :root {
     --dark: #282A35;
@@ -21,13 +21,11 @@
     --footer-h: 45px;
 }
 
-/*  BODY  */
+/* Body */
 body {
     background-color: #1E1F26;
     height: 100vh;
-    /* altura fija, NO min-height */
     overflow: hidden;
-    /* el body NO scrollea */
     margin: 0;
     padding: 0;
     font-family: Calibri, Arial, Helvetica, sans-serif;
@@ -35,13 +33,12 @@ body {
     flex-direction: column;
 }
 
-/*  HEADER  */
+/* Header */
 header {
     display: flex;
     align-items: center;
     gap: 20px;
     flex-shrink: 0;
-    /* nunca se encoge */
     z-index: 100;
 }
 
@@ -54,7 +51,7 @@ header {
 }
 
 .header-right {
-    margin-left: auto;          /* empuja perfil + botón hasta la derecha */
+    margin-left: auto;
     display: flex;
     align-items: center;
     gap: 14px;
@@ -90,7 +87,7 @@ header {
 }
 
 @media (max-width: 576px) {
-    .header-perfil__nombre { display: none; }   /* deja solo el avatar en móvil */
+    .header-perfil__nombre { display: none; }
 }
 
 .btn-cerrar-header {
@@ -119,7 +116,7 @@ header {
     opacity: 0.85;
 }
 
-/*  TÍTULOS  */
+/* Títulos */
 h1 {
     color: var(--white);
     font-family: Calibri, Arial, Helvetica, sans-serif;
@@ -132,31 +129,25 @@ h1 {
     color: var(--green-main);
 }
 
-
-/*  LAYOUT  */
+/* Layout */
 .layout {
     flex: 1;
-    /* ocupa todo el espacio entre header y footer */
     overflow: hidden;
-    /* contiene a sus hijos */
     display: flex;
     min-height: 0;
-    /* necesario para que flex respete el overflow */
 }
 
-/*  MAIN  */
+/* Main */
 main {
     flex: 1;
     min-width: 0;
     overflow-y: auto;
-    /* SOLO el main hace scroll */
     padding: 0;
-    /* columna flex: deja que el footer caiga al final con margin-top:auto */
     display: flex;
     flex-direction: column;
 }
 
-/*  SIDEBAR — fijo por diseño flex  */
+/* Sidebar */
 .app-sidebar {
     background-color: var(--dark);
     border-right: 1px solid rgba(255, 255, 255, 0.05);
@@ -164,12 +155,10 @@ main {
     flex-shrink: 0;
     overflow: hidden;
     transition: width var(--sidebar-transition);
-    /* NO necesita position sticky — el flex lo mantiene fijo */
     z-index: 50;
     scrollbar-width: none;
     padding: 10px 12px;
     box-sizing: border-box;
-    /* Altura = todo el layout */
     align-self: stretch;
 }
 
@@ -177,7 +166,7 @@ main {
     display: none;
 }
 
-/* Título MENÚ */
+/* Título del menú */
 .app-sidebar h4 {
     color: #bfc6d1;
     font-size: 0.72rem;
@@ -191,7 +180,7 @@ main {
     padding-left: 6px;
 }
 
-/* Indicador verde */
+/* Indicador verde del sidebar */
 .app-sidebar::after {
     content: '';
     position: absolute;
@@ -206,11 +195,7 @@ main {
     transition: opacity var(--sidebar-transition), height var(--sidebar-transition);
 }
 
-/* 
-   EXPANSIÓN POR HOVER — SOLO ESCRITORIO CON MOUSE REAL
-   El emulador de Edge y los táctiles reportan hover:none,
-   así que aquí no se dispara nada por puntero.
-    */
+/* Expansión del sidebar al pasar el mouse (solo escritorio) */
 @media (hover: hover) and (pointer: fine) {
     .app-sidebar:hover {
         width: var(--sidebar-expanded);
@@ -268,13 +253,13 @@ main {
         color: var(--green-main);
     }
 
-    /* Abrir submenú por hover (solo cuando el sidebar también está expandido) */
+    /* Abrir submenú por hover */
     .app-sidebar:hover .nav-group:hover .nav-sub {
         max-height: 200px;
         opacity: 1;
     }
 
-    /* Submenú abierto por clase .open visible cuando el sidebar está expandido */
+    /* Submenú abierto por clase .open */
     .app-sidebar:hover .nav-group.open .nav-sub {
         max-height: 200px;
         opacity: 1;
@@ -288,7 +273,7 @@ main {
     }
 }
 
-/*  BOTONES NAV  */
+/* Botones de navegación (sidebar) */
 .nav-btn {
     width: 100%;
     padding: 11px 10px;
@@ -328,20 +313,18 @@ main {
     opacity: 0;
 }
 
-/* 
-   ESTADO PERSISTENTE (controlado por JS con .open) — SIEMPRE activo
-    */
+/* Estado persistente controlado por JS (.open) */
 .nav-group.open .nav-arrow {
     transform: rotate(180deg);
     color: var(--green-main);
 }
 
-/* Marca verde fija en el grupo abierto (no depende de hover) */
+/* Marca del grupo abierto */
 .nav-group.open>.nav-btn.has-sub {
     background-color: rgba(4, 170, 109, 0.18);
 }
 
-/*  ÍCONOS  */
+/* Íconos */
 .nav-icon {
     width: 20px;
     height: 20px;
@@ -363,7 +346,7 @@ main {
     flex: 1;
 }
 
-/*  SUBMENÚ  */
+/* Submenú */
 .nav-group {
     margin-bottom: 4px;
 }
@@ -398,19 +381,17 @@ main {
     transform: scale(0.98);
 }
 
-/*  FOOTER  */
+/* Footer */
 .app-footer {
     background-color: var(--dark);
     color: var(--white);
     text-align: center;
     padding: 12px;
     flex-shrink: 0;
-    /* lo empuja al fondo del main cuando sobra espacio,
-       y fluye al final cuando hay scroll (ya no estático) */
     margin-top: auto;
 }
 
-/*  SCROLLBAR GLOBAL  */
+/* Scrollbar global */
 ::-webkit-scrollbar {
     width: 10px;
 }
@@ -428,7 +409,7 @@ main {
     background: #4C566A;
 }
 
-/*  RESPONSIVE MÓVIL  */
+/* Responsive: móvil (botón flotante y overlay) */
 .sidebar-toggle {
     position: fixed;
     bottom: 70px;
@@ -490,8 +471,6 @@ main {
         transform: translateX(0);
         box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
         overflow-y: auto !important;
-        /* espacio extra abajo para que el último ítem no
-           quede tapado por el botón verde flotante */
         padding-bottom: 90px !important;
     }
 
@@ -512,7 +491,7 @@ main {
         padding: 16px;
     }
 
-    /* el footer queda a borde completo del main aunque main tenga padding */
+    /* Footer a ancho completo dentro de main */
     main>.app-footer {
         margin-left: -16px;
         margin-right: -16px;
@@ -536,9 +515,7 @@ main {
     }
 }
 
-/* 
-   WORKSPACE
-*/
+/* Workspace (layout de paneles) */
 .workspace {
     display: grid;
     grid-template-columns: 1fr 540px;
@@ -558,9 +535,7 @@ main {
     }
 }
 
-/*
-   PANELES BASE 
-*/
+/* Paneles base (consola/editor) */
 .console-panel {
     background-color: var(--dark);
     border-radius: 10px;
@@ -652,9 +627,7 @@ main {
     gap: 6px;
 }
 
-/* 
-   EditorR
-    */
+/* Editor */
 .editor-panel {
     min-height: 50px;
 }
@@ -674,6 +647,7 @@ main {
     min-height: 140px;
 }
 
+/* Controles del editor */
 .editor-controls {
     display: flex;
     align-items: center;
@@ -685,6 +659,7 @@ main {
     flex-shrink: 0;
 }
 
+/* Botones de control (ejecutar, reiniciar, etc.) */
 .ctrl-btn {
     padding: 8px 14px;
     background-color: #252a3a;
@@ -734,10 +709,7 @@ main {
     white-space: nowrap;
 }
 
-/* width:100% obliga a que esta fila SIEMPRE caiga en su propia línea dentro
-   de .editor-controls (que es flex-wrap) — sin esto, el slider competía por
-   espacio con los botones (Reiniciar/Ejercicio anterior/Siguiente/Pista/
-   Comprobar) en la misma línea y terminaba encimado con ellos. */
+/* Fila del control de velocidad (ocupa toda la línea) */
 .sim-speed-row {
     display: flex;
     align-items: center;
@@ -766,6 +738,7 @@ main {
     text-align: right;
 }
 
+/* Barra de progreso */
 .pbar {
     width: 100px;
     height: 4px;
@@ -782,6 +755,7 @@ main {
     border-radius: 3px;
 }
 
+/* Progreso del tema */
 .hero-progreso {
     max-width: 420px;
     margin: 18px 0 8px;
@@ -825,9 +799,7 @@ main {
     gap: 14px;
 }
 
-/* 
-   TEXTO EXPLICATIVO
-    */
+/* Texto explicativo */
 .explanation-text {
     background-color: #1e2130;
     border: 1px solid var(--console-border);
@@ -851,7 +823,7 @@ section {
     margin-bottom: 12px;
 }
 
-/* Modal */
+/* Modal de concepto */
 
 .custom-modal {
     background-color: var(--dark);
@@ -876,6 +848,7 @@ section {
     flex-direction: column;
 }
 
+/* Encabezado del modal */
 .custom-modal-header {
     display: flex;
     justify-content: space-between;
@@ -905,6 +878,7 @@ section {
     color: var(--white);
 }
 
+/* Cuerpo del modal */
 .custom-modal-body {
     padding: 24px 24px 16px 24px;
     background-color: var(--dark);
@@ -967,6 +941,7 @@ section {
     margin: 0;
 }
 
+/* Pie del modal */
 .custom-modal-footer {
     padding: 16px 24px;
     border-top: 1px solid var(--console-border);
@@ -1023,19 +998,16 @@ pre {
     font-family: monospace;
 }
 
-/* pantalla de inicio */
+/* Pantalla de inicio */
 #pantalla-inicio {
     display: none;
     flex-direction: column;
     width: 100%;
-    /* sin overflow-y propio: que scrollee el main, no esta caja.
-       Así el footer (hermano dentro de main) fluye al final igual
-       que en las demás pantallas. */
 }
 
-/* Hero */
+/* Hero (portada del inicio) */
 .hero {
-    
+
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 60px;
@@ -1044,30 +1016,26 @@ pre {
     border-bottom: 1px solid #2a2d3a;
     position: relative;
     min-height: 450px;
-    /* necesario para el ::before */
     overflow: hidden;
-    /* recorta la imagen al área del hero */
 }
-/* Imagen de fondo del hero, SIN difuminado */
+/* Imagen de fondo del hero */
 .hero::before {
     content: "";
     position: absolute;
     inset: 0;
     height: 450px;
-    
 
     background-image: url("../../img/Gerarquia_De_Operadores.png");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
 
-    /* Solo oscurece ligeramente la imagen */
     filter: brightness(0.4);
 
     z-index: 0;
 }
 
-/* El contenido del hero queda POR ENCIMA de la imagen */
+/* Contenido del hero sobre la imagen de fondo */
 .hero > * {
     position: relative;
     z-index: 1;
@@ -1119,7 +1087,7 @@ pre {
     }
 }
 
-/* ── SECCIÓN GLOSARIO EN INICIO ── */
+/* Sección glosario (inicio) */
 .inicio-glosario {
     padding: 60px 60px;
 }
@@ -1143,12 +1111,8 @@ pre {
     margin-bottom: 36px;
 }
 
+/* Feedback táctil (:active) en sidebar móvil */
 
-/* COLORES DE SELECCIÓN EN MÓVIL / TÁCTIL
-   :active y touch feedback para nav-btn y nav-sub-btn
- */
-
-/* Feedback visual al tocar cualquier botón del sidebar */
 .nav-btn:active {
     background-color: var(--green-main) !important;
     color: var(--white) !important;
@@ -1161,7 +1125,7 @@ pre {
     border-left-color: var(--green-main) !important;
 }
 
-/* En móvil, los botones del sidebar abierto siempre muestran color al tocar */
+/* En móvil, mostrar color siempre al tocar */
 @media (max-width: 767.98px) {
     .nav-btn:active {
         background-color: var(--green-main) !important;
@@ -1173,7 +1137,7 @@ pre {
         color: var(--green-main) !important;
     }
 
-    /* Flecha rotada cuando el grupo está abierto en móvil */
+    /* Flecha rotada cuando el grupo está abierto */
     .app-sidebar .nav-group.open .nav-arrow {
         transform: rotate(180deg) !important;
         color: var(--green-main) !important;
@@ -1181,10 +1145,10 @@ pre {
     }
 }
 
-/* ── MÓVIL: sidebar abierto muestra todo correctamente ── */
+/* Sidebar abierto en móvil */
 @media (max-width: 767.98px) {
 
-    /* Mostrar título MENÚ */
+    /* Mostrar título del menú */
     .app-sidebar.open h4 {
         opacity: 1 !important;
         padding-top: 0 !important;
@@ -1195,7 +1159,7 @@ pre {
         transform: none !important;
     }
 
-    /* Mostrar labels siempre cuando sidebar abierto */
+    /* Mostrar labels cuando el sidebar está abierto */
     .app-sidebar.open .nav-label,
     .app-sidebar.open .nav-arrow {
         opacity: 1 !important;
@@ -1208,14 +1172,11 @@ pre {
     }
 }
 
-
-/* Botones de paso Anterior y siguiente */
+/* Botones Anterior / Siguiente */
 .btn-anterior,
 .btn-siguiente {
     position: relative;
-    /* Clave para el tooltip */
     background-color: #252a3a;
-    /* Mismo fondo que .ctrl-btn */
     border: 1px solid var(--console-border);
     border-radius: 8px;
     cursor: pointer;
@@ -1226,13 +1187,13 @@ pre {
     transition: 0.15s;
 }
 
-/* Efecto Hover para ambos botones */
+/* Hover de ambos botones */
 .btn-anterior:hover:not(:disabled),
 .btn-siguiente:hover:not(:disabled) {
     border-color: var(--green-main);
 }
 
-/* Cuando están deshabilitados (disabled) */
+/* Botones deshabilitados */
 .btn-anterior:disabled,
 .btn-siguiente:disabled {
     opacity: 0.35;
@@ -1240,13 +1201,12 @@ pre {
     border-color: var(--console-border);
 }
 
-/* Estilos para las imágenes PNG de ambos botones */
+/* Íconos de ambos botones */
 .btn-anterior img,
 .btn-siguiente img {
     width: 18px;
     height: 18px;
     filter: brightness(0) invert(1);
-    /* Convierte tus PNGs oscuros a blanco */
     opacity: 0.8;
     transition: opacity 0.2s;
 }
@@ -1256,13 +1216,12 @@ pre {
     opacity: 1;
 }
 
-/* Tooltip unificado para ambos carteles */
+/* Tooltip de ambos botones */
 .btn-anterior .tooltip-text,
 .btn-siguiente .tooltip-text {
     visibility: hidden;
     opacity: 0;
     background-color: #15161e;
-    /* Fondo oscuro a juego */
     border: 1px solid var(--console-border);
     color: var(--white);
     text-align: center;
@@ -1282,14 +1241,14 @@ pre {
     z-index: 200;
 }
 
-/* Mostrar tooltips al pasar el cursor (solo si el botón no está disabled) */
+/* Mostrar tooltip al pasar el cursor */
 .btn-anterior:hover:not(:disabled) .tooltip-text,
 .btn-siguiente:hover:not(:disabled) .tooltip-text {
     visibility: visible;
     opacity: 1;
 }
 
-/* Boton de reproduccion play y pause */
+/* Botón reproducir/pausar */
 #btn-reproducir {
     position: relative;
     display: inline-flex;
@@ -1297,7 +1256,6 @@ pre {
     justify-content: center;
     gap: 6px;
 
-    /* Mismo texto que .btn-anterior / .btn-siguiente */
     font-family: Calibri, Arial, Helvetica, sans-serif;
     font-size: 0.78rem;
     font-weight: normal;
@@ -1307,7 +1265,7 @@ pre {
     border-radius: 8px;
 }
 
-/* Ícono con el mismo tamaño estándar que Anterior/Siguiente */
+/* Ícono del botón reproducir */
 #btn-reproducir img {
     width: 18px;
     height: 18px;
@@ -1320,7 +1278,7 @@ pre {
     opacity: 1;
 }
 
-/* Ocultar el span de tooltip por defecto */
+/* Tooltip del botón reproducir */
 #btn-reproducir .tooltip-text {
     visibility: hidden;
     opacity: 0;
@@ -1358,14 +1316,13 @@ pre {
     border-bottom: 1px solid var(--console-border);
 }
 
-/* TOOLTIPS DE GLOSARIO */
+/* Tooltips del glosario */
 
 .glosario-tip {
     font-weight: 700;
     color: var(--green-main);
     border-bottom: 1px dashed var(--green-main);
     cursor: default;
-    /* sin signo de interrogación */
     transition: color 0.15s;
 }
 
@@ -1373,14 +1330,11 @@ pre {
     color: #03c47e;
 }
 
-/* El tooltip flota encima de todo porque vive dentro del <dialog>
-   (top layer del navegador) y usa position:fixed con coordenadas
-   del mouse. El ::backdrop del dialog no puede taparlo. */
+/* Tooltip flotante (usa el top layer del <dialog>) */
 #glosario-tooltip {
     display: none;
     position: fixed;
     z-index: 2147483647;
-    /* el máximo posible */
     background-color: #15161e;
     border: 1px solid var(--console-border);
 
@@ -1400,11 +1354,7 @@ pre {
     display: block;
 }
 
-
-/* ════════════════════════════════════════
-   TERCER NIVEL DEL MENÚ (sub-submenú)
-   simples / anidadas / compuestas → If · Switch · Ternario
-   ════════════════════════════════════════ */
+/* Tercer nivel del menú (submenú anidado) */
 
 .nav-subgroup {
     margin: 2px 0;
@@ -1424,7 +1374,7 @@ pre {
     flex-shrink: 0;
 }
 
-/* Caja del 3er nivel: oculta por defecto */
+/* Caja del tercer nivel (oculta por defecto) */
 .nav-sub2 {
     max-height: 0;
     overflow: hidden;
@@ -1433,7 +1383,7 @@ pre {
     transition: max-height 0.28s ease, opacity 0.2s ease;
 }
 
-/* Hojas finales (If / Switch / Ternario) */
+/* Opciones finales del tercer nivel */
 .nav-sub2-btn {
     width: 100%;
     padding: 7px 14px;
@@ -1459,7 +1409,7 @@ pre {
     padding-left: 18px;
 }
 
-/* Estado ABIERTO persistente (click / móvil) */
+/* Estado abierto persistente */
 .nav-subgroup.open>.nav-sub2 {
     max-height: 240px;
     opacity: 1;
@@ -1470,12 +1420,12 @@ pre {
     color: var(--green-main);
 }
 
-/* El 2º nivel debe crecer para no recortar el 3er nivel */
+/* El 2º nivel crece para no recortar el 3er nivel */
 .nav-group.open .nav-sub {
     max-height: 600px;
 }
 
-/* ── HOVER (solo escritorio con mouse real) ── */
+/* Hover en escritorio */
 @media (hover: hover) and (pointer: fine) {
     .app-sidebar:hover .nav-group:hover .nav-sub,
     .app-sidebar:hover .nav-group.open .nav-sub {
@@ -1483,7 +1433,7 @@ pre {
     }
 }
 
-/* ── MÓVIL ── */
+/* Móvil */
 @media (max-width: 767.98px) {
     .app-sidebar .nav-group.open .nav-sub {
         max-height: 600px !important;
@@ -1501,7 +1451,7 @@ pre {
     }
 }
 
-/* Pestañas Ejemplo 1 / 2 / 3 del simulador */
+/* Pestañas de ejemplos del simulador */
 #sim-ejemplos-tabs,
 #arr-ejemplos-tabs {
     display: flex;
@@ -1534,20 +1484,14 @@ pre {
     font-weight: 600;
 }
 
-/* ════════════════════════════════════════
-   FIX MÓVIL: que el 3er nivel no se recorte
-   ════════════════════════════════════════ */
+/* Fix móvil: evita recorte del tercer nivel */
 @media (max-width: 767.98px) {
 
-    /* Cuando un grupo está abierto, su caja de 2º nivel
-       debe crecer lo suficiente para mostrar el 3er nivel */
     .app-sidebar.open .nav-group.open .nav-sub,
     .app-sidebar .nav-group.open .nav-sub {
         max-height: 1200px !important;
     }
 
-    /* Cuando simples/anidadas/compuestas está abierto,
-       mostrar sus tres opciones completas */
     .app-sidebar.open .nav-subgroup.open>.nav-sub2,
     .app-sidebar .nav-subgroup.open>.nav-sub2 {
         max-height: 600px !important;
@@ -1555,8 +1499,7 @@ pre {
     }
 }
 
-/* Pestaña de ejercicio: se distingue de los ejemplos */
-/* Pestaña de ejercicio: igual a las demás; morada solo al seleccionarse */
+/* Pestaña de ejercicio (variante morada) */
 .sim-tab.ejercicio:hover {
     border-color: #9d4edd;
     color: #c9a3ff;
@@ -1568,20 +1511,20 @@ pre {
     border-color: #7B2CBF;
 }
 
-/* Caja del enunciado cuando estás en modo ejercicio */
+/* Enunciado en modo ejercicio */
 .explanation-text.modo-ejercicio {
     border-color: rgba(133, 34, 219, 0.19);
     background: rgba(112, 38, 176, 0.156);
 }
 
-/* Caja del enunciado cuando estás viendo un ejemplo con enunciado propio */
+/* Enunciado en modo ejemplo */
 .explanation-text.modo-ejemplo {
     border-color: rgba(4, 170, 109, 0.25);
     background: rgba(4, 170, 109, 0.12);
 }
 
 .sim-ejemplo-badge {
-    
+
     display: inline-block;
     color: var(--green-main);
     font-size: 0.95rem;
@@ -1613,9 +1556,7 @@ pre {
     vertical-align: middle;
 }
 
-/* ════════════════════════════════════════
-   PANELES DE MEMORIA — simulador de arreglos
-   ════════════════════════════════════════ */
+/* Paneles de memoria (simulador de arreglos) */
 .cs-mem-block {
     margin-bottom: 14px;
 }
@@ -1769,7 +1710,7 @@ pre {
     color: #55607a;
 }
 
-/* Celda o variable que cambió en este paso (destello verde) */
+/* Destello verde: celda/variable modificada */
 .cs-flash {
     background: rgba(4, 170, 109, 0.28) !important;
     border-color: var(--green-main) !important;
@@ -1782,7 +1723,7 @@ pre {
     background: transparent !important;
 }
 
-/* ── Pila de llamadas (Recursividad) ── */
+/* Pila de llamadas (recursividad) */
 .rec-stack-panel {
     background: #1a1d2a;
     border: 1px solid #3d4160;
@@ -1834,9 +1775,7 @@ pre {
     font-family: 'Consolas', monospace;
 }
 
-/* Marco iluminado: la llamada que está usando el resultado en el desglose
-   de suma/multiplicación que se muestra en Variables (ver
-   recursividad_simulator.js::recBuildMemoriaHtml) */
+/* Marco iluminado: llamada activa en el desglose */
 .rec-frame.rec-frame-activo {
     border-left-color: var(--warn);
     background: rgba(255, 159, 67, 0.14);
@@ -1847,7 +1786,7 @@ pre {
     color: var(--warn);
 }
 
-/* Celda que se leyó en este paso (destello naranja) */
+/* Destello naranja: celda leída */
 .cs-read {
     background: rgba(240, 165, 0, 0.18) !important;
     border-color: #f0a500 !important;
@@ -1859,7 +1798,7 @@ pre {
     font-weight: 700;
 }
 
-/* Panel del ciclo for activo (simuladores de ciclos y arreglos) */
+/* Panel del ciclo for activo */
 .sim-for-panel {
     background: #1a1d2a;
     border: 1px solid #3d4160;
@@ -1919,7 +1858,7 @@ pre {
     font-style: italic;
 }
 
-/* Panel "Paso actual" del simulador de arreglos */
+/* Panel "Paso actual" */
 .cs-step-line {
     font-size: 0.82em;
     color: #8a9ab5;
@@ -1937,9 +1876,7 @@ pre {
     font-weight: 600;
 }
 
-/* Caja "Operación" — muestra la expresión de la asignación ya resuelta
-   con los valores actuales, para explicar por qué la celda queda con
-   ese resultado (ej. numeros[1] = (1 + 1) * 10 → 20). */
+/* Caja "Operación": expresión resuelta paso a paso */
 .cs-assign-box {
     margin-top: 8px;
     background: #1a1d2a;
@@ -1975,7 +1912,7 @@ pre {
     font-size: 1.02em;
 }
 
-/* Resaltado de línea en Monaco (arreglos) */
+/* Resaltado de línea en el editor (Monaco) */
 .cs-line-active {
     background: rgba(4, 170, 109, 0.15);
 }
@@ -1984,10 +1921,7 @@ pre {
     background: rgba(220, 53, 69, 0.22);
 }
 
-/* 
-   INPUTS EDITABLES — sirve para AMBOS simuladores
-   (#sim-vars-editable = selectivas/ciclos, #arr-vars-editable = arreglos)
-    */
+/* Inputs editables (variables de los simuladores) */
 #sim-vars-editable,
 #arr-vars-editable {
     display: flex;
@@ -2000,7 +1934,7 @@ pre {
     border-radius: 8px;
 }
 
-/* si no hay variables editables, no mostrar el recuadro vacío */
+/* Ocultar contenedor si no hay variables editables */
 #sim-vars-editable:empty,
 #arr-vars-editable:empty {
     display: none;
@@ -2040,7 +1974,7 @@ pre {
 .arr-var-input:focus {
     border-color: #04AA6D;
 }
-/* ── Tabla de métodos del módulo Archivos ── */
+/* Tabla de métodos (módulo Archivos) */
 .arc-tabla-metodos {
     width: 100%;
     border-collapse: collapse;
@@ -2067,7 +2001,7 @@ pre {
     color: #04AA6D;
 }
 
-/* ── Notificaciones (toasts) — reemplazan alert() ───────────────── */
+/* Notificaciones (toasts) */
 #toastContainer {
     position: fixed;
     top: 20px;
@@ -2143,6 +2077,7 @@ pre {
     color: var(--text);
 }
 
+/* Variantes de color del toast */
 .toast--exito { border-left-color: var(--green-main); }
 .toast--exito .toast__icon { background: var(--green-soft); color: var(--green-main); }
 
@@ -2155,7 +2090,7 @@ pre {
 .toast--info { border-left-color: var(--text-dim); }
 .toast--info .toast__icon { background: rgba(138, 154, 181, .15); color: var(--text-dim); }
 
-/* ── Confirmación (reemplaza confirm()) ─────────────────────────── */
+/* Modal de confirmación */
 .confirm-modal {
     position: fixed;
     top: 50%;
@@ -2195,6 +2130,7 @@ pre {
     margin-bottom: 8px;
 }
 
+/* Variantes de color del ícono */
 .confirm-modal__icon.peligroso { background: rgba(224, 82, 99, .15); color: var(--danger); }
 .confirm-modal__icon.normal { background: rgba(255, 159, 67, .15); color: var(--warn); }
 
@@ -2218,6 +2154,7 @@ pre {
     border-top: 1px solid var(--console-border);
 }
 
+/* Botones del modal de confirmación */
 .confirm-btn {
     display: inline-flex;
     align-items: center;
@@ -2261,7 +2198,7 @@ pre {
     background: #c8455a;
 }
 
-/* Contenedor de la imagen — separación con el hero y el glosario */
+/* Imagen "Jerarquía de operadores" */
 .inicio-gerarquiaDeOperadores {
     display: flex;
     justify-content: center;

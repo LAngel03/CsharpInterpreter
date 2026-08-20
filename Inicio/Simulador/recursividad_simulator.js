@@ -1,11 +1,6 @@
-// ============================================================
-//  Simulador/recursividad_simulator.js
-//  Simulador paso a paso para el subtema "Recursividad".
-//  Usa CSharpEngine como motor (soporta funciones y return).
-// ============================================================
+// Simulador paso a paso del subtema "Recursividad": usa CSharpEngine, que soporta funciones y return.
 
-// ── Utilidades ───────────────────────────────────────────────
-
+// Escapa caracteres especiales de HTML para mostrar texto sin romper el marcado.
 function recEscape(str) {
     return String(str)
         .replace(/&/g, '&amp;')
@@ -13,6 +8,7 @@ function recEscape(str) {
         .replace(/>/g, '&gt;');
 }
 
+// Formatea un valor tal como se vería escrito en código C# (comillas, true/false).
 function recFmtVal(v, type) {
     if (v === null || v === undefined) return 'null';
     if (type === 'bool' || typeof v === 'boolean') return v ? 'true' : 'false';
@@ -21,9 +17,11 @@ function recFmtVal(v, type) {
     return String(v);
 }
 
+// Iconos del botón reproducir/pausar.
 const _REC_ICON_PLAY  = '<img src="../img/iconos/play.png" alt="Reproducir"><span class="tooltip-text">Reproducir</span>';
 const _REC_ICON_PAUSE = '<img src="../img/iconos/pause.png" alt="Pausar"><span class="tooltip-text">Pausar</span>';
 
+// Devuelve los cuatro botones de control de pasos por su id.
 function _recBtns() {
     return [
         document.getElementById('btn-reiniciar'),
@@ -33,8 +31,7 @@ function _recBtns() {
     ];
 }
 
-// ── SnapshotManager ──────────────────────────────────────────
-
+// Controla el índice actual dentro de la lista de snapshots (pasos) de ejecución.
 class RecSnapMgr {
     constructor() { this.snaps = []; this.idx = -1; }
     reset()  { this.snaps = []; this.idx = -1; }
@@ -45,10 +42,10 @@ class RecSnapMgr {
     total() { return this.snaps.length; }
 }
 
-// ── Simulador (usa CSharpEngine como motor) ──────────────────
-
+// Ejecuta código C# con CSharpEngine y expone la navegación paso a paso.
 class RecursividadSimulator {
     constructor() { this.snap = new RecSnapMgr(); this.lastAst = null; }
+    // Compila y ejecuta el código, arma la lista de snapshots (o un único snapshot de error) y devuelve el primero.
     load(code) {
         this.snap.reset();
         this.lastAst = null;
@@ -81,12 +78,10 @@ class RecursividadSimulator {
     info()  { return { index: this.snap.idx, total: this.snap.total() }; }
 }
 
-// ════════════════════════════════════════════════════════════
-//  EJEMPLOS Y EJERCICIO — conectados a la API (subtema "Recursividad")
-// ════════════════════════════════════════════════════════════
-
+// Caché de subtemas ya obtenidos desde la API, por slug.
 const recCacheSubtemas = {};
 
+// Obtiene los datos del subtema "Recursividad" desde la API, usando caché.
 async function recObtenerDatosTema(slug) {
     if (recCacheSubtemas[slug]) return recCacheSubtemas[slug];
     try {
@@ -99,17 +94,17 @@ async function recObtenerDatosTema(slug) {
         return subtema;
     } catch (e) {
         console.warn(`Subtema "${slug}" no encontrado en la API`, e);
-        return { codigo_ejemplo: null, _apiError: e.message }; // null => sin datos, se avisa en pantalla
+        return { codigo_ejemplo: null, _apiError: e.message };
     }
 }
 
+// Arma la lista de pestañas de ejemplo/caso a partir de los datos del subtema.
 function recGetItemsDesdeSubtema(subtema) {
     if (subtema.codigo_ejemplo === null) {
         return [{ label: 'Ejemplo 1', codigo: '// No se pudo cargar el ejemplo desde la API.', enunciado: null }];
     }
 
-    // Los ejemplos vienen de su propia tabla (subtema.ejemplos), ya
-    // ordenados por "orden" desde el backend.
+    // Los ejemplos vienen de su propia tabla, ya ordenados por el backend.
     const ejemplosDb = Array.isArray(subtema.ejemplos) ? subtema.ejemplos : [];
     const items = ejemplosDb.map((ej, i) => ({
         label: ejemplosDb.length > 1 ? 'Ejemplo ' + (i + 1) : 'Ejemplo',
@@ -119,10 +114,8 @@ function recGetItemsDesdeSubtema(subtema) {
         esEjercicio: false
     }));
 
-    // Los ejercicios vienen APARTE, en subtema.ejercicios (lista de la BD).
-    // Campos reales: titulo, descripcion (enunciado) y codigo_csharp (solución).
-    // Solo modo='demostracion': los de "Ponte a prueba" (modo='practica') no
-    // deben mostrarse aquí — su codigo_csharp es la solución del ejercicio.
+    // Toma solo los ejercicios modo='demostracion'; los de "Ponte a prueba" (modo='practica')
+    // no se muestran aquí porque su codigo_csharp es la solución que el alumno debe encontrar.
     const ejercicios = (Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [])
         .filter(ej => (ej.modo || 'demostracion') === 'demostracion');
     ejercicios.forEach((ej, i) => {
@@ -141,9 +134,7 @@ function recGetItemsDesdeSubtema(subtema) {
     return items;
 }
 
-// Recuadro del enunciado propio del ejemplo/ejercicio activo — va debajo del
-// concepto general del tema (#tema-descripcion, que no se toca aquí).
-// tipo: 'ejercicio' | 'ejemplo' | null (oculta el recuadro, no hay enunciado)
+// Muestra u oculta el recuadro de enunciado del ejemplo/caso activo, debajo del concepto general del tema.
 function recSetDescripcion(html, tipo, titulo) {
     const elDesc = document.getElementById('tema-enunciado');
     if (!elDesc) return;
@@ -162,8 +153,7 @@ function recSetDescripcion(html, tipo, titulo) {
     }
 }
 
-// ── Estado global del módulo ──────────────────────────────────
-
+// Instancia del simulador y estado del editor/reproducción del módulo.
 const recSim = new RecursividadSimulator();
 let recMonacoEditor = null;
 let recDecorations  = [];
@@ -172,8 +162,7 @@ let recPlaying      = false;
 let recCurrentCode  = '';
 let recTemaActual   = '';
 
-// ── Variables escalares editables (sólo del cuerpo principal) ──
-
+// Encuentra declaraciones de variables con valor literal en el cuerpo principal, editables por el usuario.
 function recExtraerVariablesEditables(ast) {
     if (!ast || !ast.body) return [];
     return ast.body
@@ -181,6 +170,7 @@ function recExtraerVariablesEditables(ast) {
         .map(n => ({ name: n.name, dataType: n.dataType, raw: n.init.raw, value: n.init.value, line: n.line }));
 }
 
+// Reescribe en el código fuente la línea de cada variable editada con su nuevo valor.
 function recReconstruirCodigo(baseCode, variables, valoresNuevos) {
     const lineas = baseCode.split('\n');
     for (const v of variables) {
@@ -202,6 +192,7 @@ function recReconstruirCodigo(baseCode, variables, valoresNuevos) {
     return lineas.join('\n');
 }
 
+// Dibuja un input por cada variable editable y reejecuta el código cuando cambia su valor.
 function recRenderInputsVariables(variables, codigoBase) {
     let host = document.getElementById('rec-vars-editable');
     if (!host) return;
@@ -218,9 +209,9 @@ function recRenderInputsVariables(variables, codigoBase) {
         const tipoInput = (v.dataType === 'int' || v.dataType === 'double' || v.dataType === 'float') ? 'number' : 'text';
         const inputHtml = v.dataType === 'bool'
             ? '<select class="arr-var-input" data-var="' + v.name + '">' +
-              '<option value="true"' + (v.value === true ? ' selected' : '') + '>true</option>' +
-              '<option value="false"' + (v.value === false ? ' selected' : '') + '>false</option>' +
-              '</select>'
+                '<option value="true"' + (v.value === true ? ' selected' : '') + '>true</option>' +
+                '<option value="false"' + (v.value === false ? ' selected' : '') + '>false</option>' +
+                '</select>'
             : '<input class="arr-var-input" type="' + tipoInput + '" data-var="' + v.name + '" value="' + recEscape(String(v.value)) + '">';
         return '<div class="arr-var-field"><label>' + recEscape(v.dataType) + ' ' + recEscape(v.name) + '</label>' + inputHtml + '</div>';
     }).join('');
@@ -239,6 +230,7 @@ function recRenderInputsVariables(variables, codigoBase) {
     });
 }
 
+// Reejecuta el código y renderiza el primer paso, sin reconstruir los inputs de variables.
 function recEjecutarSinTocarInputs(codigo) {
     const first = recSim.load(codigo);
     recRender(first, recSim.info());
@@ -247,6 +239,7 @@ function recEjecutarSinTocarInputs(codigo) {
     if (btns[3]) { recPlaying = false; btns[3].innerHTML = _REC_ICON_PLAY; }
 }
 
+// Carga el código, reconstruye los inputs de variables editables y renderiza el primer paso.
 function recCargarYEjecutar(codigo) {
     const first = recSim.load(codigo);
     const variables = recExtraerVariablesEditables(recSim.lastAst);
@@ -257,17 +250,9 @@ function recCargarYEjecutar(codigo) {
     if (btns[3]) { recPlaying = false; btns[3].innerHTML = _REC_ICON_PLAY; }
 }
 
-// ── Render de la pila de llamadas ─────────────────────────────
-
-// Orden "de manual": la llamada más externa (la primera, ej. Factorial(5))
-// arriba de todo y sin sangría; cada llamada más profunda se dibuja debajo
-// Y más indentada, como si se fueran apilando. La última — la llamada
-// actual, la más profunda — queda hasta abajo, con la mayor sangría.
-//
-// resaltarActual: cuando el paso actual es el desglose de una suma/multipli-
-// cación (ver REC_BINOP_LINE_RE más abajo), se ilumina esa llamada actual
-// (la de hasta abajo) — es la que está usando ese resultado, para que sea
-// más claro de dónde viene.
+// Renderiza la pila de llamadas de mayor a menor profundidad: la llamada externa arriba sin
+// sangría y cada llamada anidada debajo con más sangría; si resaltarActual es true, ilumina la
+// última (la llamada activa) porque el paso actual usa su resultado en un desglose de suma/multiplicación.
 function recBuildCallStackHtml(callStack, resaltarActual) {
     if (!callStack || !callStack.length) return '';
     let html = '<div class="rec-stack-panel"><div class="rec-stack-header">Pila de llamadas<span class="n">' + callStack.length + '</span></div>';
@@ -285,20 +270,18 @@ function recBuildCallStackHtml(callStack, resaltarActual) {
     return html;
 }
 
-// ── Render principal ──────────────────────────────────────────
-
-// Línea fuente del paso actual, para detectar si una variable que acaba de
-// cambiar viene de una suma o multiplicación de dos operandos (variable o
-// literal) — ej. Factorial: "resultado = n * anterior", Suma: "total = n +
-// resto" — y así mostrar "n × anterior = 120" en vez de solo "120".
+// Reconoce una asignación de la forma "x = a + b" o "x = a * b" (ej. "resultado = n * anterior"),
+// para poder mostrar el desglose "n × anterior = 120" en vez de solo el resultado "120".
 const REC_BINOP_LINE_RE = /^(?:int|double|float|string|bool|char)?\s*([A-Za-z_]\w*)\s*=\s*(\w+)\s*([+*])\s*(\w+)\s*;?$/;
 
+// Arma el texto "operando1 op operando2 = resultado" para una asignación reconocida por REC_BINOP_LINE_RE.
 function recDesglosarBinop(match, val) {
     if (!match) return null;
     const simbolo = match[3] === '*' ? '×' : match[3];
     return recEscape(match[2]) + ' ' + simbolo + ' ' + recEscape(match[4]) + ' = ' + recEscape(val);
 }
 
+// Renderiza la pila de llamadas y el panel de variables (con desglose de la operación si aplica).
 function recBuildMemoriaHtml(state) {
     const ch = new Set(state.changed || []);
 
@@ -325,6 +308,7 @@ function recBuildMemoriaHtml(state) {
     return html;
 }
 
+// Resalta la línea actual en el editor Monaco.
 function recHighlight(line, isError) {
     if (!recMonacoEditor) return;
     const cls = isError ? 'lineFalse' : 'lineHighlight';
@@ -335,6 +319,7 @@ function recHighlight(line, isError) {
     recMonacoEditor.revealLineInCenter(line);
 }
 
+// Deja todos los paneles del paso en su estado vacío inicial.
 function recClearPanels() {
     if (recMonacoEditor) recDecorations = recMonacoEditor.deltaDecorations(recDecorations, []);
     const panelPaso = document.getElementById('panel-paso');
@@ -349,6 +334,7 @@ function recClearPanels() {
     if (fill) fill.style.width = '0%';
 }
 
+// Renderiza un paso completo: resalta la línea, actualiza paneles y la barra de progreso.
 function recRender(state, info) {
     if (!state) { recClearPanels(); return; }
 
@@ -380,14 +366,14 @@ function recRender(state, info) {
     }
 }
 
-// ── Controles ─────────────────────────────────────────────────
-
+// Calcula el retardo entre pasos de auto-reproducción a partir del slider de velocidad.
 function recGetDelay() {
     const slider = document.getElementById('sim-speed-slider');
     const val = slider ? parseInt(slider.value) : 40;
     return Math.round(2000 - (val / 100) * 1800);
 }
 
+// Detiene la auto-reproducción y restaura el ícono del botón reproducir.
 function recStopPlay(btns) {
     clearTimeout(recPlayTimer);
     recPlayTimer = null;
@@ -396,6 +382,7 @@ function recStopPlay(btns) {
     if (btnR) btnR.innerHTML = _REC_ICON_PLAY;
 }
 
+// Conecta los botones de control de pasos y crea el slider de velocidad si no existe.
 function recConectarBotones() {
     const btns = _recBtns();
     const [btnRei, btnAnt, btnSig, btnRep] = btns;
@@ -450,8 +437,7 @@ function recConectarBotones() {
     }
 }
 
-// ── CSS de la pila de llamadas (inyectado una vez) ────────────
-
+// Inyecta el CSS de la pila de llamadas y del panel de este simulador una sola vez.
 (function injectRecStyles() {
     if (document.getElementById('rec-styles')) return;
     const style = document.createElement('style');
@@ -517,7 +503,7 @@ function recConectarBotones() {
     document.head.appendChild(style);
 })();
 
-// Muestra (o limpia) un mensaje de error visible arriba del editor.
+// Muestra o limpia un mensaje de error visible arriba del editor.
 function recMostrarErrorApi(mensaje) {
     const editorBody = document.getElementById('editor-body');
     if (!editorBody) return;
@@ -535,8 +521,7 @@ function recMostrarErrorApi(mensaje) {
     box.textContent = mensaje;
 }
 
-// ── Inicialización (conectada a GET /api/subtemas/slug/:slug) ─
-
+// Punto de entrada: carga datos desde la API, arma pestañas/editor e inicia Monaco.
 async function initRecursividadSimulador(tema) {
     const editorBody = document.getElementById('editor-body');
     if (!editorBody) return;
@@ -546,8 +531,7 @@ async function initRecursividadSimulador(tema) {
         const subtema = await recObtenerDatosTema(tema);
         items = recGetItemsDesdeSubtema(subtema);
 
-        // Título y definición del tema vienen de la BD (vía admin); se
-        // pintan aquí porque cargarTema() ya no trae texto local.
+        // Título y definición del tema vienen de la base de datos.
         mostrarDescripcion(subtema.titulo || '', subtema.definicion || '');
 
         if (subtema._apiError) {
@@ -563,7 +547,7 @@ async function initRecursividadSimulador(tema) {
 
     recCurrentCode = items[0].codigo;
 
-    // Pestañas (primero, van encima de los inputs)
+    // Contenedor de pestañas de ejemplo/caso (va encima de los inputs).
     let tabsEl = document.getElementById('sim-ejemplos-tabs');
     if (!tabsEl && items.length > 1) {
         tabsEl = document.createElement('div');
@@ -571,16 +555,14 @@ async function initRecursividadSimulador(tema) {
         editorBody.parentNode.insertBefore(tabsEl, editorBody);
     }
 
-    // Panel de variables editables (debajo de las pestañas)
+    // Contenedor de los inputs de variables editables (debajo de las pestañas).
     if (!document.getElementById('rec-vars-editable')) {
         const varsHost = document.createElement('div');
         varsHost.id = 'rec-vars-editable';
         editorBody.parentNode.insertBefore(varsHost, editorBody);
     }
 
-    // Muestra (o esconde) el recuadro de enunciado propio del item activo;
-    // el concepto general del tema vive aparte, en #tema-descripcion, y no
-    // se toca aquí — sigue visible siempre.
+    // Muestra u oculta el enunciado propio del item activo (el concepto general del tema no se toca aquí).
     function mostrarDescripcionItem(it) {
         if (it.esEjercicio && it.enunciado) recSetDescripcion(it.enunciado, 'Caso', it.titulo);
         else if (it.enunciado) recSetDescripcion(it.enunciado, 'ejemplo', it.titulo);
@@ -608,6 +590,7 @@ async function initRecursividadSimulador(tema) {
         });
     }
 
+    // Crea la instancia del editor Monaco y ejecuta el código inicial.
     function crearEditorRec() {
         require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
         require(['vs/editor/editor.main'], function () {
@@ -637,13 +620,12 @@ async function initRecursividadSimulador(tema) {
     }
 }
 
-// ── Hook en cargarTema ────────────────────────────────────────
-
+// Envuelve cargarTema para inicializar/limpiar este simulador cuando corresponde.
 (function wrapCargarTemaRecursividad() {
     const _prevCargarTema = window.cargarTema;
 
     window.cargarTema = function (nombreTema) {
-        // Limpiar estado de recursividad al salir del módulo
+        // Limpia el estado propio de este simulador al salir del tema.
         recStopPlay(_recBtns());
         if (recMonacoEditor) {
             recMonacoEditor.dispose();
@@ -659,6 +641,6 @@ async function initRecursividadSimulador(tema) {
         recTemaActual = nombreTema;
         recPlaying = false;
 
-        initRecursividadSimulador(nombreTema); // ya es async, no necesita setTimeout
+        initRecursividadSimulador(nombreTema);
     };
 })();

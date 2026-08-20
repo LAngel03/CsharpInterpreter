@@ -1,19 +1,9 @@
-// ============================================================
-//  Simulador/array_simulator.js
-//  Simulador paso a paso para "Arreglos unidimensionales" y
-//  "Arreglos bidimensionales" (matrices).
-//
-//  Lee ejemplos/ejercicio desde la API (igual que simulator.js).
-//  Mantiene ARR_EXAMPLES y ARR_EJERCICIOS como RESPALDO local: si la
-//  API falla o no devuelve datos, el simulador sigue funcionando.
-//
-//  Panel del ciclo "for" mejorado: sustituye el nombre de la
-//  variable por su valor actual (ej. "3 < numeros.Length", "3++").
-//  Requiere el engine.js NUEVO (genera forCtx y read).
-// ============================================================
+// Simulador paso a paso de "Arreglos unidimensionales" y "Arreglos bidimensionales" (matrices).
+// Lee ejemplos/ejercicios desde la API; ARR_EXAMPLES y ARR_EJERCICIOS son el respaldo local
+// usado cuando la API falla. El panel del ciclo "for" sustituye el nombre de la variable por su
+// valor actual (ej. "3 < numeros.Length", "3++"), lo que requiere que engine.js genere forCtx y read.
 
-// ── Utilidades ───────────────────────────────────────────────
-
+// Escapa caracteres especiales de HTML para mostrar texto sin romper el marcado.
 function arrEscape(str) {
     return String(str)
         .replace(/&/g, '&amp;')
@@ -21,6 +11,7 @@ function arrEscape(str) {
         .replace(/>/g, '&gt;');
 }
 
+// Formatea un valor tal como se vería escrito en código C# (comillas, true/false).
 function arrFmtVal(v, type) {
     if (v === null || v === undefined) return { text: 'null' };
     if (type === 'bool' || typeof v === 'boolean') return { text: v ? 'true' : 'false' };
@@ -29,17 +20,18 @@ function arrFmtVal(v, type) {
     return { text: String(v) };
 }
 
+// Texto corto de una celda de arreglo/matriz: '·' si está vacía, T/F para booleanos.
 function arrCellText(v) {
     if (v === null || v === undefined) return '·';
     if (typeof v === 'boolean') return v ? 'T' : 'F';
     return String(v);
 }
 
-// ── Iconos del botón reproducir/pausar ───────────────────────
+// Iconos del botón reproducir/pausar.
 const _ARR_ICON_PLAY  = '<img src="../img/iconos/play.png" alt="Reproducir"><span class="tooltip-text">Reproducir</span>';
 const _ARR_ICON_PAUSE = '<img src="../img/iconos/pause.png" alt="Pausar"><span class="tooltip-text">Pausar</span>';
 
-// ── Botones por ID (compatibles con consolas.js) ─────────────
+// Devuelve los cuatro botones de control de pasos por su id (compatibles con consolas.js).
 function _arrBtns() {
     return [
         document.getElementById('btn-reiniciar'),
@@ -49,8 +41,7 @@ function _arrBtns() {
     ];
 }
 
-// ── SnapshotManager ──────────────────────────────────────────
-
+// Controla el índice actual dentro de la lista de snapshots (pasos) de ejecución.
 class ArrSnapMgr {
     constructor() { this.snaps = []; this.idx = -1; }
     reset()  { this.snaps = []; this.idx = -1; }
@@ -61,10 +52,10 @@ class ArrSnapMgr {
     total() { return this.snaps.length; }
 }
 
-// ── Simulador (usa CSharpEngine como motor) ──────────────────
-
+// Ejecuta código C# con CSharpEngine y expone la navegación paso a paso.
 class ArraySimulator {
     constructor() { this.snap = new ArrSnapMgr(); this.lastAst = null; }
+    // Compila y ejecuta el código, arma la lista de snapshots y devuelve el primer paso.
     load(code) {
         this.snap.reset();
         this.lastAst = null;
@@ -87,10 +78,8 @@ class ArraySimulator {
     info()  { return { index: this.snap.idx, total: this.snap.total() }; }
 }
 
-// ════════════════════════════════════════════════════════════
-//  EJEMPLOS Y EJERCICIOS — RESPALDO local (usado si la API falla)
-// ════════════════════════════════════════════════════════════
-
+// Ejemplos y ejercicios de respaldo local, usados solo si la API falla o no devuelve datos.
+// El código C# de estas plantillas (incluidos sus "//") es contenido mostrado al alumno, no código JS.
 const ARR_EXAMPLES = {
     Array_unidimensional:
 `// =============================================
@@ -226,12 +215,10 @@ for (int f = 0; f < ventas.GetLength(0); f++) {
     }
 };
 
-// ════════════════════════════════════════════════════════════
-//  CONEXIÓN CON LA API (con caché y respaldo local)
-// ════════════════════════════════════════════════════════════
-
+// Caché de subtemas ya obtenidos desde la API, por slug.
 const arrCacheSubtemas = {};
 
+// Obtiene los datos del subtema de arreglos desde la API, usando caché.
 async function arrObtenerDatosTema(slug) {
     if (arrCacheSubtemas[slug]) return arrCacheSubtemas[slug];
     try {
@@ -252,13 +239,13 @@ async function arrObtenerDatosTema(slug) {
     }
 }
 
+// Arma la lista de pestañas de ejemplo/caso a partir de los datos del subtema, o usa el respaldo local.
 function arrGetItemsDesdeSubtema(subtema, slug) {
     if (!subtema || subtema.codigo_ejemplo === null) {
         return arrGetItemsLocal(slug);
     }
 
-    // Los ejemplos ahora vienen de su propia tabla (subtema.ejemplos), ya
-    // ordenados por "orden" desde el backend.
+    // Los ejemplos vienen de su propia tabla, ya ordenados por el backend.
     const ejemplosDb = Array.isArray(subtema.ejemplos) ? subtema.ejemplos : [];
     if (!ejemplosDb.length) return arrGetItemsLocal(slug);
 
@@ -270,9 +257,8 @@ function arrGetItemsDesdeSubtema(subtema, slug) {
         esEjercicio: false
     }));
 
-    // Solo modo='demostracion': subtema.ejercicios también trae los de "Ponte
-    // a prueba" (modo='practica'), cuyo codigo_csharp es la solución que el
-    // alumno debe encontrar solo — no deben mostrarse aquí como Caso.
+    // Toma solo los ejercicios modo='demostracion'; los de "Ponte a prueba" (modo='practica')
+    // no se muestran aquí porque su codigo_csharp es la solución que el alumno debe encontrar.
     const ejercicios = (Array.isArray(subtema.ejercicios) ? subtema.ejercicios : [])
         .filter(ej => (ej.modo || 'demostracion') === 'demostracion');
     ejercicios.forEach((ej, i) => {
@@ -287,6 +273,7 @@ function arrGetItemsDesdeSubtema(subtema, slug) {
     return items;
 }
 
+// Arma la lista de pestañas de ejemplo/caso a partir del respaldo local (ARR_EXAMPLES / ARR_EJERCICIOS).
 function arrGetItemsLocal(tema) {
     const ex = ARR_EXAMPLES[tema];
     const ejemplos = Array.isArray(ex) ? ex.slice() : (typeof ex === 'string' ? [ex] : ['']);
@@ -301,9 +288,7 @@ function arrGetItemsLocal(tema) {
     return items;
 }
 
-// Recuadro del enunciado propio del ejemplo/ejercicio activo — va debajo del
-// concepto general del tema (#tema-descripcion, que no se toca aquí).
-// tipo: 'ejercicio' | 'ejemplo' | null (oculta el recuadro, no hay enunciado)
+// Muestra u oculta el recuadro de enunciado del ejemplo/caso activo, debajo del concepto general del tema.
 function arrSetDescripcion(html, tipo, titulo) {
     const elDesc = document.getElementById('tema-enunciado');
     if (!elDesc) return;
@@ -322,6 +307,7 @@ function arrSetDescripcion(html, tipo, titulo) {
     }
 }
 
+// Muestra o limpia un mensaje de error visible arriba del editor.
 function arrMostrarErrorApi(mensaje) {
     const editorBody = document.getElementById('editor-body');
     if (!editorBody) return;
@@ -336,8 +322,7 @@ function arrMostrarErrorApi(mensaje) {
     box.textContent = mensaje;
 }
 
-// ── Estado global del módulo ──────────────────────────────────
-
+// Instancia del simulador y estado del editor/reproducción del módulo.
 const arrSim = new ArraySimulator();
 let arrMonacoEditor = null;
 let arrDecorations  = [];
@@ -346,8 +331,7 @@ let arrPlaying      = false;
 let arrCurrentCode  = '';
 let arrTemaActual   = '';
 
-// ── Variables escalares editables ────────────────────────────
-
+// Encuentra declaraciones de variables con valor literal en el nivel superior del AST, editables por el usuario.
 function arrExtraerVariablesEditables(ast) {
     if (!ast || !ast.body) return [];
     return ast.body
@@ -355,6 +339,7 @@ function arrExtraerVariablesEditables(ast) {
         .map(n => ({ name: n.name, dataType: n.dataType, raw: n.init.raw, value: n.init.value, line: n.line }));
 }
 
+// Reescribe en el código fuente la línea de cada variable editada con su nuevo valor.
 function arrReconstruirCodigo(baseCode, variables, valoresNuevos) {
     const lineas = baseCode.split('\n');
     for (const v of variables) {
@@ -378,6 +363,7 @@ function arrReconstruirCodigo(baseCode, variables, valoresNuevos) {
     return lineas.join('\n');
 }
 
+// Dibuja un input por cada variable editable y reejecuta el código cuando cambia su valor.
 function arrRenderInputsVariables(variables, codigoBase) {
     const host = document.getElementById('arr-vars-editable');
     if (!host) return;
@@ -428,6 +414,7 @@ function arrRenderInputsVariables(variables, codigoBase) {
     });
 }
 
+// Reejecuta el código y renderiza el primer paso, sin reconstruir los inputs de variables.
 function arrEjecutarSinTocarInputs(codigo) {
     const first = arrSim.load(codigo);
     arrRender(first, arrSim.info());
@@ -436,6 +423,7 @@ function arrEjecutarSinTocarInputs(codigo) {
     if (btns[3]) { arrPlaying = false; btns[3].innerHTML = _ARR_ICON_PLAY; }
 }
 
+// Carga el código, reconstruye los inputs de variables editables y renderiza el primer paso.
 function arrCargarYEjecutar(codigo) {
     const first    = arrSim.load(codigo);
     const variables = arrExtraerVariablesEditables(arrSim.lastAst);
@@ -446,15 +434,13 @@ function arrCargarYEjecutar(codigo) {
     if (btns[3]) { arrPlaying = false; btns[3].innerHTML = _ARR_ICON_PLAY; }
 }
 
-// ── Render de memoria (variables, arreglos y matrices) ────────
-
-// Panel del ciclo "for": muestra la variable con su VALOR ACTUAL
-// sustituido dentro de la condición y del avance (ej. "3 < numeros.Length", "3++").
+// Panel del ciclo "for": muestra la condición y el avance con el nombre de la variable
+// sustituido por su valor actual (ej. "3 < numeros.Length", "3++").
 function arrBuildForBoxHtml(forCtx) {
     if (!forCtx) return '';
     const val    = forCtx.varValue !== null ? forCtx.varValue : '?';
     const valStr = arrEscape(String(val));
-    // Sustituye el nombre de la variable por su valor numérico actual
+    // Sustituye el nombre de la variable por su valor numérico actual.
     const varRe         = new RegExp('\\b' + forCtx.varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'g');
     const condWithVal   = arrEscape(forCtx.condText.replace(varRe,   String(val)));
     const updateWithVal = arrEscape(forCtx.updateText.replace(varRe, String(val)));
@@ -484,6 +470,7 @@ function arrBuildForBoxHtml(forCtx) {
     '</div>';
 }
 
+// Renderiza los paneles del ciclo "for", variables, arreglos y matrices para el paso actual.
 function arrBuildMemoriaHtml(state) {
     const ch = new Set(state.changed || []);
     const rd = new Set(state.read || []);
@@ -548,9 +535,8 @@ function arrBuildMemoriaHtml(state) {
     return html;
 }
 
-// Caja "Operación": muestra la expresión de la asignación con los valores
-// actuales ya sustituidos (ej. "(1 + 1) * 10") y el resultado resaltado,
-// para que se note claramente por qué la celda queda con ese valor.
+// Caja "Operación": muestra la expresión de la asignación con los valores actuales ya sustituidos
+// (ej. "(1 + 1) * 10") y el resultado resaltado, para explicar por qué la celda queda con ese valor.
 function arrBuildAssignBoxHtml(ctx) {
     if (!ctx || !ctx.showResolved) return '';
     return '<div class="cs-assign-box">' +
@@ -561,6 +547,7 @@ function arrBuildAssignBoxHtml(ctx) {
         '</div>';
 }
 
+// Renderiza un paso completo: resalta la línea, actualiza paneles y la barra de progreso.
 function arrRender(state, info) {
     if (!state) { arrClearPanels(); return; }
     arrHighlightLine(state.currentLine, state.isError);
@@ -590,6 +577,7 @@ function arrRender(state, info) {
     }
 }
 
+// Resalta la línea actual en el editor Monaco.
 function arrHighlightLine(line, isError) {
     if (!arrMonacoEditor) return;
     if (!line || line < 1) { arrDecorations = arrMonacoEditor.deltaDecorations(arrDecorations, []); return; }
@@ -601,6 +589,7 @@ function arrHighlightLine(line, isError) {
     arrMonacoEditor.revealLineInCenter(line);
 }
 
+// Deja todos los paneles del paso en su estado vacío inicial.
 function arrClearPanels() {
     if (arrMonacoEditor) arrDecorations = arrMonacoEditor.deltaDecorations(arrDecorations, []);
     const panelPaso   = document.getElementById('panel-paso');
@@ -615,22 +604,19 @@ function arrClearPanels() {
     if (fill)        fill.style.width       = '0%';
 }
 
-// ── Inicialización del editor con sistema de tabs (async) ─────
-
+// Punto de entrada: carga datos desde la API (o el respaldo local), arma pestañas/editor e inicia Monaco.
 async function initArraySimulator(nombreTema) {
     const editorBody = document.getElementById('editor-body');
     if (!editorBody) return;
 
     arrTemaActual = nombreTema;
 
-    // 1) Pide los datos a la API (con respaldo local si falla)
     let subtema, items;
     try {
         subtema = await arrObtenerDatosTema(nombreTema);
         items = arrGetItemsDesdeSubtema(subtema, nombreTema);
 
-        // Título y definición del tema vienen de la BD (vía admin); se
-        // pintan aquí porque cargarTema() ya no trae texto local.
+        // Título y definición del tema vienen de la base de datos.
         mostrarDescripcion(subtema.titulo || '', subtema.definicion || '');
 
         if (subtema._apiError) {
@@ -648,14 +634,14 @@ async function initArraySimulator(nombreTema) {
         items = [{ label: 'Ejemplo 1', codigo: '// No se pudo cargar el ejemplo.', enunciado: null, esEjercicio: false }];
     }
 
-    // Panel de variables editables
+    // Contenedor de los inputs de variables editables.
     if (!document.getElementById('arr-vars-editable')) {
         const varsHost = document.createElement('div');
         varsHost.id = 'arr-vars-editable';
         editorBody.parentNode.insertBefore(varsHost, editorBody);
     }
 
-    // Tabs (solo si hay más de un item)
+    // Contenedor de pestañas de ejemplo/caso, solo si hay más de un item.
     if (!document.getElementById('arr-ejemplos-tabs') && items.length > 1) {
         const tabs = document.createElement('div');
         tabs.id = 'arr-ejemplos-tabs';
@@ -670,9 +656,7 @@ async function initArraySimulator(nombreTema) {
     const codigoInicial = items[0].codigo;
     arrCurrentCode = codigoInicial;
 
-    // Muestra (o esconde) el recuadro de enunciado propio del item activo;
-    // el concepto general del tema vive aparte, en #tema-descripcion, y no
-    // se toca aquí — sigue visible siempre.
+    // Muestra u oculta el enunciado propio del item activo (el concepto general del tema no se toca aquí).
     function mostrarDescripcionItem(it) {
         if (it.esEjercicio && it.enunciado) {
             arrSetDescripcion(it.enunciado, 'Caso', it.titulo);
@@ -683,6 +667,7 @@ async function initArraySimulator(nombreTema) {
         }
     }
 
+    // Conecta el clic de cada pestaña para cambiar el ejemplo/caso activo.
     function activarTabs() {
         const tabs = document.getElementById('arr-ejemplos-tabs');
         if (!tabs) return;
@@ -704,6 +689,7 @@ async function initArraySimulator(nombreTema) {
         });
     }
 
+    // Crea la instancia del editor Monaco y ejecuta el código inicial.
     function crearEditor() {
         require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
         require(['vs/editor/editor.main'], function () {
@@ -736,14 +722,14 @@ async function initArraySimulator(nombreTema) {
     }
 }
 
-// ── Auto-reproducción ─────────────────────────────────────────
-
+// Calcula el retardo entre pasos de auto-reproducción a partir del slider de velocidad.
 function arrGetDelay() {
     const slider = document.getElementById('arr-speed-slider');
     const val = slider ? parseInt(slider.value) : 40;
     return Math.round(2000 - (val / 100) * 1800);
 }
 
+// Detiene la auto-reproducción y restaura el ícono del botón reproducir.
 function arrStopPlay(btns) {
     clearTimeout(arrPlayTimer);
     arrPlayTimer = null;
@@ -752,6 +738,7 @@ function arrStopPlay(btns) {
     if (btnR) btnR.innerHTML = _ARR_ICON_PLAY;
 }
 
+// Avanza un paso y se reprograma a sí misma hasta llegar al último paso.
 function arrAutoPlay(btns) {
     const info = arrSim.info();
     if (info.index >= info.total - 1) { arrStopPlay(btns); return; }
@@ -761,8 +748,7 @@ function arrAutoPlay(btns) {
     arrPlayTimer = setTimeout(() => arrAutoPlay(btns), arrGetDelay());
 }
 
-// ── Conexión de botones ───────────────────────────────────────
-
+// Conecta los botones de control de pasos y crea el slider de velocidad si no existe.
 function arrConectarBotones() {
     const btns = _arrBtns();
 
@@ -820,8 +806,7 @@ function arrConectarBotones() {
     }
 }
 
-// ── Hook a cargarTema ─────────────────────────────────────────
-
+// Envuelve cargarTema para inicializar/limpiar este simulador cuando corresponde.
 (function () {
     const _cargarTema = window.cargarTema;
     window.cargarTema = function (nombreTema) {

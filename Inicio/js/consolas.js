@@ -1,5 +1,4 @@
-/* Consolas.js */
-
+// Construye e inserta el HTML del workspace: panel del editor más los paneles laterales de pasos/variables/salida.
 function insertarConsolas() {
     document.getElementById('workspace-container').innerHTML = `
         <div class="workspace">

@@ -1,12 +1,8 @@
-// admin/js/admin-ui.js
-// Notificaciones propias del panel — reemplazan alert()/confirm() nativos
-// del navegador (esos no se pueden colorear ni tematizar, y rompen la
-// apariencia del resto del sistema). Se carga ANTES de admin.js y
-// admin-practica.js porque ambos llaman a mostrarToast()/confirmarAccion().
+// Reemplazos propios del panel admin para alert()/confirm(): toasts y modal de confirmación.
 
 let _adminToastId = 0;
 
-// tipo: 'exito' | 'error' | 'advertencia' | 'info'
+// Muestra un mensaje flotante temporal; tipo es 'exito' | 'error' | 'advertencia' | 'info'.
 function mostrarToast(mensaje, tipo, duracionMs) {
     tipo = tipo || 'info';
     duracionMs = duracionMs || 4200;
@@ -35,13 +31,7 @@ function mostrarToast(mensaje, tipo, duracionMs) {
     setTimeout(cerrar, duracionMs);
 }
 
-// Reemplazo de confirm() con el mismo look del resto del panel. Devuelve
-// una Promise<boolean> — hay que usar await en el lugar donde antes se
-// escribía "if (!confirm(...)) return;".
-//
-// opciones: { titulo, mensaje, textoConfirmar, textoCancelar, peligroso }
-// peligroso=true pinta el botón de confirmar en rojo (borrar) en vez de
-// verde (acción reversible, ej. descartar cambios o desactivar).
+// Abre el modal de confirmación y devuelve una Promise<boolean> con la elección del usuario.
 function confirmarAccion(opciones) {
     opciones = opciones || {};
     return new Promise((resolve) => {
@@ -63,8 +53,9 @@ function confirmarAccion(opciones) {
         btnOk.className = 'btn btn--sm' + (opciones.peligroso ? ' btn--danger' : ' btn--save');
 
         let resuelto = false;
+        // Resuelve la promesa una sola vez sin importar qué botón o evento la dispare.
         const cerrar = (resultado) => {
-            if (resuelto) return; // evita doble-resolve (click + evento "close")
+            if (resuelto) return;
             resuelto = true;
             btnOk.onclick = null;
             btnCancel.onclick = null;
@@ -73,17 +64,13 @@ function confirmarAccion(opciones) {
         };
         btnOk.onclick = () => cerrar(true);
         btnCancel.onclick = () => cerrar(false);
-        // Tecla Esc o cierre por otra vía: cuenta como cancelar.
         modal.addEventListener('close', () => cerrar(false), { once: true });
 
         modal.showModal();
     });
 }
 
-// Clic en el backdrop (fuera de la tarjeta) cuenta como cancelar — igual
-// que el resto de los modales del panel. Se registra una sola vez: dentro
-// de confirmarAccion() ya escuchamos el evento "close" nativo del dialog,
-// así que aquí solo hace falta disparar ese cierre.
+// Click fuera de la tarjeta del modal de confirmación equivale a cancelar.
 (function () {
     const modal = document.getElementById('confirmModal');
     if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) modal.close(); });

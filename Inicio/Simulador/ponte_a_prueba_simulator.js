@@ -1,14 +1,6 @@
-// ============================================================
-//  Simulador/ponte_a_prueba_simulator.js
-//  Consola del apartado "Ponte a prueba": banco global de ejercicios
-//  con bugs (GET /ejercicios/practica, ejercicios con modo='practica'
-//  de cualquier subtema). El estudiante corrige codigo_con_errores
-//  solo en las líneas marcadas como editables (soluciones_validacion.
-//  lineas_editables), ejecuta con CSharpEngine y valida su salida
-//  contra el backend (POST /ejercicios/:id/validar).
-// ============================================================
+// Console for the "Ponte a prueba" section: loads buggy exercises from the practice bank, lets the student fix only the editable lines, and validates the result against the backend.
 
-// ── CSS del panel ───────────────────────────
+// Injects the CSS used by this panel
 
 (function injectPpStyles() {
     if (document.getElementById('pp-styles')) return;
@@ -72,7 +64,7 @@
     document.head.appendChild(style);
 })();
 
-// ── Utilidades ───────────────────────────────────────────────
+// Utility helpers
 
 function ppEscape(str) {
     return String(str)
@@ -104,7 +96,7 @@ function _ppBtns() {
     ];
 }
 
-// ── SnapshotManager ──────────────────────────────────────────
+// Tracks the list of execution snapshots and the current position within them
 
 class PpSnapMgr {
     constructor() { this.snaps = []; this.idx = -1; }
@@ -116,7 +108,7 @@ class PpSnapMgr {
     total() { return this.snaps.length; }
 }
 
-// ── Simulador (usa CSharpEngine como motor) ──────────────────
+// Runs a piece of code through CSharpEngine and exposes step-by-step navigation
 
 class PonteApruebaSimulator {
     constructor() { this.snap = new PpSnapMgr(); this.lastAst = null; }
@@ -142,9 +134,7 @@ class PonteApruebaSimulator {
     info()  { return { index: this.snap.idx, total: this.snap.total() }; }
 }
 
-// ════════════════════════════════════════════════════════════
-//  CONEXIÓN CON LA API — banco global de ejercicios modo='practica'
-// ════════════════════════════════════════════════════════════
+// API connection: fetches the global bank of exercises with modo='practica'
 
 let ppCachePracticas = null;
 
@@ -158,9 +148,7 @@ async function ppObtenerPracticas() {
     return ppCachePracticas;
 }
 
-// Título del tema — a diferencia de los otros simuladores, esta página
-// reusa #tema-descripcion para el enunciado por pestaña (ppSetDescripcion),
-// así que el título se pinta aparte en vez de con mostrarDescripcion().
+// Sets the page title separately, since the description element is reused for the exercise statement
 function ppSetTitulo(titulo) {
     const elTitulo = document.getElementById('tema-titulo');
     if (elTitulo) elTitulo.innerHTML = titulo ? '<h2 class="tema-titulo-text">' + titulo + '</h2>' : '';
@@ -196,7 +184,7 @@ function ppMostrarErrorApi(mensaje) {
     box.textContent = mensaje;
 }
 
-// ── Caja de resultado (validación / pista) ─────────────────────
+// Result box shared by the validation verdict and the hint display
 
 function ppResultadoBox() {
     let box = document.getElementById('pp-resultado');
@@ -215,15 +203,13 @@ function ppResultadoBox() {
 function ppOcultarResultado() {
     const box = document.getElementById('pp-resultado');
     if (box) { box.style.display = 'none'; box.textContent = ''; }
-    // Cancela cualquier "Comprobar" en curso (pausado o no) — evita que un
-    // veredicto viejo aparezca al volver a este ejercicio, o que un "resume"
-    // se confunda con el de otro ejercicio/tema.
+    // clears any in-progress "Comprobar" run so a stale verdict can't resurface later
     ppComprobarEnCurso = false;
     ppOnDoneComprobar = null;
     ppComprobarCodigoActivo = null;
 }
 
-// ── Estado global del módulo ──────────────────────────────────
+// Module-wide state
 
 const ppSim = new PonteApruebaSimulator();
 let ppMonacoEditor = null;
@@ -235,40 +221,28 @@ let ppCurrentCode  = '';
 let ppItemActual   = null;
 let ppLineasEditablesActual = [];
 let ppUltimoCodigoValido = '';
-// "Comprobar" ahora se puede pausar/reanudar: mientras haya una corrida en
-// curso (en_curso=true) el clic reanuda la animación en vez de reiniciar
-// desde el paso 0 y volver a pedirle al backend que valide.
+// tracks whether a "Comprobar" run is active, so a click can pause/resume it instead of restarting
 let ppComprobarEnCurso = false;
 let ppOnDoneComprobar = null;
 let ppComprobarCodigoActivo = null;
 
-// Mismo ícono play/pausa que el resto de los simuladores, pero el texto del
-// tooltip se queda en "Comprobar" — este botón no solo reproduce, también
-// valida la solución contra el backend.
+// play/pause icon markup for the combined Comprobar/play button
 const _PP_ICON_PLAY  = '<img src="../img/iconos/play.png" alt="Comprobar"><span class="tooltip-text">Comprobar</span>';
 const _PP_ICON_PAUSE = '<img src="../img/iconos/pause.png" alt="Comprobar"><span class="tooltip-text">Comprobar</span>';
 
-// ── Progresión lineal del banco de ejercicios, por módulo ──────
-// ppGroups: un grupo por categoría (Ciclos, Arreglos, Recursividad...),
-// cada uno con su propia lista de ejercicios y su propio avance —
-// el alumno elige en qué módulo trabajar (pestañas ppRenderGrupos),
-// pero dentro de un módulo la progresión sigue siendo lineal: currentIndex
-// es el primer no resuelto DE ESE GRUPO (recalculado del servidor, nunca
-// de localStorage, para sobrevivir a un F5 o cerrar sesión), y viewIndex
-// es el que se está viendo (puede ser menor si el alumno retrocedió a
-// revisar uno ya resuelto).
+// Per-module exercise groups: each group tracks its own linear progress (currentIndex/viewIndex)
 let ppGroups = [];
 let ppGroupIndex = 0;
 
 function ppGrupoActual() { return ppGroups[ppGroupIndex] || null; }
 
-// ── Restricción de edición a las líneas marcadas ───────────────
+// Restricts editing to the lines marked as editable
 
 function ppEsEdicionValida(nuevo, anterior, lineasPermitidas) {
-    if (!lineasPermitidas || !lineasPermitidas.length) return true; // sin metadatos: no se restringe
+    if (!lineasPermitidas || !lineasPermitidas.length) return true;
     const nuevas = nuevo.split('\n');
     const viejas = anterior.split('\n');
-    if (nuevas.length !== viejas.length) return false; // no se permite agregar/quitar líneas
+    if (nuevas.length !== viejas.length) return false;
     for (let i = 0; i < nuevas.length; i++) {
         if (nuevas[i] !== viejas[i] && !lineasPermitidas.includes(i + 1)) return false;
     }
@@ -297,7 +271,7 @@ function ppResaltarLineasEditables(lineas) {
     ppEditableDecorations = ppMonacoEditor.deltaDecorations(ppEditableDecorations, decos);
 }
 
-// ── Ejecutar código y refrescar los paneles ────────────────────
+// Runs the given code and refreshes all the display panels
 
 function ppEjecutar(codigo) {
     const first = ppSim.load(codigo);
@@ -307,13 +281,7 @@ function ppEjecutar(codigo) {
     ppPlaying = false;
 }
 
-// ── Comprobar: reproduce la ejecución paso a paso y, hasta que esa
-// reproducción termina (llega al último paso que se pudo ejecutar),
-// pinta el veredicto del backend — no antes, aunque la red responda
-// más rápido que la animación. El mismo botón funciona como play/pausa
-// (ver ppConectarBotones): un clic mientras anima pausa sin perder el
-// progreso ni volver a pedirle al backend que valide; un clic estando
-// pausado reanuda desde donde se quedó.
+// Plays back the execution step by step and shows the backend verdict only once playback finishes; the same button pauses/resumes an in-progress run
 function ppComprobarSolucion() {
     if (!ppItemActual || !ppItemActual.id || !ppMonacoEditor) return;
     const btns = _ppBtns();
@@ -323,13 +291,11 @@ function ppComprobarSolucion() {
     const codigo = ppMonacoEditor.getValue();
 
     if (!ppComprobarEnCurso || codigo !== ppComprobarCodigoActivo) {
-        // Arranque en frío (primer clic, o el código cambió desde la última
-        // corrida): reinicia desde el paso 0 y dispara la validación.
+        // cold start: code changed since last run, so restart from step 0 and trigger validation
         ppOcultarResultado();
         ppEjecutar(codigo);
 
-        // La llamada al backend se lanza ya (por la latencia de red), pero
-        // el resultado se guarda y no se muestra hasta ppMostrarVeredicto().
+        // fires the backend call now, but the verdict is held until ppMostrarVeredicto shows it
         const veredictoPromise = ppValidarConBackend(codigo);
         ppComprobarEnCurso = true;
         ppComprobarCodigoActivo = codigo;
@@ -351,16 +317,12 @@ function ppComprobarSolucion() {
         if (btns[3]) btns[3].innerHTML = _PP_ICON_PAUSE;
         ppPlayTimer = setTimeout(() => ppAutoPlay(btns, dispararSiTermino), ppGetDelay());
     } else {
-        // Nada que animar (p. ej. error de compilación en el paso 0):
-        // el veredicto se muestra en cuanto la validación responda.
+        // nothing to animate (e.g. a compile error on step 0): show the verdict as soon as it arrives
         dispararSiTermino();
     }
 }
 
-// ── Validar solución contra el backend ─────────────────────────
-// Devuelve el veredicto en vez de pintarlo — quien llama decide cuándo
-// mostrarlo (ppComprobarSolucion espera a que termine la animación).
-
+// Runs the code and checks its output against the backend; returns the verdict without displaying it
 async function ppValidarConBackend(codigo) {
     let resultado;
     try {
@@ -379,8 +341,7 @@ async function ppValidarConBackend(codigo) {
                 texto: '¡Correcto, redirigiendo a la siguiente lección!',
                 clase: 'pp-resultado-ok',
                 correcto: true,
-                // primeraVez lo manda el backend — evita que un reintento sobre
-                // un ejercicio ya resuelto vuelva a "avanzar" o sumar puntos.
+                // primeraVez comes from the backend, so retrying a solved exercise doesn't re-award progress
                 esNuevo: !!veredicto.primeraVez,
             };
         }
@@ -402,9 +363,7 @@ function ppMostrarVeredicto(v) {
     if (ppItemActual) ppItemActual.resuelto = true;
 
     if (v.esNuevo) {
-        // Invalida el caché: la próxima vez que se entre a esta pestaña
-        // (o se recargue la página) se vuelve a pedir al backend, que es
-        // la única fuente de verdad de qué se resolvió.
+        // invalidates the cache so the next tab load re-fetches solved state from the backend
         ppCachePracticas = null;
         const grupo = ppGrupoActual();
         if (grupo) {
@@ -416,9 +375,7 @@ function ppMostrarVeredicto(v) {
         if (typeof window.actualizarProgresoUsuario === 'function') window.actualizarProgresoUsuario();
     }
 
-    // Al resolver correctamente, pasa solo al siguiente ejercicio DE ESTE
-    // MISMO módulo tras un segundo — si ya era el último de la categoría,
-    // se queda aquí (cambiar de módulo lo sigue haciendo el alumno a mano).
+    // advances to the next exercise within the same module after a short delay, once solved
     setTimeout(() => {
         const grupo = ppGrupoActual();
         if (!grupo || ppItemActual !== grupo.items[grupo.viewIndex]) return;
@@ -429,10 +386,9 @@ function ppMostrarVeredicto(v) {
     }, 2000);
 }
 
+// Reveals the editable-line highlight and shows the exercise hint text
 function ppMostrarPista() {
     const caja = ppResultadoBox();
-    // Las líneas editables (en rojo) se quedan ocultas hasta que el alumno
-    // pide la pista — así no delatan de entrada dónde está el bug.
     ppResaltarLineasEditables(ppLineasEditablesActual);
     if (!ppItemActual || !ppItemActual.pista) {
         caja.textContent = 'Este ejercicio no tiene pista disponible.';
@@ -443,7 +399,7 @@ function ppMostrarPista() {
     caja.className = 'pp-resultado pp-resultado-info';
 }
 
-// ── Render de memoria (variables, arreglos y matrices) ────────
+// Renders memory state: variables, arrays and matrices
 
 function ppBuildForBoxHtml(forCtx) {
     if (!forCtx) return '';
@@ -478,13 +434,10 @@ function ppBuildForBoxHtml(forCtx) {
     '</div>';
 }
 
-// Línea fuente del paso actual, para detectar si una variable que acaba de
-// cambiar viene de una suma o multiplicación de dos operandos (variable o
-// literal) — ej. "total = a + resto" o "resultado = anterior * 2" en los
-// ejercicios de recursividad — y así mostrar "a + resto = 8" en vez de
-// solo "8". Mismo criterio que recursividad_simulator.js.
+// Matches a simple "x = a + b" or "x = a * b" assignment line, to show the operands instead of just the result
 const PP_BINOP_LINE_RE = /^(?:int|double|float|string|bool|char)?\s*([A-Za-z_]\w*)\s*=\s*(\w+)\s*([+*])\s*(\w+)\s*;?$/;
 
+// Formats a matched binary-operation line as "a + b = value"
 function ppDesglosarBinop(match, val) {
     if (!match) return null;
     const simbolo = match[3] === '*' ? '×' : match[3];
@@ -614,7 +567,7 @@ function ppClearPanels() {
     if (fill)        fill.style.width       = '0%';
 }
 
-// ── Navegación lineal (selector "Ejercicio N de M") ────────────
+// Linear navigation between exercises ("Exercise N of M")
 
 function ppAplicarItem(it) {
     ppItemActual = it;
@@ -630,9 +583,7 @@ function ppAplicarItem(it) {
     ppOcultarResultado();
 }
 
-// Solo se puede navegar entre 0 y currentIndex del grupo activo (el primer
-// no resuelto DE ESE MÓDULO): retroceder para revisar está permitido,
-// adelantarse no.
+// Navigates to exercise idx within the active group; only allows going back to review, not skipping ahead unsolved
 function ppIrA(idx) {
     const grupo = ppGrupoActual();
     if (!grupo) return;
@@ -641,14 +592,13 @@ function ppIrA(idx) {
     const it = grupo.items[idx];
     ppAplicarItem(it);
     if (ppMonacoEditor) ppMonacoEditor.setValue(it.codigo);
-    // El resaltado en rojo de las líneas editables no se muestra de entrada
-    // en cada ejercicio — se revela solo al pedir la pista (ppMostrarPista).
+    // editable-line highlight starts hidden; ppMostrarPista reveals it when the hint is requested
     ppResaltarLineasEditables([]);
     ppEjecutar(it.codigo);
     ppRenderStepper();
 }
 
-// Cambia de módulo (pestaña de categoría) y muestra su ejercicio actual.
+// Switches the active module tab and shows its current exercise
 function ppIrAGrupo(grupoIdx) {
     if (grupoIdx < 0 || grupoIdx >= ppGroups.length || grupoIdx === ppGroupIndex) return;
     ppGroupIndex = grupoIdx;
@@ -657,10 +607,7 @@ function ppIrAGrupo(grupoIdx) {
     ppIrA(grupo.viewIndex);
 }
 
-// Progreso GLOBAL (todos los módulos/temas combinados) para el contador
-// "Ejercicio N de M" de arriba: el alumno pidió que ese número no dependa
-// de en qué tema esté parado, a diferencia de las pestañas "Ciclos 1/12",
-// etc., que sí siguen siendo por tema.
+// Computes progress across all modules combined, for the top "Exercise N of M" counter
 function ppProgresoGlobal() {
     const grupo = ppGrupoActual();
     const total = ppGroups.reduce((sum, g) => sum + g.items.length, 0);
@@ -670,7 +617,7 @@ function ppProgresoGlobal() {
     const it = grupo.items[grupo.viewIndex];
     let n;
     if (it.resuelto) {
-        // Resueltos de los módulos anteriores + resueltos de este módulo hasta el actual (inclusive)
+        // sums solved exercises from earlier modules plus solved ones in this module up to the current one
         n = 0;
         for (const g of ppGroups) {
             if (g === grupo) {
@@ -702,7 +649,7 @@ function ppRenderStepper() {
     }
 }
 
-// Pestañas de módulo/categoría — una por grupo, con su progreso "X/Y".
+// Renders one tab per module group, showing its "solved/total" progress
 function ppRenderGrupos() {
     let tabs = document.getElementById('pp-grupos');
     const editorBody = document.getElementById('editor-body');
@@ -725,8 +672,7 @@ function ppRenderGrupos() {
     });
 }
 
-// ── Inicialización del editor (async) ──────────────────────────
-
+// Loads the exercise bank from the API and sets up the Monaco editor
 async function initPonteApruebaSimulator(nombreTema) {
     const editorBody = document.getElementById('editor-body');
     if (!editorBody) return;
@@ -735,7 +681,7 @@ async function initPonteApruebaSimulator(nombreTema) {
 
     let grupos;
     try {
-        const practicas = await ppObtenerPracticas(); // [{ categoria_id, categoria, ejercicios: [...] }, ...]
+        const practicas = await ppObtenerPracticas();
         grupos = practicas
             .filter(g => Array.isArray(g.ejercicios) && g.ejercicios.length)
             .map(g => {
@@ -751,7 +697,7 @@ async function initPonteApruebaSimulator(nombreTema) {
                     resuelto: !!ej.resuelto,
                 }));
                 let currentIndex = items.findIndex(it => !it.resuelto);
-                if (currentIndex === -1) currentIndex = items.length - 1; // ya resolvió todo el módulo
+                if (currentIndex === -1) currentIndex = items.length - 1;
                 return { categoriaId: g.categoria_id, categoria: g.categoria, items, currentIndex, viewIndex: currentIndex };
             });
         ppMostrarErrorApi(null);
@@ -774,16 +720,13 @@ async function initPonteApruebaSimulator(nombreTema) {
     }
 
     ppGroups = grupos;
-    // Arranca en el primer módulo que todavía tenga pendientes; si ya
-    // resolvió todo, se queda en el primero.
+    // starts on the first module with pending exercises, or the first module if all are solved
     ppGroupIndex = grupos.findIndex(g => g.items.some(it => !it.resuelto));
     if (ppGroupIndex === -1) ppGroupIndex = 0;
     const grupoInicial = ppGrupoActual();
 
     if (!document.getElementById('pp-stepper')) {
-        // Ya no lleva flechas — solo el contador. La navegación entre
-        // ejercicios se hizo con botones propios en la barra de abajo
-        // (ver "Ejercicio anterior"/"Siguiente ejercicio" en ppConectarBotones).
+        // builds the stepper counter element; actual navigation is wired up in ppConectarBotones
         const stepper = document.createElement('div');
         stepper.id = 'pp-stepper';
         stepper.className = 'pp-stepper';
@@ -831,7 +774,7 @@ async function initPonteApruebaSimulator(nombreTema) {
     }
 }
 
-// ── Auto-reproducción ─────────────────────────────────────────
+// Automatic playback controls
 
 function ppGetDelay() {
     const slider = document.getElementById('pp-speed-slider');
@@ -847,9 +790,7 @@ function ppStopPlay(btns) {
     if (list[3]) list[3].innerHTML = _PP_ICON_PLAY;
 }
 
-// onDone (opcional) se dispara una sola vez, justo al llegar al último
-// paso que se pudo ejecutar — lo usa ppComprobarSolucion para no pintar
-// el veredicto hasta que la animación termina.
+// Advances one step at a time on a timer; onDone fires once when the last step is reached
 function ppAutoPlay(btns, onDone) {
     const info = ppSim.info();
     if (info.index >= info.total - 1) {
@@ -863,14 +804,11 @@ function ppAutoPlay(btns, onDone) {
     ppPlayTimer = setTimeout(() => ppAutoPlay(btns, onDone), ppGetDelay());
 }
 
-// ── Conexión de botones ───────────────────────────────────────
-
+// Wires up the editor control buttons
 function ppConectarBotones() {
     const btns = _ppBtns();
 
-    // "Volver al inicio" (texto del skeleton compartido) confunde aquí: no
-    // navega a ningún lado, solo vuelve a ejecutar el código actual desde
-    // el paso 1. Se renombra a algo que describa lo que realmente hace.
+    // relabels the shared "restart" button, since here it just re-runs the current code from step 1
     if (btns[0]) {
         btns[0].textContent = 'Reiniciar ejercicio';
         btns[0].onclick = () => {
@@ -880,9 +818,7 @@ function ppConectarBotones() {
         };
     }
 
-    // Reemplazan a las flechas que antes vivían junto al contador de arriba
-    // (ver el bloque de "pp-stepper" más abajo) — misma función, nueva
-    // ubicación, para no repetir la navegación de ejercicios dos veces.
+    // adds the "previous/next exercise" buttons next to the step controls
     const controlsEl = document.querySelector('.editor-controls');
     if (controlsEl && btns[1] && !document.getElementById('pp-ejercicio-prev')) {
         const prevEj = document.createElement('button');
@@ -919,10 +855,7 @@ function ppConectarBotones() {
         if (btns[1]) btns[1].disabled = (ppSim.info().index <= 0);
     };
 
-    // btns[3] era el botón "Reproducir" del skeleton compartido
-    // (consolas.js). Aquí conserva el ícono play/pausa, pero el tooltip se
-    // queda en "Comprobar": el mismo botón reproduce la ejecución paso a
-    // paso Y valida contra el backend a la vez (ver ppComprobarSolucion).
+    // btns[3] is the shared "play" button, repurposed here to both animate and validate (ppComprobarSolucion)
     if (btns[3]) {
         btns[3].innerHTML = _PP_ICON_PLAY;
         btns[3].onclick = ppComprobarSolucion;
@@ -930,8 +863,7 @@ function ppConectarBotones() {
 
     const controls = document.querySelector('.editor-controls');
 
-    // "Pista" va en la misma fila que Comprobar, justo antes — prev/anterior
-    // y siguiente se conservan tal cual, sin tocarlos.
+    // adds the "Pista" (hint) button right before the Comprobar button
     if (controls && btns[3] && !document.getElementById('pp-btn-pista')) {
         const pista = document.createElement('button');
         pista.className = 'ctrl-btn';
@@ -958,7 +890,7 @@ function ppConectarBotones() {
 
 }
 
-// ── Hook a cargarTema ─────────────────────────────────────────
+// Hooks into the shared cargarTema navigation to initialize/teardown this simulator
 
 (function () {
     const _cargarTema = window.cargarTema;

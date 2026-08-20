@@ -1,11 +1,8 @@
-// Inicio/js/ui-notificaciones.js
-// Notificaciones propias de la app del alumno — mismo mecanismo que
-// admin/js/admin-ui.js (panel de administrador), adaptado a las clases de
-// botón de este lado. Reemplaza alert()/confirm() nativos del navegador.
+// Reemplaza el alert()/confirm() nativo del navegador con notificaciones tipo toast y modal, con el estilo de la app.
 
 let _uiToastId = 0;
 
-// tipo: 'exito' | 'error' | 'advertencia' | 'info'
+// Muestra un mensaje toast que se puede cerrar; tipo es 'exito' | 'error' | 'advertencia' | 'info'.
 function mostrarToast(mensaje, tipo, duracionMs) {
     tipo = tipo || 'info';
     duracionMs = duracionMs || 4200;
@@ -34,11 +31,7 @@ function mostrarToast(mensaje, tipo, duracionMs) {
     setTimeout(cerrar, duracionMs);
 }
 
-// Reemplazo de confirm() con el mismo look de la app. Devuelve una
-// Promise<boolean> — se usa con await donde antes había
-// "if (!confirm(...)) return;".
-//
-// opciones: { titulo, mensaje, textoConfirmar, textoCancelar, peligroso }
+// Muestra un diálogo de confirmación con estilo propio y resuelve true/false según la elección del usuario.
 function confirmarAccion(opciones) {
     opciones = opciones || {};
     return new Promise((resolve) => {
